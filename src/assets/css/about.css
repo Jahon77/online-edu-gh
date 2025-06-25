@@ -1,0 +1,118 @@
+.about{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.about-in{
+    width: 100%;
+}
+.image-about{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+}
+.image-about img{
+    width: 100%;
+    height: 300px;
+    margin-top: 10px;
+}
+.image-about h2{
+    color: white;
+    position: absolute;
+    top:310px;
+    left: 48%;
+    font-size: 28px;
+}
+.image-about p{
+    width: 70%;
+    color: white;
+    position: absolute;
+    top:380px;
+
+    font-size: 18px;
+    text-align: center;
+}
+.about-content{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+}
+.person-introduction{
+    width: 80%;
+
+    height: 40vh;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+}
+.person-introduction-ask{
+
+    height: 40vh;
+    width: 40%;
+
+}
+.person-introduction-ask h3{
+    margin-top: 10px;
+}
+.person-introduction-ask p{
+    margin-top: 20px;
+    color: #595858;
+}
+.person-introduction-img{
+    height: 40vh;
+    width: 20%;
+
+}
+.person-introduction-img img{
+    width: 270px;
+    height: 90%;
+}
+.person-introduction-word{
+    height: 40vh;
+
+    width:  30%
+}
+.person-introduction-word svg{
+    color:  rgb(89, 188, 219);
+    width: 30px;
+    height: 40px;
+}
+.person-introduction-word p{
+    margin-top: 20px;
+    color: #595858;
+}
+.person-introduction-word h3{
+    margin-top: 20px;
+}
+.Sign{
+    width: 100%;
+
+    margin-top:15vh;
+
+}
+.Sign h1{
+    text-align: center;
+}
+.Sign p{
+    text-align: center;
+    font-size: 18px;
+    color: #9b9b9b;
+}
+.sign-img{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    width: 100%;
+}
+.sign-img img{
+    text-align: center;
+}
+.sign-img-in{
+    width: 60%;
+}
