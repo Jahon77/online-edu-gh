@@ -5,23 +5,66 @@
         <form action="" class="sign-in-form" @submit.prevent="handleSubmit">
           <b>Smart Learning Platform</b>
           <h2 class="title">Login</h2>
-          <div class="input-field">
-            <div class="el-icon-user-solid"></div>
-            <input type="username" placeholder="Username" v-model="username" >
+
+          <!-- 登录方式选择 -->
+          <div v-if="loginMode === 'selection'" class="login-mode-selection">
+            <button @click.prevent="setLoginMode('password')" class="btn mode-btn">By Password</button>
+            <button @click.prevent="setLoginMode('phone')" class="btn mode-btn">By PhoneNumber</button>
+            <button @click.prevent="setLoginMode('face')" class="btn mode-btn">By Face</button>
           </div>
-          <div class="input-field">
-            <div class="el-icon-key"></div>
-            <input type="password" placeholder="Password" v-model="password">
-          </div>
-          <div class="input-field captcha-field">
-            <div class="el-icon-picture-outline"></div>
-            <input type="text" placeholder="Verification Code" v-model="captchaCode">
-            <div class="captcha-img" @click="refreshCaptcha">
-              <img v-if="captchaImageUrl" :src="captchaImageUrl" alt="验证码">
+
+          <!-- 账号密码登录 -->
+          <div v-if="loginMode === 'password'">
+            <div class="input-field">
+              <div class="el-icon-user-solid"></div>
+              <input type="username" placeholder="Username" v-model="username" >
             </div>
+            <div class="input-field">
+              <div class="el-icon-key"></div>
+              <input type="password" placeholder="Password" v-model="password">
+            </div>
+            <div class="input-field captcha-field">
+              <div class="el-icon-picture-outline"></div>
+              <input type="text" placeholder="Verification Code" v-model="captchaCode">
+              <div class="captcha-img" @click="refreshCaptcha">
+                <img v-if="captchaImageUrl" :src="captchaImageUrl" alt="验证码">
+              </div>
+            </div>
+            <div >
+              <input type="submit" value="Login" class="btn"  >
+            </div>
+            <a href="#" @click.prevent="goBack" class="back-link">返回</a>
           </div>
-          <div >
-            <input type="submit" value="Login" class="btn"  >
+
+          <!-- 手机号码登录 -->
+          <div v-if="loginMode === 'phone'">
+            <div class="input-field">
+              <div class="el-icon-phone-outline"></div>
+              <input type="text" placeholder="Phone Number" v-model="phone">
+            </div>
+            <div class="input-field captcha-field">
+               <div class="el-icon-picture-outline"></div>
+               <input type="text" placeholder="Verification Code" v-model="smsCode">
+               <button @click.prevent="sendSmsForLogin" class="sms-button" v-if="!isLoginSmsCounting">Get V-Code</button>
+               <div v-if="isLoginSmsCounting" class="countdown-box">
+                {{ loginSmsCountdown }} 秒后重新发送
+               </div>
+             </div>
+            <div>
+              <input type="submit" value="Login" class="btn" @click.prevent="handlePhoneLogin">
+            </div>
+            <a href="#" @click.prevent="goBack" class="back-link">返回</a>
+          </div>
+
+          <!-- 人脸识别登录 -->
+          <div v-if="loginMode === 'face'" class="face-login-container">
+            <p>请点击下方按钮，允许浏览器使用摄像头进行登录</p>
+            <button @click.prevent="openFaceModal" class="btn">开启人脸识别</button>
+            <a href="#" @click.prevent="goBack" class="back-link" style="margin-top: 20px;">返回</a>
+          </div>
+
+          <div v-if="loginStatusMessage" class="login-status-message">
+            {{ loginStatusMessage }}
           </div>
           <p class="social-text">Or Sign in with social platforms</p>
 
@@ -60,7 +103,7 @@
           <div class="input-field code-field">
             <i class="el-icon-message"></i>
             <input type="text" placeholder="SMS Code" v-model="registerForm.smsCode">
-            <button id="send-sms-code-btn" @click.prevent="sendSmsCode" 
+            <button id="send-sms-code-btn" @click.prevent="sendSmsCode"
                     class="sms-button"
                     v-if="!isCounting"
             >Get V-Code
@@ -70,7 +113,7 @@
             </div>
           </div>
           <input type="submit" value="Next" class="btn" style="margin-bottom: 20px;">
-          
+
           <!-- 认证弹窗 -->
           <div class="auth-modal" v-if="showAuthModal">
             <div class="auth-modal-content">
@@ -89,7 +132,7 @@
               </div>
             </div>
           </div>
-          
+
           <p class="social-text">Or Sign up with social platforms</p>
           <div class="social-media" style="margin-top: 50px;">
             <a href="https://im.qq.com/index/" class="social-icon">
@@ -135,6 +178,27 @@
         </div>
         <img src="../assets/pictures/web.svg" class="image">
 
+      </div>
+    </div>
+     <!-- 人脸识别弹窗 -->
+    <div class="auth-modal" v-if="showCameraModal">
+      <div class="auth-modal-content">
+        <h3>人脸登录</h3>
+        <canvas ref="canvas" style="display:none;"></canvas>
+        <div v-if="!capturedImage">
+          <video ref="video" autoplay playsinline class="video-preview"></video>
+          <button @click="capture" class="btn modal-btn">拍照</button>
+        </div>
+        <div v-else>
+          <img :src="capturedImage" class="video-preview" />
+          <div class="button-group">
+            <button @click="resetCapture" class="btn modal-btn secondary">重拍</button>
+            <button @click="loginWithFace" class="btn modal-btn" :disabled="isProcessing">
+              {{ isProcessing ? '登录中...' : '确认登录' }}
+            </button>
+          </div>
+        </div>
+        <button @click="closeCamera" class="btn modal-btn transparent">关闭</button>
       </div>
     </div>
   </div>
@@ -248,8 +312,8 @@ form.sign-up-form{
   color: var(--text-color);
 }
 .input-field input::placeholder{
-  color:#aaa;
-  font-weight: 100;
+  color: var(--subtle-text-color);
+  font-weight: 500;
 }
 .btn{
   width:150px;
@@ -271,7 +335,7 @@ form.sign-up-form{
 .social-text{
   padding:.7rem 0;
   font-size: 1rem;
-  color: var(--subtle-text-color);
+  color: var(--text-color);
 }
 .social-media{
   display: flex;
@@ -281,7 +345,7 @@ form.sign-up-form{
 .social-icon{
   height: 46px;
   width:46px;
-  border: 1px solid var(--text-color);
+  border: 1px solid var(--border-color);
   margin: 0 0.45rem;
   display: flex;
   justify-content: center;
@@ -293,15 +357,15 @@ form.sign-up-form{
   transition:0.3s;
 }
 .social-icon:hover{
-  color: var(--primary-color);
-  border-color: var(--primary-color);
+  color: var(--accent-color);
+  border-color: var(--accent-color);
 }
 .signin-signup{
   position: absolute;
-  top:45%;
+  top:50%;
   left:75%;
   transform:translate(-50%,-50%);
-  width: 70%;
+  width: 50%;
   display: grid;
   grid-template-columns: 1fr;
   z-index: 5;
@@ -354,7 +418,7 @@ form.sign-up-form{
 }
 .btn.transparent:hover {
   background: white;
-  color: var(--primary-color);
+  color: var(--accent-color);
 }
 .right-panel{
   padding: 3rem 12% 2rem 17%;
@@ -468,7 +532,7 @@ form.sign-up-form{
 }
 
 .modal-btn.confirm {
-  background-color: var(--primary-color);
+  background-color: var(--accent-color);
   color: white;
 }
 
@@ -476,21 +540,67 @@ form.sign-up-form{
   grid-template-columns: 15% 45% 40%;
 }
 .sms-button {
-  background-color: var(--primary-color);
+  background-color: var(--accent-color);
   color: white;
   border: none;
-  padding: 10px 15px;
-  border-radius: 25px;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 20px;
   cursor: pointer;
   font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 40px;
+  transition: all 0.3s ease;
+  align-self: center;
+  justify-self: center;
 }
 .sms-button:hover {
-  background-color: var(--primary-light-color);
+  background-color: #8ec5f5;
 }
 .countdown-box {
   padding: 10px 15px;
   font-size: 0.9rem;
   color: var(--subtle-text-color);
+}
+
+.login-status-message {
+  margin-top: 15px;
+  padding: 10px;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  border-radius: 5px;
+  background-color: #e6f7ff;
+  border: 1px solid #91d5ff;
+  color: #096dd9;
+}
+
+.login-mode-selection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.mode-btn {
+  width: 100%;
+  max-width: 380px;
+  margin: 10px 0;
+  font-size: 1.2rem;
+  text-transform: none;
+  padding: 12px 0;
+  height: auto;
+}
+
+.back-link {
+  margin-top: 15px;
+  color: var(--text-color);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.back-link:hover {
+  color: var(--accent-color);
 }
 
 @media (max-width: 870px){
@@ -513,14 +623,86 @@ form.sign-up-form{
     display: none;
   }
 }
+
+/* 人脸识别弹窗样式 */
+.auth-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.auth-modal-content {
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  width: 90%;
+  max-width: 500px;
+  text-align: center;
+}
+.auth-modal-content h3 {
+  margin-bottom: 20px;
+  color: #333;
+}
+.video-preview {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  background-color: #eee;
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.modal-btn {
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.modal-btn.secondary {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.modal-btn.transparent {
+  background: none;
+  color: #666;
+}
+
+.face-login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.face-login-container p {
+  margin-bottom: 15px;
+  color: var(--text-color);
+}
 </style>
 <script>
 
 import axios from "axios";
 export default {
-  name: "loginView",
+  name: "Login",
   data() {
     return {
+      loginMode: 'selection', // 'selection', 'password', 'phone', 'face'
       username: '',
       password: '',
       captchaCode: '',
@@ -539,7 +721,21 @@ export default {
       countdown: 60,
       isCounting: false,
       showAuthModal: false,
-      countdownTimer: null
+      countdownTimer: null,
+      loginStatusMessage: '',
+      // for phone login
+      phone: '',
+      smsCode: '',
+      isLoginSmsCounting: false,
+      loginSmsCountdown: 60,
+
+      // for face login
+      showCameraModal: false,
+      video: null,
+      canvas: null,
+      capturedImage: null,
+      isProcessing: false,
+      stream: null,
     };
   },
   mounted() {
@@ -560,62 +756,142 @@ export default {
     });
   },
   methods: {
-    refreshCaptcha() {
-      axios.get('http://localhost:8080/captcha')
-        .then(response => {
-          if (response.data.status === 10004) {
-            const captchaData = response.data.data;
-            this.captchaKey = captchaData.captchaKey;
-            this.captchaImageUrl = captchaData.captchaImage;
-          } else {
-            console.error('获取验证码失败:', response.data.message);
+    setLoginMode(mode) {
+      this.loginMode = mode;
+      // 清理可能残留的错误信息
+      this.loginStatusMessage = '';
+    },
+    goBack() {
+      this.loginMode = 'selection';
+      this.closeCamera(); // 从人脸识别模式返回时确保摄像头关闭
+    },
+    async handlePhoneLogin() {
+      if (!this.phone || !this.smsCode) {
+        this.loginStatusMessage = '请输入手机号和验证码';
+        return;
+      }
+      try {
+        const loginData = {
+          phone: this.phone,
+          smsCode: this.smsCode
+        };
+        this.loginStatusMessage = '';
+        const response = await axios.post('http://localhost:8080/login-by-phone', loginData, {
+          headers: {
+            'Content-Type': 'application/json'
           }
+        });
+
+        if (response.data.status === 10001) {
+          const loginResp = response.data.data;
+          this.loginStatusMessage = '您已成功登录，正在跳转...';
+
+          this.setCookie('satoken', loginResp.saTokenInfo.tokenValue, 1);
+          this.setCookie('username', loginResp.username, 1);
+          this.setCookie('userid', loginResp.userId, 1);
+          this.setCookie('name', loginResp.name, 1);
+
+          // 根据角色跳转
+          if (loginResp.role === 3) { // 管理员
+            await this.$router.push('/admin');
+          } else { // 学生或教师
+            await this.$router.push('/face-test');
+          }
+        } else {
+          this.loginStatusMessage = response.data.message || '登录失败，请重试';
+        }
+      } catch (error) {
+        this.loginStatusMessage = '登录失败，请检查网络或联系管理员';
+      }
+    },
+    sendSmsForLogin() {
+      if (!this.phone || !/^1[3-9]\d{9}$/.test(this.phone)) {
+        alert('请输入正确的手机号码');
+        return;
+      }
+
+      // 检查手机号是否存在
+      axios.get(`http://localhost:8080/check-phone?phone=${this.phone}`)
+        .then(response => {
+          if (!response.data.data || !response.data.data.exists) {
+            alert('该手机号未注册');
+            return;
+          }
+          
+          // 发送短信
+          axios.post(`http://localhost:8080/send-sms?phone=${this.phone}`)
+            .then(sendResponse => {
+              if (sendResponse.data.status === 10005) {
+                alert('短信验证码已发送，请查收');
+                this.startLoginSmsCountdown();
+              } else {
+                alert(sendResponse.data.message || '短信验证码发送失败');
+              }
+            })
+            .catch(error => {
+              console.error('短信验证码发送请求异常:', error);
+              alert('短信验证码发送失败: 网络错误');
+            });
         })
         .catch(error => {
-          console.error('获取验证码请求失败:', error);
+          console.error('检查手机号失败:', error);
+          alert('检查手机号失败，请稍后重试');
         });
     },
-    handleSubmit() {
-      const loginData = {
-        username: this.username,
-        password: this.password,
-        captchaCode: this.captchaCode,
-        captchaKey: this.captchaKey
-      };
-      
-      console.log('发送登录请求:', loginData);
-      
-      axios.post('http://localhost:8080/login', loginData, {
-        headers: {
-          'Content-Type': 'application/json'
+    startLoginSmsCountdown() {
+      this.isLoginSmsCounting = true;
+      this.loginSmsCountdown = 60;
+      this.loginSmsCountdownTimer = setInterval(() => {
+        this.loginSmsCountdown--;
+        if (this.loginSmsCountdown <= 0) {
+          this.isLoginSmsCounting = false;
+          clearInterval(this.loginSmsCountdownTimer);
         }
-      })
-      .then(response => {
+      }, 1000);
+    },
+    async handleSubmit() {
+      if (this.loginMode !== 'password') return;
+      try {
+        const loginData = {
+          username: this.username,
+          password: this.password,
+          captchaCode: this.captchaCode,
+          captchaKey: this.captchaKey
+        };
+        
+        this.loginStatusMessage = '';
+        
+        const response = await axios.post('http://localhost:8080/login', loginData, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
         console.log('登录响应:', response.data);
         
-        if (response.data.status === 0) {
+        if (response.data.status === 10001) {
           const loginResp = response.data.data;
-          console.log('登录成功，用户信息:', loginResp);
+          this.loginStatusMessage = '您已成功登录，正在跳转...';
           
           this.setCookie('satoken', loginResp.saTokenInfo.tokenValue, 1);
           this.setCookie('username', loginResp.username, 1);
           this.setCookie('userid', loginResp.userId, 1);
+          this.setCookie('name', loginResp.name, 1);
           
-          setTimeout(() => {
-            console.log('准备跳转到主页面');
-            window.location.href = '#/mainView';
-          }, 100);
+          // 根据角色跳转
+          if (loginResp.role === 3) { // 管理员
+            await this.$router.push('/admin');
+          } else { // 学生或教师
+            await this.$router.push('/face-test');
+          }
         } else {
-          console.error('登录失败:', response.data.message);
-          alert(response.data.message || '登录失败');
+          this.loginStatusMessage = response.data.message || '登录失败，请重试';
           this.refreshCaptcha();
         }
-      })
-      .catch(error => {
-        console.error('登录请求失败:', error);
-        alert('登录失败，请检查网络连接或联系管理员');
+      } catch (error) {
+        this.loginStatusMessage = '登录失败，请检查网络或联系管理员';
         this.refreshCaptcha();
-      });
+      }
     },
     // 发送短信验证码
     sendSmsCode() {
@@ -807,6 +1083,165 @@ export default {
       document.cookie = name + "=" + value + ";" + expires + ";path=/";
       console.log(`Cookie已设置: ${name}=${value}`);
     },
+    refreshCaptcha() {
+      axios.get('http://localhost:8080/captcha')
+        .then(response => {
+          if (response.data.status === 10004) {
+            const captchaData = response.data.data;
+            this.captchaKey = captchaData.captchaKey;
+            this.captchaImageUrl = captchaData.captchaImage;
+          } else {
+            console.error('获取验证码失败:', response.data.message);
+          }
+        })
+        .catch(error => {
+          console.error('获取验证码请求失败:', error);
+        });
+    },
+    // --- 人脸识别相关方法 ---
+    openFaceModal() {
+      this.showCameraModal = true;
+    },
+    async openCamera() {
+      if (this.stream) return;
+      try {
+        this.stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        this.$nextTick(() => {
+            const videoElement = this.$refs.video;
+            if(videoElement) {
+                videoElement.srcObject = this.stream;
+            }
+        });
+      } catch (err) {
+        alert('无法访问摄像头，请检查权限。');
+        console.error("Error accessing camera: ", err);
+      }
+    },
+    closeCamera() {
+      if (this.stream) {
+        this.stream.getTracks().forEach(track => track.stop());
+        this.stream = null;
+      }
+      this.resetCapture();
+      this.showCameraModal = false;
+    },
+    capture() {
+      const videoElement = this.$refs.video;
+      const canvasElement = this.$refs.canvas;
+      if (videoElement && canvasElement) {
+        if (videoElement.videoWidth === 0) {
+            alert('摄像头尚未准备好或权限被阻止，请稍等片刻或刷新重试。');
+            return;
+        }
+        const context = canvasElement.getContext('2d');
+        
+        // 设置较小的尺寸以减小图像大小
+        const maxWidth = 640;
+        const maxHeight = 480;
+        let width = videoElement.videoWidth;
+        let height = videoElement.videoHeight;
+        
+        // 保持宽高比的情况下调整尺寸
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round(height * maxWidth / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round(width * maxHeight / height);
+            height = maxHeight;
+          }
+        }
+        
+        canvasElement.width = width;
+        canvasElement.height = height;
+        context.drawImage(videoElement, 0, 0, width, height);
+        
+        // 使用较低的图像质量
+        this.capturedImage = canvasElement.toDataURL('image/jpeg', 0.7);
+        
+        console.log('图像已压缩，大小约为：' + Math.round(this.capturedImage.length / 1024) + 'KB');
+      } else {
+          alert('拍照功能初始化失败，请关闭弹窗后重试。');
+      }
+    },
+    resetCapture() {
+      this.capturedImage = null;
+      if (this.showCameraModal) {
+          this.$nextTick(() => this.openCamera());
+      }
+    },
+    async loginWithFace() {
+      if (!this.capturedImage) {
+        alert('请先拍照');
+        return;
+      }
+      this.isProcessing = true;
+      this.loginStatusMessage = '正在进行人脸识别...';
+      try {
+        // 打印请求数据，检查格式
+        const requestData = {
+          image: this.capturedImage,
+          userId: null // 人脸登录不需要提供用户ID
+        };
+        console.log('人脸登录请求数据:', JSON.stringify(requestData).substring(0, 100) + '...');
+        
+        const response = await axios.post('http://localhost:8080/api/face/login', requestData, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        console.log('人脸登录响应:', response.data);
+        
+        if (response.data.status === 10001) {
+          const loginResp = response.data.data;
+          this.setCookie('satoken', loginResp.saTokenInfo.tokenValue, 1);
+          this.setCookie('username', loginResp.userInfo.username, 1);
+          this.setCookie('userid', loginResp.userInfo.userId, 1);
+          this.setCookie('name', loginResp.userInfo.name, 1);
+          this.loginStatusMessage = '人脸登录成功！欢迎回来, ' + loginResp.userInfo.name;
+          this.closeCamera();
+          
+          // 根据角色跳转
+          if (loginResp.userInfo.role === 3) { // 管理员
+            await this.$router.push('/admin');
+          } else { // 学生或教师
+            await this.$router.push('/face-test');
+          }
+        } else {
+          this.loginStatusMessage = response.data.message || '人脸登录失败。';
+        }
+      } catch (error) {
+        console.error('人脸登录错误:', error);
+        // 打印更详细的错误信息
+        if (error.response) {
+          console.error('错误响应数据:', error.response.data);
+          console.error('错误状态码:', error.response.status);
+          console.error('错误头信息:', error.response.headers);
+        }
+        this.loginStatusMessage = error.response?.data?.message || '请求失败，请检查网络或联系管理员。';
+      } finally {
+        this.isProcessing = false;
+      }
+    },
+    setCookieForLogin(name, value, days) {
+      const d = new Date();
+      d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+      const expires = "expires="+d.toUTCString();
+      document.cookie = name + "=" + value + ";" + expires + ";path=/";
+      console.log(`Cookie已设置: ${name}=${value}`);
+    },
+  },
+  watch: {
+    showCameraModal(newValue) {
+      if(newValue) {
+        this.openCamera();
+      } else {
+        // 当弹窗关闭时，也确保摄像头资源被释放
+        this.closeCamera();
+      }
+    }
   }
 }
 

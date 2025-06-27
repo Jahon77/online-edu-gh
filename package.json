@@ -16,6 +16,7 @@
     "element-plus": "^2.7.6",
     "html2canvas": "^1.4.1",
     "icons-vue": "^1.0.9",
+    "js-cookie": "^3.0.5",
     "jsqr": "^1.4.0",
     "lodash": "^4.17.21",
     "marked": "^15.0.12",

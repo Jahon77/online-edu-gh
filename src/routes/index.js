@@ -1,8 +1,13 @@
 // �����Ҫ��ģ��
 import { createRouter, createWebHashHistory } from 'vue-router';
 import homeView from '../views/login.vue'
-
-
+import Index from '../views/index.vue'
+import Login from '../views/login.vue'
+import About from '../views/about.vue'
+import Use from '../views/use.vue'
+import Notice from '../views/notice.vue'
+import Chat from '../views/chat.vue'
+import FaceTest from '../views/FaceTest.vue'
 
 const routes = [
     {
@@ -18,27 +23,32 @@ const routes = [
     {
         path: '/index',
         name: 'index',
-        component: ()=> import('../views/index.vue')
+        component: Index
     },
     {
         path: '/notice',
         name: 'notice',
-        component: ()=> import('../views/notice.vue')
+        component: Notice
     },
     {
         path: '/use',
         name: 'use',
-        component: ()=> import('../views/use.vue')
+        component: Use
     },
     {
         path: '/about',
         name: 'about',
-        component: ()=> import('../views/about.vue')
+        component: About
     },
     {
         path: '/chat',
         name: 'chat',
-        component: ()=> import('../views/chat.vue')
+        component: Chat
+    },
+    {
+        path: '/face-test',
+        name: 'face-test',
+        component: FaceTest
     }
 ];
 
