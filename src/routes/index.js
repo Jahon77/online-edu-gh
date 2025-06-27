@@ -25,6 +25,22 @@ const routes = [
         name: 'notice',
         component: ()=> import('../views/notice.vue')
     },
+    { 
+        path: '/courses', 
+        name: 'CourseList',
+        component: CourseList 
+    },
+    { 
+        path: '/courses/:id', 
+        name: 'CourseDetail', 
+        component: CourseDetail,
+        props: true 
+    },
+    {
+        path: '/course',
+        name: 'CoursePage',
+        component: ()=> import('../views/CoursePage.vue')
+    },
     {
         path: '/use',
         name: 'use',
