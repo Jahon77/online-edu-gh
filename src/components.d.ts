@@ -14,5 +14,6 @@ declare module 'vue' {
     Layout: typeof import('./components/commen/layout.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    TeacherHeader: typeof import('./components/commen/header/TeacherHeader.vue')['default']
   }
 }
