@@ -36,6 +36,16 @@ export default defineConfig({
       'src': fileURLToPath(new URL('./src', import.meta.url))
     },
     extensions: [".js", ".ts", ".tsx", ".jsx"],
+  },
+  server: {
+    proxy: {
+      // 将所有/api开头的请求代理到后端服务器
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false
+      }
+    }
   }
 })
 

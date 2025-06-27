@@ -24,19 +24,21 @@
     border-style: solid;
     border-width: 1px;
     border-radius: 20px;
-    border-color: #cccccc;
+    border-color: var(--border-color);
     cursor: pointer;
+    background-color: var(--light-background-color);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 .notice-in h2{
     margin-left: 10px;
-    color: #9b9b9b;
+    color: var(--subtle-text-color);
     margin-top: 10px;
 }
 .notice-line{
     margin-left: 5px;
     margin-bottom: 10px;
     height: 0.7vh;
-    background-color:rgb(89, 188, 219) ;
+    background-color: var(--primary-color) ;
     width: 120px;
     border-radius: 5px;
 }
@@ -54,13 +56,15 @@
     border-style: solid;
     border-width: 1px;
     border-radius: 20px;
-    border-color: #cccccc;
+    border-color: var(--border-color);
     cursor: pointer;
+    background-color: var(--light-background-color);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 .announcement-in h2{
     margin-top: 10px;
     margin-left: 10px;
-    color: #9b9b9b;
+    color: var(--subtle-text-color);
 }
 .second{
     height: 60vh;
@@ -80,20 +84,23 @@
 .buttons-in{
     width: 95%;
     height: 57vh;
+    border-radius: 20px;
+    overflow: hidden;
     /*border-style: solid;*/
     /*border-width: 1px;*/
     /*border-radius: 20px;*/
     /*border-color: #cccccc;*/
-    background-color: rgb(237, 239, 243);
+    background-color: transparent;
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 .button-navigation{
 
     width: 20%;
-    background-color: rgb(33,89,164);
+    background-color: var(--primary-color);
     display: flex;
 
     height: 57vh;
@@ -112,7 +119,7 @@
  color: white;;
 }
 .buttons-content{
-
+    background-color: var(--light-background-color);
     height: 57vh;
     width: 80%;
     display: grid;
@@ -121,7 +128,7 @@
     padding: 10px; /* 容器内边距 */
 }
 .buttons-content-in{
-
+    background-color: transparent;
 
     padding: 20px; /* 按钮内边距 */
     text-align: center; /* 文字居中 */
@@ -132,6 +139,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.3s ease;
 }
 .button-center{
     width: 80%;
@@ -140,7 +148,7 @@
     justify-content: center;
 }
 .buttons-content-in:hover {
-    background-color: rgb(33,89,164);
+    background-color: var(--primary-color);
 
 }
 .buttons-content-in:hover svg{
@@ -168,13 +176,15 @@
     border-style: solid;
     border-width: 1px;
     border-radius: 20px;
-    border-color: #cccccc;
+    border-color: var(--border-color);
     cursor: pointer;
+    background-color: var(--light-background-color);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 .schoolnews h2{
     margin-top: 10px;
     margin-left: 10px;
-    color: #9b9b9b;
+    color: var(--subtle-text-color);
 }
 .news-item{
     display: flex;
@@ -204,8 +214,36 @@
 .calendar .el-calendar{
     width: 100%;
    height: 60vh;
+    background-color: var(--light-background-color);
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 
-
+}
+.el-calendar-table .el-calendar-day {
+    color: var(--text-color);
+}
+.el-calendar-table .el-calendar-day:hover {
+    background-color: var(--primary-light-color);
+}
+.el-calendar-table .is-selected {
+    background-color: var(--primary-color) !important;
+    color: white;
+}
+.el-calendar__header {
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 10px 10px 0 0;
+}
+.el-calendar__title {
+    color: white;
+}
+.el-button-group > .el-button {
+    background: transparent;
+    color: white;
+    border-color: white;
+}
+.el-button-group > .el-button:hover {
+    background: rgba(255,255,255,0.2);
 }
 /* 图片容器样式 */
 .SwiperBox {
@@ -216,6 +254,8 @@
     box-sizing: border-box;
     cursor: pointer;
     overflow: hidden;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 .imgBox {
     position: absolute;
@@ -243,13 +283,16 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background: rgba(109, 109, 109, 0.445);
+    background: var(--primary-light-color);
     color: #fff;
     border-radius: 50%;
     cursor: pointer;
     font-size: 12px;
-    font-weight: 500;
-    user-select: none;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+}
+.leftBtn:hover, .rightBtn:hover {
+    opacity: 1;
 }
 .leftBtn {
     left: 10px;
@@ -260,44 +303,48 @@
 /* 下方指示器盒子 */
 .instBox {
     position: absolute;
+    bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
-    bottom: 10px;
-    display: flex;
-}
-/* 小圆点 */
-.inst {
-    width: 10px;
-    height: 10px;
-    border: 1px solid #ccc;
-    margin-right: 8px;
-    background: #fff;
-    border-radius: 50%;
-    cursor: pointer;
-}
-.inst:last-child {
-    margin-right: 0px;
-}
-.instActv {
-    border: 1px solid #ff0000;
-    background: #ff0000;
-}
-.news-item p{
-    margin-left: 20px;
-    font-size: 16px;
-    color: #656161;
-    font-family: "Microsoft YaHei", Arial, sans-serif;
-    line-height: 2.5;
-}
-.content-pagination{
-    margin-top: 10px;
-    width: 80%;
     height: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
-.pagination{
-    width: 20px;
+/* 小圆点 */
+.inst {
+    width: 10px;
     height: 10px;
+    border-radius: 50%;
+    border: 1px solid var(--primary-color);
+    background-color: #fff;
+    cursor: pointer;
+}
+.inst:last-child {
+    margin-right: 0px !important;
+}
+.instActv {
+    background-color: var(--primary-color);
+}
+.news-item p{
+    color: var(--text-color);
+    margin-top: 10px;
+    font-size: 16px;
+    margin-left: 20px;
+    margin-right: 20px;
+    line-height: 1.6;
+}
+.news-item p strong{
+    color: var(--primary-color);
+}
+.content-pagination{
+    width: 100%;
+    height: 10vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+}
+.pagination{
+    --el-color-primary: var(--primary-color);
 }

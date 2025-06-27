@@ -1,7 +1,8 @@
-// �����Ҫ��ģ��
+// 导入需要的模块
 import { createRouter, createWebHashHistory } from 'vue-router';
 import homeView from '../views/login.vue'
-
+import CourseList from '../views/CourseList.vue'
+import CourseDetail from '../views/CourseDetail.vue'
 
 
 const routes = [
@@ -19,6 +20,22 @@ const routes = [
         path: '/index',
         name: 'index',
         component: ()=> import('../views/index.vue')
+    },
+    { 
+        path: '/courses', 
+        name: 'CourseList',
+        component: CourseList 
+    },
+    { 
+        path: '/courses/:id', 
+        name: 'CourseDetail', 
+        component: CourseDetail,
+        props: true 
+    },
+    {
+        path: '/course',
+        name: 'CoursePage',
+        component: ()=> import('../views/CoursePage.vue')
     },
     {
         path: '/create',
@@ -53,4 +70,4 @@ const router = createRouter({
     routes,
 });
 
-export default router;
+export default router; 
