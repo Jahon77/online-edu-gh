@@ -41,8 +41,30 @@ const routes = [
         component: ()=> import('../views/chat.vue')
     },
     {
-        path: '/admin/home',
-        component: () => import('@/views/admin/admin_home.vue')
+        path: '/admin',
+        component: () => import('@/views/admin/admin_layout.vue'),
+        children: [
+            {
+                path: 'home',
+                component: () => import('@/views/admin/admin_home.vue')
+            },
+            {
+                path: 'teacher',
+                component: () => import('@/views/admin/teacher.vue')
+            },
+            {
+                path: 'student',
+                component: () => import('@/views/admin/student.vue')
+            },
+            {
+                path: 'course',
+                component: () => import('@/views/admin/course.vue')
+            },
+            {
+                path: 'chat',
+                component: () => import('@/views/admin/chat.vue')
+            }
+        ]
     }
 ];
 
