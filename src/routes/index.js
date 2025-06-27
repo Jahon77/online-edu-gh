@@ -40,9 +40,14 @@ const routes = [
         props: true 
     },
     {
-        path: '/course',
+        path: '/courses/explore',
         name: 'CoursePage',
-        component: ()=> import('../views/Course/CoursePage.vue')
+        component: () => import('../views/CoursePage.vue')
+    },
+    {
+        path: '/courses/filter',
+        name: 'CourseFilterPage',
+        component: () => import('../views/CourseFilterPage.vue')
     },
     {
         path: '/create',
