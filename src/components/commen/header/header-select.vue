@@ -1,4 +1,4 @@
-//<template>
+<!-- //<template>
   //<div class="index-tab-div">
     //<div class="index-tab-div2">
       //<div class="index-tab-list1">
@@ -100,7 +100,7 @@
 
 
 //}
-//</script>
+//</script> -->
 <template>
   <div class="index-tab-div">
     <div class="index-tab-div2">

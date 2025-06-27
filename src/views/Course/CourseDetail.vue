@@ -80,8 +80,8 @@
 </template>
 
 <script>
-import Layout from '../components/commen/layout.vue';
-import axios from '../utils/http';
+import Layout from 'src/components/commen/layout.vue';
+import axios from 'src/utils/http';
 
 export default {
   name: 'CourseDetail',

@@ -228,7 +228,7 @@
 </template>
 
 <script>
-import axios from '../utils/http' // 你的http封装
+import axios from 'src/utils/http' // 你的http封装
 
 export default {
   name: 'CourseList',

@@ -14,6 +14,7 @@
              <ul class="dropdown-menu" v-show="showDropdown">
                 <li class="dropdown-item" @click="goTo('create')">创建课程</li>
                 <li class="dropdown-item" @click="goTo('teacherCourseList')">课程列表</li>
+                <li class="dropdown-item" @click="goTo(' ')">草稿箱</li>
              </ul>
          </li>
           <li class="menu-item">学生管理与互动</li>

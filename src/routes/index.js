@@ -1,8 +1,8 @@
 // 导入需要的模块
 import { createRouter, createWebHashHistory } from 'vue-router';
 import homeView from '../views/login.vue'
-import CourseList from '../views/CourseList.vue'
-import CourseDetail from '../views/CourseDetail.vue'
+import CourseList from '../views/Course/CourseList.vue'
+import CourseDetail from '../views/Course/CourseDetail.vue'
 
 
 const routes = [
@@ -35,17 +35,22 @@ const routes = [
     {
         path: '/course',
         name: 'CoursePage',
-        component: ()=> import('../views/CoursePage.vue')
+        component: ()=> import('../views/Course/CoursePage.vue')
     },
     {
-        path: '/create',
+        path: '/teacher/create',
         name: 'create',
         component: ()=> import('../views/CreateCourse.vue')
     },
     {
-        path: '/teacherCourseList',
+        path: '/teacher/courseList',
         name: 'teacherCourseList',
         component: ()=> import('../views/TeacherCourseList.vue')
+    },
+    {
+        path: '/teacher/edit-course/:id',
+        name: 'editCourse',
+        component: ()=> import('../views/EditCourse.vue')
     },
     {
         path: '/notice',
