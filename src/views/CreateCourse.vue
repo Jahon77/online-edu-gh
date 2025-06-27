@@ -217,7 +217,7 @@
         }))
       }))
     };
-
+    
     // 把Vue响应式对象转换为普通JSON对象
     const data = JSON.parse(JSON.stringify(payload));
 

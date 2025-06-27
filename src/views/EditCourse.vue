@@ -107,7 +107,7 @@
       </div>
     </div>
   </template>
-  
+    
   <script>
   import TeacherHeader from "src/components/commen/header/TeacherHeader.vue";
   
