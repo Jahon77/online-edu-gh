@@ -57,30 +57,15 @@
             <i class="el-icon-phone-outline"></i>
             <input type="text" placeholder="Phone Number" v-model="registerForm.phone">
           </div>
-          <div class="input-field" style="display: flex">
-            <input style="margin-left: 10px" type="text" placeholder="           SMS Code" v-model="registerForm.smsCode">
-            <button id="send-sms-code-btn" @click.prevent="sendSmsCode" style=" padding: 0 0;
-                    background-color: #247fe0;
-                    color: #fff;
-                    border: none;
-                    border-radius: 40px;
-                    cursor: pointer;
-                    flex: 1;
-                    justify-content: flex-end;"
+          <div class="input-field code-field">
+            <i class="el-icon-message"></i>
+            <input type="text" placeholder="SMS Code" v-model="registerForm.smsCode">
+            <button id="send-sms-code-btn" @click.prevent="sendSmsCode" 
+                    class="sms-button"
                     v-if="!isCounting"
             >Get V-Code
             </button>
-            <div id="countdown" v-if="isCounting" style="
-                     padding: 0 0;
-                     background-color: #f0f0f0;
-                     color: #343232;
-                     border: none;
-                     border-radius: 40px;
-                     cursor: pointer; flex: 1;
-                     justify-content: flex-end;
-                     margin-top: 15px;
-                     margin-right: 5px;
-                    " >
+            <div id="countdown" v-if="isCounting" class="countdown-box">
               {{ countdown }} 秒后重新发送
             </div>
           </div>
@@ -473,6 +458,35 @@ form.sign-up-form{
 .modal-btn.confirm {
   background-color: #5995fd;
   color: white;
+}
+
+.code-field {
+  grid-template-columns: 15% 45% 40%;
+}
+.sms-button {
+  background-color: #247fe0;
+  color: #fff;
+  border: none;
+  border-radius: 40px;
+  cursor: pointer;
+  margin: 10px;
+  padding: 0 10px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.countdown-box {
+  background-color: #f0f0f0;
+  color: #343232;
+  border: none;
+  border-radius: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px;
+  padding: 0 10px;
+  font-size: 0.9rem;
 }
 
 </style>
