@@ -1,4 +1,4 @@
-//<template>
+<!-- //<template>
   //<div class="index-tab-div">
     //<div class="index-tab-div2">
       //<div class="index-tab-list1">
@@ -71,8 +71,8 @@
 //<style scoped>
 
 //</style>
-//<script>
-//import AppFunctions from "@/utils/appFunction.js";
+//<script> -->
+<!-- //import AppFunctions from "@/utils/appFunction.js";
 
 //export default {
   //name: "Header-Select",
@@ -96,11 +96,11 @@
     //about() {
       //this.$router.push({name: 'about'});
     //}
-  //}
+  //}~
 
 
 //}
-//</script>
+//</script> -->
 <template>
   <div class="index-tab-div">
     <div class="index-tab-div2">
