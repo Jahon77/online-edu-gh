@@ -48,12 +48,12 @@ const routes = [
     {
         path: '/courses/filter',
         name: 'CourseFilterPage',
-        component: () => import('../views/CourseFilterPage.vue')
+        component: () => import('../views/Course/CourseFilterPage.vue')
     },
     {
         path: '/dashboard',
         name: 'Dashboard',
-        component: ()=> import('../views/Dashboard.vue')
+        component: ()=> import('../views/Course/Dashboard.vue')
     },
     {
         path: '/teacher/create',
