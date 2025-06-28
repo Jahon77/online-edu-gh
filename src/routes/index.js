@@ -90,6 +90,14 @@ const routes = [
             {
                 path: 'chat',
                 component: () => import('@/views/admin/chat.vue')
+            },
+            {
+                path: 'log',
+                component: () => import('@/views/admin/log.vue')
+            },
+            {
+                path: 'setting',
+                component: () => import('@/views/admin/setting.vue')
             }
         ]
     }

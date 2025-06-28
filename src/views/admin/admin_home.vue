@@ -5,7 +5,7 @@
       <!-- 顶部栏 -->
       <header class="header">
         <div class="welcome">
-          <h2>欢迎回来，KOTO！</h2>
+          <h2>欢迎回来，{{username}}！</h2>
           <p>最轻松的管理和LMS平台绩效</p>
         </div>
         <div class="header-actions">
@@ -125,12 +125,17 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
-const router = useRouter()
-function goToTeacher() {
-  router.push('/admin/teacher')
-}
-// 这里可后续引入图表组件等
+import { ref, onMounted } from 'vue'
+
+const username = ref('admin') // 初始值为 admin
+
+onMounted(() => {
+  fetch('/api/user-info')
+    .then(res => res.json())
+    .then(data => {
+      username.value = data.username
+    })
+})
 </script>
 
 <style scoped>
