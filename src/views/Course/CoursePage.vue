@@ -40,7 +40,7 @@
 </template>
 
 <script>
-import Layout from "../components/commen/layout.vue";
+import Layout from "src/components/commen/layout.vue";
 
 export default {
   name: "CoursePage",
