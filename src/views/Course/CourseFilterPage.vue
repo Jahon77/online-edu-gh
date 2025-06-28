@@ -161,7 +161,7 @@
 </template>
 
 <script>
-import axios from '../utils/http'
+import axios from 'src/utils/http'
 
 export default {
   name: 'CourseFilterPage',
