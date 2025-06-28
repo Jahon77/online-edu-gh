@@ -1,5 +1,33 @@
 <template>
   <div class="admin-home">
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+      <div class="logo">教学管理</div>
+      <nav>
+        <ul>
+          <li class="active">首页</li>
+          <li>教师</li>
+          <li>学生</li>
+          <li>课程</li>
+          <li>资源</li>
+          <li>证书</li>
+          <li>聊天</li>
+          <li>交易</li>
+          <li>应用</li>
+          <li>项目</li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="avatar" />
+          <div>
+            <div class="name">KOTO</div>
+            <div class="email">koto@qq.com</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
     <!-- 主体内容 -->
     <main class="main-content">
       <!-- 顶部栏 -->
@@ -178,14 +206,6 @@ onMounted(() => {
 }
 .sidebar nav li.active,
 .sidebar nav li:hover {
-  background: var(--main-orange);
-  color: #fff;
-}
-.sidebar nav li.clickable {
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.sidebar nav li.clickable:hover {
   background: var(--main-orange);
   color: #fff;
 }
