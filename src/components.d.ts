@@ -20,9 +20,11 @@ declare module 'vue' {
     Footer: typeof import('./components/commen/footer/footer.vue')['default']
     Header: typeof import('./components/commen/header/header.vue')['default']
     HeaderSelect: typeof import('./components/commen/header/header-select.vue')['default']
+    ImageUpload: typeof import('./components/ImageUpload.vue')['default']
     Layout: typeof import('./components/commen/layout.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     TeacherHeader: typeof import('./components/commen/header/TeacherHeader.vue')['default']
+    VideoUpload: typeof import('./components/VideoUpload.vue')['default']
   }
 }

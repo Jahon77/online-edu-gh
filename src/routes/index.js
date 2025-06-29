@@ -7,7 +7,6 @@ import Login from '../views/login.vue'
 import About from '../views/about.vue'
 import Use from '../views/use.vue'
 import Notice from '../views/notice.vue'
-import Chat from '../views/chatTest.vue'
 import FaceTest from '../views/FaceTest.vue'
 import CourseList from '../views/Course/CourseList.vue'
 import CourseDetail from '../views/Course/CourseDetail.vue'
@@ -72,6 +71,11 @@ const routes = [
         path: '/teacher/edit-course/:id',
         name: 'editCourse',
         component: ()=> import('../views/EditCourse.vue')
+    },
+    {
+        path: '/teacher/student-management',
+        name: 'studentManagement',
+        component: ()=> import('../views/StudentManagement.vue')
     },
     {
         path: '/notice',
