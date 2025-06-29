@@ -10,6 +10,7 @@ import Notice from '../views/notice.vue'
 import FaceTest from '../views/FaceTest.vue'
 import CourseList from '../views/Course/CourseList.vue'
 import CourseDetail from '../views/Course/CourseDetail.vue'
+import Chat from '../views/chat.vue';
 
 
 const routes = [
@@ -109,9 +110,14 @@ const routes = [
         path: '/chat-test',
         component: () => import('../views/chatTest.vue'),
         name: 'ChatTest',
+        
+    },
+    {
+        path: '/chat',
+        name: 'Chat',
+        component: Chat,
         meta: {
-            title: '聊天测试',
-            requiresAuth: false
+            requiresAuth: true
         }
     },
     {

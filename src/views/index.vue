@@ -251,7 +251,7 @@ export default {
       }
     },
     goToChatTest() {
-      this.$router.push('/chat-test');
+      this.$router.push('/chat');
     }
   }
 }
