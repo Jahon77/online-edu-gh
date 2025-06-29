@@ -7,6 +7,8 @@ import 'element-plus/dist/index.css'
 import { createMetaManager } from 'vue-meta'
 import axios from 'axios'
 
+import { createPinia } from 'pinia'
+
 // 配置axios默认值
 axios.defaults.baseURL = 'http://localhost:8080'
 axios.defaults.timeout = 30000
@@ -21,6 +23,7 @@ import 'aos/dist/aos.css'
 
 // 初始化AOS
 AOS.init({
+
   duration: 800,
   easing: 'ease-in-out',
   once: true,
@@ -28,6 +31,9 @@ AOS.init({
 })
 
 const app = createApp(App)
+
+const pinia = createPinia()
+app.use(pinia)
 
 const metaManager = createMetaManager()
 app.use(metaManager)

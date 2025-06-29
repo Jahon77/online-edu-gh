@@ -35,9 +35,7 @@ service.interceptors.request.use(
 // response拦截器
 service.interceptors.response.use(
   response => {
-    console.log("response",response)
     return response;
-
     //修改
     // const res = response.data
     // if (res.code !== 200) {

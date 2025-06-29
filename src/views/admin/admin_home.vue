@@ -5,7 +5,7 @@
       <!-- 顶部栏 -->
       <header class="header">
         <div class="welcome">
-          <h2>欢迎回来，{{username}}！</h2>
+          <h2>欢迎回来，{{userStore.user.name}}！</h2>
           <p>最轻松的管理和LMS平台绩效</p>
         </div>
         <div class="header-actions">
@@ -25,6 +25,13 @@
           </div>
         </div>
         <div class="card">
+          <div class="card-title">教师总数</div>
+          <div class="card-value">{{ teacherStats.totalTeachers || '加载中...' }}</div>
+          <div :class="['card-desc', teacherStats.growthDirection || 'up']">
+            {{ teacherStats.growthRate ? (teacherStats.growthDirection === 'up' ? '+' : '') + teacherStats.growthRate + '%' : '加载中...' }}
+          </div>
+        </div>
+        <div class="card">
           <div class="card-title">总课程</div>
           <div class="card-value">{{ courseStats.total || '加载中...' }}</div>
           <div :class="['card-desc', courseStats.growthDirection || 'up']">
@@ -34,11 +41,6 @@
         <div class="card">
           <div class="card-title">总视频</div>
           <div class="card-value">31,056</div>
-          <div class="card-desc up">+25.21%</div>
-        </div>
-        <div class="card">
-          <div class="card-title">总收入</div>
-          <div class="card-value">￥8,05,056</div>
           <div class="card-desc up">+25.21%</div>
         </div>
       </section>
@@ -131,8 +133,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import http from '@/utils/http.js'
+import { useUserStore } from '@/stores/user'
 
-const username = ref('admin') // 初始值为 admin
+const userStore = useUserStore()
+
 const studentStats = ref({
   totalStudents: 0,
   growthRate: '0.00',
@@ -145,12 +149,16 @@ const courseStats = ref({
   growthDirection: 'up'
 })
 
+const teacherStats = ref({
+  totalTeachers: 0,
+  growthRate: '0.00',
+  growthDirection: 'up'
+})
+
 // 获取学生统计数据
 const fetchStudentStats = async () => {
   try {
-    // console.log(111111111)
     const response = await http.get('admin/student-stats')
-    // console.log(response)
     if (response.data.status === 200) {
       studentStats.value = response.data.data
     } else {
@@ -175,15 +183,44 @@ const fetchCourseStats = async () => {
   }
 }
 
-// 获取用户信息
-const fetchUserInfo = async () => {
+// 获取教师统计数据
+const fetchTeacherStats = async () => {
   try {
-    const response = await http.get('user/user-info')
-    if (response.data.data.username) {
-      username.value = response.data.data.username
+    const response = await http.get('admin/teacher-stats')
+    console.log("教师response",response)
+    if (response.data.status === 200) {
+      teacherStats.value = response.data.data
+    } else {
+      console.error('获取教师统计数据失败:', response.message)
     }
   } catch (error) {
-    console.error('获取用户信息失败:', error)
+    console.error('获取教师统计数据出错:', error)
+  }
+}
+
+const fetchUserInfo = async () => {
+  try {
+    console.log('开始获取用户信息...');
+    const response = await http.get('/user/user-info')
+    console.log('获取用户信息响应:', response);
+    
+    if (response.data && response.data.status === 0) { // 成功状态码是0
+      const data = response.data.data;
+      console.log('用户信息数据:', data);
+      if (data && data.username) {
+        userStore.setUser(data);
+        console.log('用户信息已设置到store:', data);
+      } else {
+        console.error('用户信息数据格式不正确:', data);
+      }
+    } else {
+      console.error('获取用户信息失败:', response.data);
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error);
+    if (error.response) {
+      console.error('错误响应:', error.response.data);
+    }
   }
 }
 
@@ -193,6 +230,9 @@ onMounted(() => {
   
   // 获取学生统计数据
   fetchStudentStats()
+
+  // 获取教师统计数据
+  fetchTeacherStats()
 
   // 获取课程统计数据
   fetchCourseStats()

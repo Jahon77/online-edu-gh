@@ -41,9 +41,16 @@
         <div class="user-info">
           <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="avatar" />
           <div>
-            <div class="name">KOTO</div>
-            <div class="email">koto@qq.com</div>
+            <div class="name">{{ userStore.user.name }}</div>
+            <div class="email">{{ userStore.user.phone }}</div>
           </div>
+          <!-- 退出按钮 -->
+            <img
+              src="@/assets/images/exit.png"
+              alt="退出"
+              style="width: 24px; height: 24px; cursor: pointer;"
+              @click="logout"
+            />
         </div>
       </div>
     </aside>
@@ -56,11 +63,43 @@
 
 <script setup>
 import { useRouter, useRoute } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 const router = useRouter()
 const $route = useRoute()
+const userStore = useUserStore()
 function goTo(path) {
   if ($route.path !== path) router.push(path)
 }
+
+function logout() {
+  ElMessageBox.confirm(
+    '确定要退出登录吗？',
+    '提示',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+      draggable: true,
+    }
+  )
+    .then(() => {
+      // 点击确定
+      userStore.user.value = {}  // 清空用户信息
+      ElMessage({
+        type: 'success',
+        message: '退出成功！'
+      })
+      router.push('/login')
+    })
+    .catch(() => {
+      // 点击取消或关闭弹窗
+      ElMessage({
+        type: 'info',
+        message: '已取消退出'
+      })
+    })
+}
+
 </script>
 
 <style scoped>
