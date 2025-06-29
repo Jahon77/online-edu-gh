@@ -696,20 +696,30 @@ form.sign-up-form{
 }
 </style>
 <script>
+import axios from 'axios';
 
-import axios from "axios";
 export default {
   name: "Login",
   data() {
     return {
-      loginMode: 'selection', // 'selection', 'password', 'phone', 'face'
+      // 登录模式：selection, password, phone, face
+      loginMode: 'selection',
+      
+      // 账号密码登录
       username: '',
       password: '',
       captchaCode: '',
       captchaKey: '',
       captchaImageUrl: '',
-      errorMessage: '',
-      // 注册表单数据
+      
+      // 手机号登录
+      phone: '',
+      smsCode: '',
+      isLoginSmsCounting: false,
+      loginSmsCountdown: 60,
+      loginSmsCountdownTimer: null,
+      
+      // 注册表单
       registerForm: {
         username: '',
         password: '',
@@ -718,52 +728,67 @@ export default {
         name: '',
         authCode: ''
       },
-      countdown: 60,
+      
+      // 短信验证码倒计时
       isCounting: false,
-      showAuthModal: false,
+      countdown: 60,
       countdownTimer: null,
+      
+      // 认证弹窗
+      showAuthModal: false,
+      
+      // 登录状态消息
       loginStatusMessage: '',
-      // for phone login
-      phone: '',
-      smsCode: '',
-      isLoginSmsCounting: false,
-      loginSmsCountdown: 60,
 
-      // for face login
+      // 人脸识别
       showCameraModal: false,
-      video: null,
-      canvas: null,
-      capturedImage: null,
-      isProcessing: false,
       stream: null,
+      capturedImage: null,
+      isProcessing: false
     };
   },
-  mounted() {
+  created() {
+    // 在组件创建时获取验证码
     this.refreshCaptcha();
-
+  },
+  mounted() {
+    // 添加DOM事件监听
+    this.$nextTick(() => {
     const sign_in_btn = document.querySelector("#sign-in-btn");
     const sign_up_btn = document.querySelector("#sign-up-btn");
     const container = document.querySelector(".container");
     
-    sign_up_btn.addEventListener('click', () => {
+      if (sign_up_btn) {
+        sign_up_btn.addEventListener("click", () => {
       container.classList.add("sign-up-mode");
     });
+      }
     
-    sign_in_btn.addEventListener('click', () => {
-      this.resetRegisterForm();
-      this.stopCountdown();
+      if (sign_in_btn) {
+        sign_in_btn.addEventListener("click", () => {
       container.classList.remove("sign-up-mode");
+        });
+      }
     });
   },
   methods: {
+    // 设置登录模式
     setLoginMode(mode) {
       this.loginMode = mode;
-      // 清理可能残留的错误信息
-      this.loginStatusMessage = '';
+      if (mode === 'password') {
+        this.refreshCaptcha();
+      }
     },
+    
+    // 返回选择登录方式
     goBack() {
       this.loginMode = 'selection';
-      this.closeCamera(); // 从人脸识别模式返回时确保摄像头关闭
+      this.loginStatusMessage = '';
+      
+      // 如果是从人脸识别模式返回，确保关闭摄像头
+      if (this.stream) {
+        this.closeCamera();
+      }
     },
     async handlePhoneLogin() {
       if (!this.phone || !this.smsCode) {
@@ -791,11 +816,18 @@ export default {
           this.setCookie('userid', loginResp.userId, 1);
           this.setCookie('name', loginResp.name, 1);
 
-          // 根据角色跳转
-          if (loginResp.role === 3) { // 管理员
-            await this.$router.push('/admin');
-          } else { // 学生或教师
-            await this.$router.push('/face-test');
+          // 检查是否有重定向路径
+          const redirectPath = localStorage.getItem('redirectPath');
+          if (redirectPath) {
+            localStorage.removeItem('redirectPath'); // 使用后删除
+            await this.$router.push(redirectPath);
+          } else {
+            // 根据角色跳转
+            if (loginResp.role === 3) { // 管理员
+              await this.$router.push('/admin');
+            } else { // 学生或教师
+              await this.$router.push('/index');
+            }
           }
         } else {
           this.loginStatusMessage = response.data.message || '登录失败，请重试';
@@ -878,11 +910,18 @@ export default {
           this.setCookie('userid', loginResp.userId, 1);
           this.setCookie('name', loginResp.name, 1);
           
-          // 根据角色跳转
-          if (loginResp.role === 3) { // 管理员
-            await this.$router.push('/admin');
-          } else { // 学生或教师
-            await this.$router.push('/face-test');
+          // 检查是否有重定向路径
+          const redirectPath = localStorage.getItem('redirectPath');
+          if (redirectPath) {
+            localStorage.removeItem('redirectPath'); // 使用后删除
+            await this.$router.push(redirectPath);
+          } else {
+            // 根据角色跳转
+            if (loginResp.role === 3) { // 管理员
+              await this.$router.push('/admin');
+            } else { // 学生或教师
+              await this.$router.push('/index');
+            }
           }
         } else {
           this.loginStatusMessage = response.data.message || '登录失败，请重试';
@@ -1203,11 +1242,18 @@ export default {
           this.loginStatusMessage = '人脸登录成功！欢迎回来, ' + loginResp.userInfo.name;
           this.closeCamera();
           
-          // 根据角色跳转
-          if (loginResp.userInfo.role === 3) { // 管理员
-            await this.$router.push('/admin');
-          } else { // 学生或教师
-            await this.$router.push('/face-test');
+          // 检查是否有重定向路径
+          const redirectPath = localStorage.getItem('redirectPath');
+          if (redirectPath) {
+            localStorage.removeItem('redirectPath'); // 使用后删除
+            await this.$router.push(redirectPath);
+          } else {
+            // 根据角色跳转
+            if (loginResp.userInfo.role === 3) { // 管理员
+              await this.$router.push('/admin');
+            } else { // 学生或教师
+              await this.$router.push('/index');
+            }
           }
         } else {
           this.loginStatusMessage = response.data.message || '人脸登录失败。';

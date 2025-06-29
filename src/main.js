@@ -27,9 +27,11 @@ import './assets/css/style.css'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import { createMetaManager } from 'vue-meta'
-// 注释掉单独导入的ElCollapseTransition，因为ElementPlus已经包含它
-// import { ElCollapseTransition } from 'element-plus'
-// Vue.config.productionTip = false;
+import axios from 'axios'
+
+// 配置axios默认值
+axios.defaults.baseURL = 'http://localhost:8080'
+axios.defaults.timeout = 30000
 
 const app = createApp(App)
 
@@ -40,6 +42,10 @@ app.use(metaManager)
 // app.component(ElCollapseTransition.name, ElCollapseTransition)
 app.use(router)
 app.use(ElementPlus)
+
+// 全局挂载axios
+app.config.globalProperties.$axios = axios
+
 app.mount('#app')
 
 

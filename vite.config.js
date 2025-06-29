@@ -39,9 +39,46 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // 将所有/api开头的请求代理到后端服务器
+      // 代理所有API请求到后端服务器
       '/api': {
         target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false
+      },
+      // 代理验证码、登录等请求
+      '/captcha': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false
+      },
+      '/login': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false
+      },
+      '/register': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false
+      },
+      '/send-sms': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false
+      },
+      '/check-phone': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false
+      },
+      '/check-username': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false
+      },
+      '/ws': {
+        target: 'ws://localhost:8080',
+        ws: true,
         changeOrigin: true,
         secure: false
       }
