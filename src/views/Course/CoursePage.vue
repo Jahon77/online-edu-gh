@@ -10,6 +10,13 @@
           </div>
         </router-link>
         
+        <router-link to="/dashboard" class="course-link">
+          <div class="link-card dashboard-card">
+            <h2>我的课程</h2>
+            <p>查看您已订阅的课程和学习进度</p>
+          </div>
+        </router-link>
+        
         <h2>课程详情页直接链接</h2>
         <div class="course-ids">
           <router-link 
@@ -33,7 +40,7 @@
 </template>
 
 <script>
-import Layout from "../components/commen/layout.vue";
+import Layout from "src/components/commen/layout.vue";
 
 export default {
   name: "CoursePage",
@@ -78,6 +85,10 @@ h1 {
 .link-card h2 {
   color: #4481eb;
   margin: 0 0 10px 0;
+}
+
+.dashboard-card h2 {
+  color: #F98C53;
 }
 
 .link-card p {
