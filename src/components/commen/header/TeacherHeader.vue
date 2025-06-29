@@ -9,16 +9,28 @@
       <div class="menu-bar">
         <ul class="menu-list">
           <li class="menu-item" @click="goTo('index')">首页</li>
-          <li class="menu-item dropdown" @mouseenter="showDropdown = true" @mouseleave="showDropdown = false">
+          <li class="menu-item dropdown" @mouseenter="showCourseDropdown = true" @mouseleave="showCourseDropdown = false">
              课程管理
-             <ul class="dropdown-menu" v-show="showDropdown">
+             <ul class="dropdown-menu" v-show="showCourseDropdown">
                 <li class="dropdown-item" @click="goTo('create')">创建课程</li>
                 <li class="dropdown-item" @click="goTo('teacherCourseList')">课程列表</li>
                 <li class="dropdown-item" @click="goTo(' ')">草稿箱</li>
              </ul>
          </li>
-          <li class="menu-item">学生管理与互动</li>
-          <li class="menu-item">直播专栏</li>
+         <li class="menu-item dropdown" @mouseenter="showStudentDropdown = true" @mouseleave="showStudentDropdown = false">
+            学生管理与互动
+             <ul class="dropdown-menu" v-show="showStudentDropdown">
+                <li class="dropdown-item" @click="goTo('studentManagement')">学生管理</li>
+                <li class="dropdown-item" @click="goTo('chat')">互动管理</li>
+             </ul>
+         </li>
+         <li class="menu-item dropdown" @mouseenter="showLiveDropdown = true" @mouseleave="showLiveDropdown = false">
+            直播专栏
+             <ul class="dropdown-menu" v-show="showLiveDropdown">
+                <li class="dropdown-item" @click="goTo('create')">我要直播</li>
+                <li class="dropdown-item" @click="goTo('teacherCourseList')">直播回放</li>
+             </ul>
+         </li>
           <li class="menu-item">收入统计</li>
           <li class="menu-item">帮助中心</li>
           <li class="menu-item">智能客服</li>
@@ -46,7 +58,9 @@
     name: "TeacherHeader",
     data() {
     return {
-      showDropdown: false,
+      showCourseDropdown: false,
+      showStudentDropdown: false, 
+      showLiveDropdown: false, 
       currentPath: '首页'
     };
   },
@@ -74,7 +88,11 @@
           this.$router.push({ name: 'teacherCourseList' });
         } else if (type === 'index') {
           this.$router.push({ name: 'index' });
-        } 
+        } else if (type === 'studentManagement') {
+          this.$router.push({ name: 'studentManagement' });
+        } else if (type === 'chat') {
+          this.$router.push({ name: 'chat' });
+        }
       },
       updateCurrentPath() {
         const routeName = this.$route.name;
@@ -87,6 +105,12 @@
             break;
           case 'teacherCourseList':
             this.currentPath = '课程管理 > 课程列表';
+            break;
+          case 'studentManagement':
+            this.currentPath = '学生管理与互动 > 学生管理';
+            break;
+          case 'chat':
+            this.currentPath = '学生管理与互动 > 互动管理';
             break;
           case 'login':
             this.currentPath = '登录';

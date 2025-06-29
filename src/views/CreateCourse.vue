@@ -40,8 +40,12 @@
               </select>
             </div>
             <div class="form-row">
-              <label>封面图片URL</label>
-              <input v-model="course.coverUrl" />
+              <label>封面图片</label>
+              <ImageUpload 
+                v-model="course.coverUrl" 
+                @upload-success="handleImageUploadSuccess" 
+                @upload-error="handleImageUploadError" 
+              />
             </div>
             <div class="form-row">
               <label>课程介绍</label>
@@ -88,7 +92,11 @@
               </div>
               <div class="form-row">
                 <label>视频地址</label>
-                <input v-model="lesson.videoUrl" />
+                <VideoUpload 
+                  v-model="lesson.videoUrl" 
+                  @upload-success="handleVideoUploadSuccess" 
+                  @upload-error="handleVideoUploadError" 
+                />
               </div>
               <div class="form-row">
                 <label>时长(秒)</label>
@@ -117,6 +125,8 @@
   
   <script setup>
   import TeacherHeader from 'src/components/commen/header/TeacherHeader.vue' 
+  import ImageUpload from 'src/components/ImageUpload.vue'
+  import VideoUpload from 'src/components/VideoUpload.vue'
   import { reactive, ref } from 'vue'
   import axios from 'axios'
   
@@ -135,6 +145,53 @@
   const chapters = reactive([])
   const lessonsMap = reactive({})
   
+  // const handleImageUploadSuccess = (data) => {
+  //   try {
+  //   const formData = new FormData()
+  //   formData.append('file', data.file)
+    
+  //   const response = await axios.post('/api/upload/image', formData, {
+  //     headers: {
+  //       'Content-Type': 'multipart/form-data'
+  //     }
+  //   })
+  //   // 将服务器返回的URL赋值给封面
+  //   course.coverUrl = response.data.url
+  // } catch (error) {
+  //   console.error('上传到服务器失败:', error)
+  //   alert('图片上传失败，请重试')
+  // }}
+
+  // 处理图片上传成功
+  const handleImageUploadSuccess = (data) => {
+    console.log('图片上传成功:', data)
+    // 这里可以调用后端API上传图片到服务器
+    // 然后将返回的URL赋值给 course.coverUrl
+  }
+
+  // 处理图片上传错误
+  const handleImageUploadError = (error) => {
+    console.error('图片上传失败:', error)
+  }
+
+  // 处理视频上传成功
+  const handleVideoUploadSuccess = (data) => {
+    console.log('视频上传成功:', data)
+    // 自动填充视频时长
+    if (data.info && data.info.duration) {
+      // 找到当前正在编辑的课时并更新时长
+      const currentLesson = Object.values(lessonsMap).flat().find(lesson => lesson.videoUrl === data.url)
+      if (currentLesson) {
+        currentLesson.duration = Math.round(data.info.duration)
+      }
+    }
+  }
+
+  // 处理视频上传错误
+  const handleVideoUploadError = (error) => {
+    console.error('视频上传失败:', error)
+  }
+
   function addChapterAndNext() {
     chapters.push({ title: '' })
     lessonsMap[chapters.length - 1] = []
