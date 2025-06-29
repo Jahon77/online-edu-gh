@@ -109,16 +109,24 @@
       // 使用HTTP方式发送消息
       const sendHttpMessage = async (message, history) => {
         try {
+          // 获取token
+          const token = getCookie('satoken');
+          if (!token) {
+            throw new Error('未登录或登录已过期，请重新登录');
+          }
+          
           console.log('发送HTTP请求到:', 'http://localhost:8080/api/chat/send');
           console.log('请求体:', JSON.stringify({
             message: message,
             history: history
           }));
           
+          // 不要在URL中添加token参数，只在header中传递
           const response = await fetch('http://localhost:8080/api/chat/send', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'satoken': token
             },
             body: JSON.stringify({
               message: message,
@@ -145,6 +153,17 @@
           console.error('HTTP请求失败:', err);
           throw err;
         }
+      };
+  
+      // 获取cookie中的值
+      const getCookie = (name) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+          const tokenValue = parts.pop().split(';').shift();
+          return tokenValue;
+        }
+        return null;
       };
   
       // 发送消息

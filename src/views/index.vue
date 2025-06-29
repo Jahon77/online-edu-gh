@@ -145,11 +145,29 @@
       </div>
 
     </div>
+
+    <div class="chat-test-button-container">
+      <el-button type="primary" @click="goToChatTest" class="chat-test-button">
+        聊天测试
+      </el-button>
+    </div>
+
   </Layout>
 </template>
 
 <style>
+/* 添加聊天测试按钮样式 */
+.chat-test-button-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
 
+.chat-test-button {
+  font-size: 16px;
+  padding: 10px 20px;
+}
 </style>
 <script>
 import Layout from "../components/commen/layout.vue"
@@ -232,7 +250,9 @@ export default {
         this.buttonIf = !this.buttonIf
       }
     },
-
+    goToChatTest() {
+      this.$router.push('/chat-test');
+    }
   }
 }
 </script>

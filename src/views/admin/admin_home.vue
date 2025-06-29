@@ -240,6 +240,14 @@ onMounted(() => {
   background: var(--main-orange);
   color: #fff;
 }
+.sidebar nav li.clickable {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.sidebar nav li.clickable:hover {
+  background: var(--main-orange);
+  color: #fff;
+}
 .sidebar-footer {
   padding: 24px 0 24px 32px;
 }

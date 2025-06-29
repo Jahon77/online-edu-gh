@@ -1,14 +1,23 @@
 export default class AppFunctions {
     static addClass(element, className) {
-        document.querySelector(element).classList.add(className)
+        const el = document.querySelector(element);
+        if (el) {
+            el.classList.add(className);
+        }
     }
 
     static removeClass(element, className) {
-        document.querySelector(element).classList.remove(className)
+        const el = document.querySelector(element);
+        if (el) {
+            el.classList.remove(className);
+        }
     }
 
     static toggleClass(element, className) {
-        document.querySelector(element).classList.toggle(className)
+        const el = document.querySelector(element);
+        if (el) {
+            el.classList.toggle(className);
+        }
     }
 
     static flatDeep(arr, d = 1) {
