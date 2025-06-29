@@ -101,6 +101,11 @@ const routes = [
         },
         component: ()=> import('../views/aichat.vue')
     },
+    // {
+    //     path: '/face-test',
+    //     name: 'face-test',
+    //     component: FaceTest
+    // },
     {
         path: '/face-test',
         name: 'face-test',
@@ -143,6 +148,14 @@ const routes = [
             {
                 path: 'chat',
                 component: () => import('@/views/admin/chat.vue')
+            },
+            {
+                path: 'log',
+                component: () => import('@/views/admin/log.vue')
+            },
+            {
+                path: 'setting',
+                component: () => import('@/views/admin/setting.vue')
             }
         ]
     }
