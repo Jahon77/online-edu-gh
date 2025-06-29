@@ -21,7 +21,14 @@
             </div>
             <div class="form-row">
               <label>分类</label>
-              <input v-model="course.category" />
+              <select v-model="course.category" required>
+                <option disabled value="">请选择分类</option>
+                <option>学科主修</option>
+                <option>职场技能</option>
+                <option>人文通识</option>
+                <option>考研督学</option>
+                <option>兴趣探索</option>
+              </select>
             </div>
             <div class="form-row">
               <label>选择等级</label>
@@ -115,7 +122,7 @@
   
   const step = ref(1)
   const course = reactive({
-    teacherId: 1,
+    teacherId: 3,
     title: '',
     category: '',
     level: '基础',
@@ -183,45 +190,65 @@
     }
     
     try {
-      // 组装数据
-      const data = {
-        ...course,
-        chapters: chapters.map((chapter, idx) => ({
-          ...chapter,
-          lessons: lessonsMap[idx] || []
+    // 构造符合后端DTO的数据结构
+    const payload = {
+      course: {
+        teacherId: course.teacherId,
+        title: course.title,
+        category: course.category,
+        level: course.level,
+        coverUrl: course.coverUrl,
+        introMd: course.introMd,
+        price: course.price,
+        previewPercent: course.previewPercent,
+        status: course.status
+      },
+      chapters: chapters.map((chapter, idx) => ({
+        chapter: {
+          title: chapter.title
+          // 如果Chapter实体有更多字段，按需加
+        },
+        lessons: (lessonsMap[idx] || []).map(lesson => ({
+          title: lesson.title,
+          videoUrl: lesson.videoUrl,
+          duration: lesson.duration,
+          isPreview: lesson.isPreview
+          // 按后端Lesson实体字段定义
         }))
-      }
-      
-      console.log('发送的数据:', data)
-      
-      const response = await axios.post('http://localhost:8080/api/teacher/course/create', data)
-      console.log('响应数据:', response.data)
-      
-      if (response.data && response.data.success !== false) {
-        alert('课程创建成功！')
-        // 重置表单
-        step.value = 1
-        Object.assign(course, {
-          teacherId: 1,
-          title: '',
-          category: '',
-          level: '基础',
-          coverUrl: '',
-          introMd: '',
-          price: 0,
-          previewPercent: 10,
-          status: 0
-        })
-        chapters.splice(0)
-        Object.keys(lessonsMap).forEach(k => delete lessonsMap[k])
-      } else {
-        alert('课程创建失败: ' + (response.data?.message || '未知错误'))
-      }
-    } catch (error) {
-      console.error('请求错误:', error)
-      console.error('错误响应:', error.response?.data)
-      alert('课程创建失败: ' + (error.response?.data?.message || error.message || '网络错误'))
+      }))
+    };
+    
+    // 把Vue响应式对象转换为普通JSON对象
+    const data = JSON.parse(JSON.stringify(payload));
+
+    console.log('发送的数据:', data);
+
+    const response = await axios.post('http://localhost:8080/api/teacher/course/create', data);
+
+    if (response.data && response.data.courseId) {
+      alert('课程创建成功！');
+      // 重置逻辑
+      step.value = 1;
+      Object.assign(course, {
+        teacherId: 3,
+        title: '',
+        category: '',
+        level: '基础',
+        coverUrl: '',
+        introMd: '',
+        price: 0,
+        previewPercent: 10,
+        status: 0
+      });
+      chapters.splice(0);
+      Object.keys(lessonsMap).forEach(k => delete lessonsMap[k]);
+    } else {
+      alert('课程创建失败: ' + (response.data?.message || '未知错误'));
     }
+  } catch (error) {
+    console.error('请求错误:', error);
+    alert('课程创建失败: ' + (error.response?.data?.message || error.message || '网络错误'));
+  }
   }
   </script>
   
