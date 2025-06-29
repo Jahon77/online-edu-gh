@@ -7,7 +7,7 @@ import Login from '../views/login.vue'
 import About from '../views/about.vue'
 import Use from '../views/use.vue'
 import Notice from '../views/notice.vue'
-import Chat from '../views/chat.vue'
+import Chat from '../views/chatTest.vue'
 import FaceTest from '../views/FaceTest.vue'
 import CourseList from '../views/Course/CourseList.vue'
 import CourseDetail from '../views/Course/CourseDetail.vue'
@@ -103,7 +103,7 @@ const routes = [
     },
     {
         path: '/chat-test',
-        component: () => import('../views/chat.vue'),
+        component: () => import('../views/chatTest.vue'),
         name: 'ChatTest',
         meta: {
             title: '聊天测试',

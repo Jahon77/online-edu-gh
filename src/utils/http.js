@@ -14,18 +14,8 @@ service.interceptors.request.use(
     if (token) {
       console.log('发送请求到:', config.url, '携带token:', token);
       
-      // 尝试多种方式传递token
-      // 1. 请求头
+      // 在请求头中添加token
       config.headers['satoken'] = token;
-      config.headers['token'] = token;
-      config.headers['Authorization'] = `Bearer ${token}`;
-      
-      // 2. URL参数
-      if (config.params) {
-        config.params.token = token;
-      } else {
-        config.params = { token };
-      }
       
       // 如果是POST请求，且没有指定Content-Type，则设置为application/json
       if (config.method === 'post' && !config.headers['Content-Type']) {
@@ -86,6 +76,19 @@ function getCookie(name) {
     console.log(`读取到token: ${name}=${tokenValue}`);
     return tokenValue;
   }
+  
+  // 如果cookie中没有找到，尝试从localStorage获取
+  const localToken = localStorage.getItem(name);
+  if (localToken) {
+    console.log(`从localStorage读取到token: ${name}=${localToken}`);
+    // 重新设置到cookie中
+    const date = new Date();
+    date.setTime(date.getTime() + (24 * 60 * 60 * 1000)); // 1天过期
+    const expires = '; expires=' + date.toUTCString();
+    document.cookie = name + '=' + localToken + expires + '; path=/';
+    return localToken;
+  }
+  
   return null;
 }
 

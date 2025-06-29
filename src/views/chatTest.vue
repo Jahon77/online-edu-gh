@@ -231,15 +231,30 @@ import { ref, onMounted } from 'vue';
       participants: [],
       
       // 登录提示
-      loginRequired: false
+      loginRequired: false,
+      
+      // 重试计数
+      _retryCount: 0,
+      
+      // 登录状态检查中
+      checkingLogin: false
     };
   },
   created() {
     // 获取当前登录用户信息
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-    const token = this.getCookie('satoken');
+    let token = this.getCookie('satoken');
     const username = this.getCookie('username');
     const userId = this.getCookie('userid');
+    
+    // 如果cookie中没有token，尝试从localStorage获取
+    if (!token) {
+      token = localStorage.getItem('satoken');
+      if (token) {
+        console.log('从localStorage恢复token:', token);
+        this.setCookie('satoken', token, 1);
+      }
+    }
     
     if (userId && username && token) {
       // 如果cookie中有用户信息，使用它
@@ -250,6 +265,9 @@ import { ref, onMounted } from 'vue';
       };
       
       console.log('当前用户信息:', this.currentUser);
+      
+      // 刷新token，确保所有cookie都正确设置
+      this.refreshToken();
       
       // 获取会话列表
       this.fetchConversations();
@@ -377,9 +395,26 @@ import { ref, onMounted } from 'vue';
       this.currentConversation = conversation;
       this.fetchMessages(conversation.conversation.id);
       
+      // 获取token
+      const token = this.getCookie('satoken');
+      if (!token) {
+        console.error('未检测到登录令牌，无法标记已读');
+        return;
+      }
+      
       // 标记为已读
       console.log('正在标记会话已读，会话ID:', conversation.conversation.id);
-      axios.post(`/api/chat/read/${conversation.conversation.id}`)
+      
+      // 添加token参数到URL
+      const url = `/api/chat/read/${conversation.conversation.id}?token=${encodeURIComponent(token)}`;
+      
+      // 发送请求，使用URL参数和请求头传递token
+      axios.post(url, {}, {
+        headers: {
+          'satoken': token,
+          'Content-Type': 'application/json'
+        }
+      })
         .then(response => {
           console.log('标记已读成功:', response);
           // 更新未读数
@@ -549,7 +584,7 @@ import { ref, onMounted } from 'vue';
         if (!token) {
           console.error('未检测到登录令牌，无法连接WebSocket');
           this.$message.error('未登录或登录已过期，请重新登录');
-          this.loginRequired = true;
+          this.handleTokenInvalid();
           return;
         }
         
@@ -557,7 +592,6 @@ import { ref, onMounted } from 'vue';
         
         // 创建WebSocket连接
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        // 使用后端服务器地址，不使用相对路径
         const wsUrl = `${wsProtocol}//localhost:8080/api/ws/chat?token=${encodeURIComponent(token)}`;
         console.log('WebSocket连接URL:', wsUrl);
         
@@ -616,18 +650,25 @@ import { ref, onMounted } from 'vue';
             return;
           }
           
-          // 自动重连逻辑
-          if (!this.reconnectTimer && this.reconnectCount < 5) {
-            const delay = Math.min(1000 * Math.pow(2, this.reconnectCount), 30000);
-            console.log(`尝试在${delay/1000}秒后重新连接，当前尝试次数: ${this.reconnectCount + 1}`);
-            
-            this.reconnectTimer = setTimeout(() => {
-              this.reconnectCount++;
-              this.reconnectTimer = null;
-              this.connectWebSocket();
-            }, delay);
-          } else if (this.reconnectCount >= 5) {
-            this.$message.error('聊天服务连接失败，请刷新页面重试');
+          // 检查是否是token无效导致的关闭
+          if (event.code === 1006) {
+            // 验证token是否仍然有效
+            this.validateToken()
+              .then(valid => {
+                if (!valid) {
+                  console.log('Token无效，需要重新登录');
+                  this.handleTokenInvalid();
+                  return;
+                }
+                // Token有效但连接断开，尝试重连
+                this.handleReconnect();
+              })
+              .catch(() => {
+                this.handleTokenInvalid();
+              });
+          } else {
+            // 其他原因的断开，尝试重连
+            this.handleReconnect();
           }
         };
         
@@ -651,6 +692,74 @@ import { ref, onMounted } from 'vue';
         return null;
       }
     },
+
+    // 处理重连逻辑
+    handleReconnect() {
+      if (!this.reconnectTimer && this.reconnectCount < 3) { // 减少重试次数到3次
+        const delay = Math.min(1000 * Math.pow(2, this.reconnectCount), 30000);
+        console.log(`尝试在${delay/1000}秒后重新连接，当前尝试次数: ${this.reconnectCount + 1}`);
+        
+        this.reconnectTimer = setTimeout(() => {
+          this.reconnectCount++;
+          this.reconnectTimer = null;
+          this.connectWebSocket();
+        }, delay);
+      } else if (this.reconnectCount >= 3) {
+        this.$message.error('聊天服务连接失败，请刷新页面或重新登录');
+        this.handleTokenInvalid();
+      }
+    },
+
+    // 验证token是否有效
+    validateToken() {
+      return new Promise((resolve) => {
+        const token = this.getCookie('satoken');
+        if (!token) {
+          resolve(false);
+          return;
+        }
+
+        axios.get('/api/chat/users')
+          .then(response => {
+            resolve(response.data && response.data.status === 10000);
+          })
+          .catch(() => {
+            resolve(false);
+          });
+      });
+    },
+
+    // 处理token无效的情况
+    handleTokenInvalid() {
+      this.loginRequired = true;
+      // 清除所有相关cookie
+      this.deleteCookie('satoken');
+      this.deleteCookie('token');
+      this.deleteCookie('auth_token');
+      this.deleteCookie('username');
+      this.deleteCookie('userid');
+      this.deleteCookie('name');
+      
+      // 清除localStorage中的数据
+      localStorage.removeItem('satoken');
+      localStorage.removeItem('userInfo');
+      
+      // 停止重连
+      if (this.reconnectTimer) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = null;
+      }
+      this.reconnectCount = 0;
+      
+      // 关闭WebSocket连接
+      if (this.socket) {
+        this.socket.close();
+        this.socket = null;
+      }
+      
+      // 显示提示信息
+      this.$message.error('登录已过期，请重新登录');
+    },
     
     // 显示新建私聊对话框
     showNewPrivateChat() {
@@ -667,6 +776,53 @@ import { ref, onMounted } from 'vue';
         });
     },
     
+    // 确保用户登录状态
+    ensureLogin() {
+      if (this.checkingLogin) {
+        console.log('登录状态检查中，请稍候...');
+        return Promise.reject(new Error('登录状态检查中'));
+      }
+      
+      this.checkingLogin = true;
+      
+      return new Promise((resolve, reject) => {
+        // 获取token
+        const token = this.getCookie('satoken');
+        if (!token) {
+          this.checkingLogin = false;
+          this.$message.error('未检测到登录令牌，请先登录');
+          this.loginRequired = true;
+          reject(new Error('未检测到登录令牌'));
+          return;
+        }
+        
+        // 刷新token
+        this.refreshToken();
+        
+        // 检查登录状态
+        console.log('正在检查登录状态...');
+        axios.get('/api/chat/users')
+          .then(response => {
+            if (response.data && response.data.status === 10000) {
+              console.log('登录状态有效');
+              this.checkingLogin = false;
+              resolve(true);
+            } else {
+              console.error('登录状态检查失败:', response.data);
+              this.checkingLogin = false;
+              this.loginRequired = true;
+              reject(new Error('登录状态检查失败'));
+            }
+          })
+          .catch(error => {
+            console.error('登录状态检查失败', error);
+            this.checkingLogin = false;
+            this.loginRequired = true;
+            reject(error);
+          });
+      });
+    },
+    
     // 创建私聊
     createPrivateChat() {
       if (!this.selectedUserId) {
@@ -674,6 +830,21 @@ import { ref, onMounted } from 'vue';
         return;
       }
       
+      this.$message.info('正在验证登录状态...');
+      
+      // 确保用户已登录
+      this.ensureLogin()
+        .then(() => {
+          this.doCreatePrivateChat();
+        })
+        .catch(error => {
+          console.error('登录状态验证失败', error);
+          this.$message.error('登录状态验证失败，请重新登录');
+        });
+    },
+    
+    // 实际执行创建私聊的方法
+    doCreatePrivateChat() {
       // 获取token
       const token = this.getCookie('satoken');
       if (!token) {
@@ -684,21 +855,21 @@ import { ref, onMounted } from 'vue';
       
       console.log('创建私聊，当前token:', token);
       
-      // 构建请求数据，直接在请求体中包含token
+      // 重置重试计数
+      this._retryCount = 0;
+      
+      // 构建请求数据
       const requestData = {
-        targetUserId: this.selectedUserId,
-        token: token // 在请求体中也包含token
+        targetUserId: this.selectedUserId
       };
       
-      // 尝试多种方式传递token
+      // 添加token参数到URL
       const url = `/api/chat/conversation/private?token=${encodeURIComponent(token)}`;
       
-      // 发送请求，确保以多种方式传递token
+      // 发送请求创建私聊，使用URL参数和请求头传递token
       axios.post(url, requestData, {
         headers: {
           'satoken': token,
-          'token': token, // 尝试使用不同的header名称
-          'Authorization': `Bearer ${token}`, // 尝试使用Bearer格式
           'Content-Type': 'application/json'
         }
       })
@@ -736,6 +907,22 @@ import { ref, onMounted } from 'vue';
                 error.response.data.message.includes('未能读取到有效Token')) {
               this.$message.error('登录已过期，请重新登录');
               this.loginRequired = true;
+            } else if (error.response.status === 400) {
+              // 如果是400错误，可能是token问题，尝试重新发送请求
+              this.$message.warning('正在尝试重新验证身份...');
+              this.refreshToken();
+              
+              // 防止无限递归，设置最大重试次数
+              if (!this._retryCount) this._retryCount = 0;
+              if (this._retryCount < 2) {
+                this._retryCount++;
+                setTimeout(() => {
+                  this.doCreatePrivateChat();
+                }, 1000);
+              } else {
+                this._retryCount = 0;
+                this.$message.error('创建私聊失败，请刷新页面重试');
+              }
             } else {
               this.$message.error(error.response.data?.message || '创建私聊失败');
             }
@@ -773,79 +960,82 @@ import { ref, onMounted } from 'vue';
         return;
       }
       
-      // 获取token
-      const token = this.getCookie('satoken');
-      if (!token) {
-        this.$message.error('未检测到登录令牌，请先登录');
-        this.loginRequired = true;
-        return;
-      }
+      this.$message.info('正在验证登录状态...');
       
-      // 先刷新token
-      this.refreshToken();
-      
-      console.log('创建群聊，当前token:', token);
-      
-      // 构建请求数据，直接在请求体中包含token
-      const requestData = {
-        groupName: this.groupName,
-        memberIds: this.selectedUserIds,
-        token: token // 在请求体中也包含token
-      };
-      
-      // 尝试多种方式传递token
-      const url = `/api/chat/conversation/group?token=${encodeURIComponent(token)}`;
-      
-      // 发送请求，确保以多种方式传递token
-      axios.post(url, requestData, {
-        headers: {
-          'satoken': token,
-          'token': token, // 尝试使用不同的header名称
-          'Authorization': `Bearer ${token}`, // 尝试使用Bearer格式
-          'Content-Type': 'application/json',
-          'Cookie': `satoken=${token}; token=${token}` // 尝试在header中也设置cookie
-        }
-      })
-        .then(response => {
-          if (response.data && response.data.status === 10000) {
-            this.$message.success('创建群聊成功');
-            this.newGroupChatVisible = false;
-            
-            // 更新会话列表
-            this.fetchConversations();
-            
-            // 选择新创建的会话
-            setTimeout(() => {
-              const newConversation = this.conversations.find(c => 
-                c.conversation.type === 'GROUP' && 
-                c.group && 
-                c.group.name === this.groupName
-              );
-              
-              if (newConversation) {
-                this.selectConversation(newConversation);
-              }
-            }, 500);
-          } else {
-            this.$message.error(response.data?.message || '创建群聊失败');
+      // 确保用户已登录
+      this.ensureLogin()
+        .then(() => {
+          // 获取token
+          const token = this.getCookie('satoken');
+          if (!token) {
+            this.$message.error('未检测到登录令牌，请先登录');
+            this.loginRequired = true;
+            return;
           }
+          
+          console.log('创建群聊，当前token:', token);
+          
+          // 构建请求数据
+          const requestData = {
+            groupName: this.groupName,
+            memberIds: this.selectedUserIds
+          };
+          
+          // 添加token参数到URL
+          const url = `/api/chat/conversation/group?token=${encodeURIComponent(token)}`;
+          
+          // 发送请求创建群聊，使用URL参数和请求头传递token
+          axios.post(url, requestData, {
+            headers: {
+              'satoken': token,
+              'Content-Type': 'application/json'
+            }
+          })
+            .then(response => {
+              if (response.data && response.data.status === 10000) {
+                this.$message.success('创建群聊成功');
+                this.newGroupChatVisible = false;
+                
+                // 更新会话列表
+                this.fetchConversations();
+                
+                // 选择新创建的会话
+                setTimeout(() => {
+                  const newConversation = this.conversations.find(c => 
+                    c.conversation.type === 'GROUP' && 
+                    c.group && 
+                    c.group.name === this.groupName
+                  );
+                  
+                  if (newConversation) {
+                    this.selectConversation(newConversation);
+                  }
+                }, 500);
+              } else {
+                this.$message.error(response.data?.message || '创建群聊失败');
+              }
+            })
+            .catch(error => {
+              console.error('创建群聊失败', error);
+              if (error.response) {
+                console.error('错误响应:', error.response);
+                if (error.response.status === 500 && 
+                    error.response.data && 
+                    error.response.data.message && 
+                    error.response.data.message.includes('未能读取到有效Token')) {
+                  this.$message.error('登录已过期，请重新登录');
+                  this.loginRequired = true;
+                } else {
+                  this.$message.error(error.response.data?.message || '创建群聊失败');
+                }
+              } else {
+                this.$message.error('创建群聊失败，请检查网络连接');
+              }
+            });
         })
         .catch(error => {
-          console.error('创建群聊失败', error);
-          if (error.response) {
-            console.error('错误响应:', error.response);
-            if (error.response.status === 500 && 
-                error.response.data && 
-                error.response.data.message && 
-                error.response.data.message.includes('未能读取到有效Token')) {
-              this.$message.error('登录已过期，请重新登录');
-              this.loginRequired = true;
-            } else {
-              this.$message.error(error.response.data?.message || '创建群聊失败');
-            }
-          } else {
-            this.$message.error('创建群聊失败，请检查网络连接');
-          }
+          console.error('登录状态验证失败', error);
+          this.$message.error('登录状态验证失败，请重新登录');
         });
     },
     
@@ -855,43 +1045,51 @@ import { ref, onMounted } from 'vue';
         return;
       }
       
-      // 获取token
-      const token = this.getCookie('satoken');
-      if (!token) {
-        this.$message.error('未检测到登录令牌，请先登录');
-        this.loginRequired = true;
-        return;
-      }
-      
-      console.log('获取群成员列表，会话ID:', this.currentConversation.conversation.id, '当前token:', token);
-      
-      // 发送请求，确保同时在请求头和URL参数中传递token
-      axios.get(`/api/chat/participants/${this.currentConversation.conversation.id}`, {
-        headers: {
-          'satoken': token
-        },
-        params: {
-          token: token
-        }
-      })
-        .then(response => {
-          if (response.data && response.data.status === 10000) {
-            this.participants = response.data.data;
-            this.participantsVisible = true;
-          } else {
-            this.$message.error(response.data?.message || '获取成员列表失败');
+      // 确保用户已登录
+      this.ensureLogin()
+        .then(() => {
+          // 获取token
+          const token = this.getCookie('satoken');
+          if (!token) {
+            this.$message.error('未检测到登录令牌，请先登录');
+            this.loginRequired = true;
+            return;
           }
+          
+          console.log('获取群成员列表，会话ID:', this.currentConversation.conversation.id, '当前token:', token);
+          
+          // 添加token参数到URL
+          const url = `/api/chat/participants/${this.currentConversation.conversation.id}?token=${encodeURIComponent(token)}`;
+          
+          // 发送请求，使用URL参数和请求头传递token
+          axios.get(url, {
+            headers: {
+              'satoken': token
+            }
+          })
+            .then(response => {
+              if (response.data && response.data.status === 10000) {
+                this.participants = response.data.data;
+                this.participantsVisible = true;
+              } else {
+                this.$message.error(response.data?.message || '获取成员列表失败');
+              }
+            })
+            .catch(error => {
+              console.error('获取成员列表失败', error);
+              if (error.response && error.response.status === 500 && 
+                  error.response.data && error.response.data.message && 
+                  error.response.data.message.includes('未能读取到有效Token')) {
+                this.$message.error('登录已过期，请重新登录');
+                this.loginRequired = true;
+              } else {
+                this.$message.error('获取成员列表失败');
+              }
+            });
         })
         .catch(error => {
-          console.error('获取成员列表失败', error);
-          if (error.response && error.response.status === 500 && 
-              error.response.data && error.response.data.message && 
-              error.response.data.message.includes('未能读取到有效Token')) {
-            this.$message.error('登录已过期，请重新登录');
-            this.loginRequired = true;
-          } else {
-            this.$message.error('获取成员列表失败');
-          }
+          console.error('登录状态验证失败', error);
+          this.$message.error('登录状态验证失败，请重新登录');
         });
     },
     
@@ -993,12 +1191,39 @@ import { ref, onMounted } from 'vue';
       
       console.log('尝试刷新token:', token);
       
+      // 先清除所有可能的token cookie
+      this.deleteCookie('satoken');
+      this.deleteCookie('token');
+      this.deleteCookie('auth_token');
+      
       // 重新设置cookie，使用多种名称
       this.setCookie('satoken', token, 1); // 1天过期
       this.setCookie('token', token, 1);
       this.setCookie('auth_token', token, 1);
       
-      this.$message.success('Token已刷新，请重试');
+      // 设置localStorage备份
+      localStorage.setItem('satoken', token);
+      
+      console.log('Token已刷新，当前cookie状态:');
+      console.log('satoken =', this.getCookie('satoken'));
+      console.log('token =', this.getCookie('token'));
+      console.log('auth_token =', this.getCookie('auth_token'));
+      
+      // 尝试验证token是否有效
+      axios.get('/api/chat/users', {
+        headers: { 'satoken': token },
+        params: { token: token }
+      }).then(() => {
+        console.log('Token验证成功');
+      }).catch(err => {
+        console.error('Token验证失败', err);
+      });
+    },
+    
+    // 删除cookie
+    deleteCookie(name) {
+      document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      console.log(`删除cookie: ${name}`);
     },
     
     // 设置cookie
