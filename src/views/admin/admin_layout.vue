@@ -108,13 +108,13 @@ function goTo(path) {
   font-weight: bold;
   color: var(--main-orange);
   text-align: center;
-  margin-top: 70px;
+  margin-top: 30px;
 }
 .sidebar nav ul {
   list-style: none;
   padding: 0;
   margin: 0;
-  margin-top: -300px
+  margin-top: -183px
 }
 .sidebar nav li {
   padding: 14px 32px;

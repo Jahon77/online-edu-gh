@@ -148,9 +148,11 @@ const courseStats = ref({
 // 获取学生统计数据
 const fetchStudentStats = async () => {
   try {
+    // console.log(111111111)
     const response = await http.get('admin/student-stats')
-    if (response.status === 200) {
-      studentStats.value = response.data
+    // console.log(response)
+    if (response.data.status === 200) {
+      studentStats.value = response.data.data
     } else {
       console.error('获取学生统计数据失败:', response.message)
     }
@@ -163,8 +165,8 @@ const fetchStudentStats = async () => {
 const fetchCourseStats = async () => {
   try {
     const response = await http.get('admin/course-stats')
-    if (response.status === 200) {
-      courseStats.value = response.data
+    if (response.data.status === 200) {
+      courseStats.value = response.data.data
     } else {
       console.error('获取课程统计数据失败:', response.message)
     }
@@ -177,8 +179,8 @@ const fetchCourseStats = async () => {
 const fetchUserInfo = async () => {
   try {
     const response = await http.get('user/user-info')
-    if (response.username) {
-      username.value = response.username
+    if (response.data.data.username) {
+      username.value = response.data.data.username
     }
   } catch (error) {
     console.error('获取用户信息失败:', error)

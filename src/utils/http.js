@@ -35,7 +35,7 @@ service.interceptors.request.use(
 // response拦截器
 service.interceptors.response.use(
   response => {
-
+    console.log("response",response)
     return response;
 
     //修改
@@ -46,7 +46,6 @@ service.interceptors.response.use(
     // } else {
     //   return res
     // }
-
   },
   error => {
     console.log('err' + error);
