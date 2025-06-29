@@ -26,7 +26,7 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   response => {
     const res = response.data
-    if (res.code !== 200) {
+    if (res.status !== 200) {
       // 处理错误
       return Promise.reject(res)
     } else {

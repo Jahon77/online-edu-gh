@@ -19,13 +19,17 @@
       <section class="stats-cards">
         <div class="card">
           <div class="card-title">学生总数</div>
-          <div class="card-value">72,056</div>
-          <div class="card-desc up">+12.05%</div>
+          <div class="card-value">{{ studentStats.totalStudents || '加载中...' }}</div>
+          <div :class="['card-desc', studentStats.growthDirection || 'up']">
+            {{ studentStats.growthRate ? (studentStats.growthDirection === 'up' ? '+' : '') + studentStats.growthRate + '%' : '加载中...' }}
+          </div>
         </div>
         <div class="card">
           <div class="card-title">总课程</div>
-          <div class="card-value">12,056</div>
-          <div class="card-desc down">-12.25%</div>
+          <div class="card-value">{{ courseStats.total || '加载中...' }}</div>
+          <div :class="['card-desc', courseStats.growthDirection || 'up']">
+            {{ courseStats.growthRate ? (courseStats.growthDirection === 'up' ? '+' : '') + courseStats.growthRate + '%' : '加载中...' }}
+          </div>
         </div>
         <div class="card">
           <div class="card-title">总视频</div>
@@ -126,15 +130,70 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import http from '@/utils/http.js'
 
 const username = ref('admin') // 初始值为 admin
+const studentStats = ref({
+  totalStudents: 0,
+  growthRate: '0.00',
+  growthDirection: 'up'
+})
+
+const courseStats = ref({
+  total: 0,
+  growthRate: '0.00',
+  growthDirection: 'up'
+})
+
+// 获取学生统计数据
+const fetchStudentStats = async () => {
+  try {
+    const response = await http.get('admin/student-stats')
+    if (response.status === 200) {
+      studentStats.value = response.data
+    } else {
+      console.error('获取学生统计数据失败:', response.message)
+    }
+  } catch (error) {
+    console.error('获取学生统计数据出错:', error)
+  }
+}
+
+// 获取课程统计数据
+const fetchCourseStats = async () => {
+  try {
+    const response = await http.get('admin/course-stats')
+    if (response.status === 200) {
+      courseStats.value = response.data
+    } else {
+      console.error('获取课程统计数据失败:', response.message)
+    }
+  } catch (error) {
+    console.error('获取课程统计数据出错:', error)
+  }
+}
+
+// 获取用户信息
+const fetchUserInfo = async () => {
+  try {
+    const response = await http.get('user/user-info')
+    if (response.username) {
+      username.value = response.username
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+  }
+}
 
 onMounted(() => {
-  fetch('/api/user-info')
-    .then(res => res.json())
-    .then(data => {
-      username.value = data.username
-    })
+  // 获取用户信息
+  fetchUserInfo()
+  
+  // 获取学生统计数据
+  fetchStudentStats()
+
+  // 获取课程统计数据
+  fetchCourseStats()
 })
 </script>
 

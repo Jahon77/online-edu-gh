@@ -90,11 +90,11 @@ const routes = [
         component: Chat
         //component: ()=> import('../views/chat.vue')
     },
-    {
-        path: '/face-test',
-        name: 'face-test',
-        component: FaceTest
-    },
+    // {
+    //     path: '/face-test',
+    //     name: 'face-test',
+    //     component: FaceTest
+    // },
     {
         path: '/admin',
         component: () => import('@/views/admin/admin_layout.vue'),

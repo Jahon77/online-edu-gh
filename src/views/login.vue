@@ -597,10 +597,6 @@ export default {
           const loginResp = response.data.data;
           console.log('登录成功，用户信息:', loginResp);
           
-          this.setCookie('satoken', loginResp.saTokenInfo.tokenValue, 1);
-          this.setCookie('username', loginResp.username, 1);
-          this.setCookie('userid', loginResp.userId, 1);
-          
           setTimeout(() => {
             console.log('准备跳转到主页面');
             window.location.href = '#/mainView';
