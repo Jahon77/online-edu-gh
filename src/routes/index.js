@@ -8,7 +8,6 @@ import About from '../views/about.vue'
 import Use from '../views/use.vue'
 import Notice from '../views/notice.vue'
 import Chat from '../views/chat.vue'
-import FaceTest from '../views/FaceTest.vue'
 import CourseList from '../views/Course/CourseList.vue'
 import CourseDetail from '../views/Course/CourseDetail.vue'
 
@@ -48,12 +47,12 @@ const routes = [
     {
         path: '/courses/filter',
         name: 'CourseFilterPage',
-        component: () => import('../views/CourseFilterPage.vue')
+        component: () => import('../views/Course/CourseFilterPage.vue')
     },
     {
         path: '/dashboard',
         name: 'Dashboard',
-        component: ()=> import('../views/Dashboard.vue')
+        component: ()=> import('../views/Course/Dashboard.vue')
     },
     {
         path: '/teacher/create',
