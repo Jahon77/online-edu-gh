@@ -34,35 +34,57 @@
         <thead>
           <tr>
             <th>课程名称</th>
+            <th>课程编号</th>
+            <th>类型</th>
             <th>讲师</th>
-            <th>笔记</th>
+            <th>订阅</th>
             <th>价格</th>
-            <th>获训</th>
-            <th>总时间</th>
             <th>状态</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(item, idx) in courseList" :key="idx">
             <td>
-              <img class="cover" :src="item.cover" />
+              <img class="cover" :src="item.coverUrl || 'https://randomuser.me/api/portraits/men/60.jpg'" />
               <div class="info">
-                <div class="name">{{ item.name }}</div>
-                <div class="id">#{{ item.id }}</div>
+                <div class="name">{{ item.title }}</div>
               </div>
             </td>
-            <td>{{ item.teacher }}</td>
-            <td>{{ item.note }}</td>
-            <td>{{ item.price }}</td>
-            <td>{{ item.train }}</td>
-            <td>{{ item.duration }}</td>
+            <td>{{ item.courseId }}</td>
+            <td>{{ item.level }}</td>
+            <td>{{ item.teacherName }}</td>
+            <td>{{ item.subscriberCount || 0 }}</td>
+            <td>￥{{ item.price || 0 }}</td>
             <td>
-              <span :class="['status', item.statusClass]">{{ item.statusText }}</span>
+              <span :class="['status', getStatusClass(item.status)]">{{ getStatusText(item.status) }}</span>
             </td>
           </tr>
         </tbody>
       </table>
-      <div class="table-footer">显示 {{ courseList.length }} 个结果</div>
+      
+      <!-- 分页组件 -->
+      <div class="pagination-wrapper">
+        <div class="pagination-info">
+          显示 {{ (currentPage - 1) * pageSize + 1 }}-{{ Math.min(currentPage * pageSize, total) }} 条，共 {{ total }} 条
+        </div>
+        <div class="pagination">
+          <button 
+            :disabled="currentPage === 1" 
+            @click="changePage(currentPage - 1)"
+            class="page-btn prev"
+          >
+            上一页
+          </button>
+          <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
+          <button 
+            :disabled="currentPage === totalPages" 
+            @click="changePage(currentPage + 1)"
+            class="page-btn next"
+          >
+            下一页
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- 课程排名表格 -->
@@ -110,7 +132,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import http from '@/utils/http.js'
 
 const activeTab = ref('all')
 const selectedMonth = ref('2024-06')
@@ -123,24 +146,63 @@ import top5 from '@/assets/images/top5.png'
 
 const topImages = [top1, top2, top3, top4, top5]
 
-const courseList = ref([
-  { name: '机器学习算法', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/60.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 24, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-  { name: '均衡饮食食谱', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/61.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-  { name: '减步技术', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/62.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已下架', statusClass: 'danger' },
-  { name: '用户界面设计', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/63.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '即将发布', statusClass: 'warning' },
-  { name: '网页设计与开发', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/64.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-  { name: '心理学入门与心灵', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/65.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-  { name: '利用数据进行决策', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/66.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-  { name: '从零开始构建网站', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/67.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-  { name: '数字营销基础知识', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/68.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-  { name: 'Python编程', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/69.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-  { name: '均衡饮食食谱', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/70.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-])
+// 分页相关数据
+const courseList = ref([])
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const totalPages = ref(0)
+
+// 获取课程列表
+const fetchCourseList = async (page = 1) => {
+  try {
+    const response = await http.get(`/admin/courses?page=${page}&size=${pageSize.value}`)
+    console.log("课程", response)
+    if (response.data.status === 200) {
+      const data = response.data.data
+      courseList.value = data.records
+      total.value = data.total
+      totalPages.value = data.pages
+      currentPage.value = data.current
+    }
+  } catch (error) {
+    console.error('获取课程列表失败:', error)
+  }
+}
+
+// 切换页码
+const changePage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    fetchCourseList(page)
+  }
+}
+
+// 获取状态样式类
+const getStatusClass = (status) => {
+  switch (status) {
+    case 1: return 'success'
+    case 2: return 'danger'
+    case 3: return 'warning'
+    case 4: return 'danger'
+    default: return 'warning'
+  }
+}
+
+// 获取状态文本
+const getStatusText = (status) => {
+  switch (status) {
+    case 0: return '草稿'
+    case 1: return '已发布'
+    case 2: return '已下架'
+    case 3: return '审核中'
+    case 4: return '拒绝'
+    default: return '未知'
+  }
+}
 
 const hotCourses = ref([
   {
     id: '54204152',
-    // img: require('@/assets/images/1.jpg'),
     title: '机器学习算法',
     teacher: '姓名示例',
     count: 562,
@@ -152,7 +214,6 @@ const hotCourses = ref([
   },
   {
     id: '54204153',
-    // img: require('@/assets/images/2.jpg'),
     title: '均衡饮食食谱',
     teacher: '姓名示例',
     count: 562,
@@ -164,7 +225,6 @@ const hotCourses = ref([
   },
   {
     id: '54204154',
-    // img: require('@/assets/images/3.jpg'),
     title: '减少技术',
     teacher: '姓名示例',
     count: 562,
@@ -176,7 +236,6 @@ const hotCourses = ref([
   },
   {
     id: '54204155',
-    // img: require('@/assets/images/4.jpg'),
     title: '用户界面设计',
     teacher: '姓名示例',
     count: 562,
@@ -188,7 +247,6 @@ const hotCourses = ref([
   },
   {
     id: '54204156',
-    // img: require('@/assets/images/5.jpg'),
     title: '网页设计与开发',
     teacher: '姓名示例',
     count: 562,
@@ -200,7 +258,6 @@ const hotCourses = ref([
   },
   {
     id: '54204157',
-    // img: require('@/assets/images/6.jpg'),
     title: '心理学入门与心灵',
     teacher: '姓名示例',
     count: 562,
@@ -212,7 +269,6 @@ const hotCourses = ref([
   },
   {
     id: '54204158',
-    // img: require('@/assets/images/7.jpg'),
     title: '利用数据进行决策',
     teacher: '姓名示例',
     count: 562,
@@ -224,7 +280,6 @@ const hotCourses = ref([
   },
   {
     id: '54204159',
-    // img: require('@/assets/images/8.jpg'),
     title: '从零开始构建网站',
     teacher: '姓名示例',
     count: 562,
@@ -239,6 +294,11 @@ const hotCourses = ref([
 const switchTab = (tab) => {
   activeTab.value = tab
 }
+
+// 页面加载时获取数据
+onMounted(() => {
+  fetchCourseList()
+})
 </script>
 
 <style scoped>
@@ -447,5 +507,55 @@ const switchTab = (tab) => {
   color: #888;
   font-size: 0.95em;
   margin-top: 16px;
+}
+
+/* 分页组件样式 */
+.pagination-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.pagination-info {
+  color: #666;
+  font-size: 14px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-btn {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--main-orange);
+  color: #fff;
+  border-color: var(--main-orange);
+}
+
+.page-btn:disabled {
+  background: #f5f5f5;
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.page-info {
+  color: #666;
+  font-size: 14px;
+  min-width: 60px;
+  text-align: center;
 }
 </style>
