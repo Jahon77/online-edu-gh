@@ -31,6 +31,7 @@ declare module 'vue' {
     Layout: typeof import('./components/commen/layout.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    StorageProviderSelector: typeof import('./components/StorageProviderSelector.vue')['default']
     TeacherHeader: typeof import('./components/commen/header/TeacherHeader.vue')['default']
     VideoUpload: typeof import('./components/VideoUpload.vue')['default']
   }

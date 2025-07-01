@@ -42,9 +42,9 @@
             <div class="form-row">
               <label>封面图片</label>
               <ImageUpload 
-                v-model="course.coverUrl" 
-                @upload-success="handleImageUploadSuccess" 
-                @upload-error="handleImageUploadError" 
+                v-model="course.coverUrl"
+                @upload-success="handleImageUploadSuccess"
+                @upload-error="handleImageUploadError"
               />
             </div>
             <div class="form-row">
@@ -93,6 +93,7 @@
               <div class="form-row">
                 <label>视频地址</label>
                 <VideoUpload 
+                  :ref="el => { if (el) videoUploadRefs[`${cIndex}-${lIndex}`] = el }"
                   v-model="lesson.videoUrl" 
                   @upload-success="handleVideoUploadSuccess" 
                   @upload-error="handleVideoUploadError" 
@@ -113,10 +114,18 @@
   
           <!-- 动态按钮区 -->
           <div class="actions">
-            <button v-if="step > 1" @click="prevStep" class="nav-btn">⬅ 上一步</button>
-            <button v-if="step === 1" @click="addChapterAndNext" class="nav-btn">➕ 添加章节</button>
-            <button v-if="step === 2" @click="addLessonAndNext" class="nav-btn">➕ 添加课时</button>
-            <button v-if="step === 3" @click="submitCourse" class="submit-btn">提交课程</button>
+            <div v-if="isSubmitting" class="upload-progress">
+              <div class="progress-text">正在上传文件，请稍候...</div>
+              <div class="progress-bar">
+                <div class="progress-fill"></div>
+              </div>
+            </div>
+            <button v-if="step > 1" @click="prevStep" class="nav-btn" :disabled="isSubmitting">⬅ 上一步</button>
+            <button v-if="step === 1" @click="addChapterAndNext" class="nav-btn" :disabled="isSubmitting">➕ 添加章节</button>
+            <button v-if="step === 2" @click="addLessonAndNext" class="nav-btn" :disabled="isSubmitting">➕ 添加课时</button>
+            <button v-if="step === 3" @click="submitCourse" class="submit-btn" :disabled="isSubmitting">
+              {{ isSubmitting ? '正在上传文件...' : '提交课程' }}
+            </button>
           </div>
         </div>
       </div>
@@ -127,12 +136,15 @@
   import TeacherHeader from 'src/components/commen/header/TeacherHeader.vue' 
   import ImageUpload from 'src/components/ImageUpload.vue'
   import VideoUpload from 'src/components/VideoUpload.vue'
-  import { reactive, ref } from 'vue'
+  import { reactive, ref, onMounted } from 'vue'
   import axios from 'axios'
+  import { useRouter } from 'vue-router'
+  const router = useRouter()
+  // import { nextTick } from 'vue'
   
   const step = ref(1)
   const course = reactive({
-    teacherId: 3,
+    teacherId: null,
     title: '',
     category: '',
     level: '基础',
@@ -145,51 +157,119 @@
   const chapters = reactive([])
   const lessonsMap = reactive({})
   
-  // const handleImageUploadSuccess = (data) => {
-  //   try {
-  //   const formData = new FormData()
-  //   formData.append('file', data.file)
-    
-  //   const response = await axios.post('/api/upload/image', formData, {
-  //     headers: {
-  //       'Content-Type': 'multipart/form-data'
-  //     }
-  //   })
-  //   // 将服务器返回的URL赋值给封面
-  //   course.coverUrl = response.data.url
-  // } catch (error) {
-  //   console.error('上传到服务器失败:', error)
-  //   alert('图片上传失败，请重试')
-  // }}
+  // 添加组件引用
+  const imageUploadRef = ref()
+  const videoUploadRefs = ref({})
+  const isSubmitting = ref(false)
+  
+  const coverFile = ref(null)
+  
+  // 获取当前登录用户的ID
+  const getCurrentUserId = () => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; userid=`);
+    if (parts.length === 2) {
+      const userId = parts.pop().split(';').shift();
+      return userId ? parseInt(userId) : null;
+    }
+    return null;
+  }
 
-  // 处理图片上传成功
+  // 组件挂载时获取当前用户ID
+  onMounted(() => {
+
+
+    const userId = getCurrentUserId();
+    if (userId) {
+      course.teacherId = userId;
+      console.log('当前教师ID:', userId);
+    } else {
+      console.error('无法获取当前用户ID，请确保已登录');
+      alert('无法获取用户信息，请重新登录');
+      // 可以在这里重定向到登录页
+      // window.location.href = '/login';
+    }
+
+  })
+
+  // 处理图片上传成功（现在只用于预览，实际上传在提交时进行）
   const handleImageUploadSuccess = (data) => {
-    console.log('图片上传成功:', data)
-    // 这里可以调用后端API上传图片到服务器
-    // 然后将返回的URL赋值给 course.coverUrl
+    if (data.file) {
+      coverFile.value = data.file
+    }
   }
 
   // 处理图片上传错误
   const handleImageUploadError = (error) => {
-    console.error('图片上传失败:', error)
+    console.error('图片预览失败:', error)
   }
 
   // 处理视频上传成功
   const handleVideoUploadSuccess = (data) => {
-    console.log('视频上传成功:', data)
-    // 自动填充视频时长
-    if (data.info && data.info.duration) {
-      // 找到当前正在编辑的课时并更新时长
-      const currentLesson = Object.values(lessonsMap).flat().find(lesson => lesson.videoUrl === data.url)
-      if (currentLesson) {
-        currentLesson.duration = Math.round(data.info.duration)
+    // 只用后端返回的 fileUrl
+  if (data.fileUrl) {
+    // 找到当前正在编辑的课时并更新URL
+    const currentLesson = Object.values(lessonsMap).flat().find(lesson => lesson.videoUrl === data.url || lesson.videoUrl === '');
+    if (currentLesson) {
+      currentLesson.videoUrl = data.fileUrl;
+      if (data.info && data.info.duration) {
+        currentLesson.duration = Math.round(data.info.duration);
       }
     }
+  } else if (data.url) {
+    // 兼容后端只返回 url 字段
+    const currentLesson = Object.values(lessonsMap).flat().find(lesson => lesson.videoUrl === data.url || lesson.videoUrl === '');
+    if (currentLesson) {
+      currentLesson.videoUrl = data.url;
+      if (data.info && data.info.duration) {
+        currentLesson.duration = Math.round(data.info.duration);
+      }
+    }
+  }
   }
 
   // 处理视频上传错误
   const handleVideoUploadError = (error) => {
     console.error('视频上传失败:', error)
+  }
+
+  // 文件上传到服务器的方法
+  async function uploadFileToServer(fileOrFiles, userId) {
+    const formData = new FormData()
+    
+    // 处理单个文件或文件数组
+    if (Array.isArray(fileOrFiles)) {
+      for (const file of fileOrFiles) {
+        formData.append('file', file) // 多文件上传
+      }
+    } else {
+      formData.append('file', fileOrFiles) // 单文件上传
+    }
+    
+    formData.append('userId', userId)
+
+    try {
+      const response = await axios.post('http://localhost:8080/file/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        timeout: 120000
+      })
+
+      if (response.data.status === 0) {
+        console.log('上传成功:', response.data.data)
+        // 如果是单文件上传，返回第一个文件记录
+        if (Array.isArray(response.data.data) && response.data.data.length > 0) {
+          return response.data.data[0]
+        }
+        return response.data.data // 文件记录数组
+      } else {
+        throw new Error(response.data.message || '上传失败')
+      }
+    } catch (error) {
+      console.error('文件上传失败:', error)
+      throw error
+    }
   }
 
   function addChapterAndNext() {
@@ -211,6 +291,8 @@
   }
   function prevStep() { step.value > 1 && step.value-- }
   async function submitCourse() {
+    if (isSubmitting.value) return
+    
     // 数据验证
     if (!course.title || course.title.trim() === '') {
       alert('请输入课程标题')
@@ -219,6 +301,13 @@
     
     if (!course.level) {
       alert('请选择课程等级')
+      return
+    }
+    
+    // 检查是否有封面图片
+    
+    if (!coverFile.value) {
+      alert('请上传课程封面图片')
       return
     }
     
@@ -246,66 +335,124 @@
       }
     }
     
-    try {
-    // 构造符合后端DTO的数据结构
-    const payload = {
-      course: {
-        teacherId: course.teacherId,
-        title: course.title,
-        category: course.category,
-        level: course.level,
-        coverUrl: course.coverUrl,
-        introMd: course.introMd,
-        price: course.price,
-        previewPercent: course.previewPercent,
-        status: course.status
-      },
-      chapters: chapters.map((chapter, idx) => ({
-        chapter: {
-          title: chapter.title
-          // 如果Chapter实体有更多字段，按需加
-        },
-        lessons: (lessonsMap[idx] || []).map(lesson => ({
-          title: lesson.title,
-          videoUrl: lesson.videoUrl,
-          duration: lesson.duration,
-          isPreview: lesson.isPreview
-          // 按后端Lesson实体字段定义
-        }))
-      }))
-    };
+    isSubmitting.value = true
     
-    // 把Vue响应式对象转换为普通JSON对象
-    const data = JSON.parse(JSON.stringify(payload));
-
-    console.log('发送的数据:', data);
-
-    const response = await axios.post('http://localhost:8080/api/teacher/course/create', data);
-
-    if (response.data && response.data.courseId) {
-      alert('课程创建成功！');
-      // 重置逻辑
-      step.value = 1;
-      Object.assign(course, {
-        teacherId: 3,
-        title: '',
-        category: '',
-        level: '基础',
-        coverUrl: '',
-        introMd: '',
-        price: 0,
-        previewPercent: 10,
-        status: 0
-      });
-      chapters.splice(0);
-      Object.keys(lessonsMap).forEach(k => delete lessonsMap[k]);
-    } else {
-      alert('课程创建失败: ' + (response.data?.message || '未知错误'));
+    try {
+    const currentUserId = getCurrentUserId()
+    if (!currentUserId) {
+      alert('无法获取用户信息，请重新登录')
+      return
     }
-  } catch (error) {
-    console.error('请求错误:', error);
-    alert('课程创建失败: ' + (error.response?.data?.message || error.message || '网络错误'));
-  }
+
+    // 1. 上传封面图片
+    console.log('=== 图片上传调试信息 ===')
+    if (coverFile.value) {
+      const coverFileRecord = await uploadFileToServer(coverFile.value, currentUserId)
+      course.coverUrl = coverFileRecord.fileUrl
+    } else {
+      alert('请上传课程封面图片')
+      isSubmitting.value = false
+      return
+    }
+
+      // 2. 上传所有课时视频
+      console.log('=== 视频上传调试信息 ===')
+      for (let i = 0; i < chapters.length; i++) {
+        for (let j = 0; j < lessonsMap[i].length; j++) {
+          const lesson = lessonsMap[i][j]
+          const videoRefKey = `${i}-${j}`
+          console.log(`检查第${i + 1}章第${j + 1}课时，refKey:`, videoRefKey)
+          console.log('videoUploadRefs.value[videoRefKey]:', videoUploadRefs.value[videoRefKey])
+          console.log('lesson.videoUrl:', lesson.videoUrl)
+          
+          if (videoUploadRefs.value[videoRefKey] && videoUploadRefs.value[videoRefKey].getFile()) {
+            const videoFile = videoUploadRefs.value[videoRefKey].getFile()
+            console.log(`检测到第${i + 1}章第${j + 1}课时视频文件:`, videoFile.name)
+            try {
+              console.log(`开始上传第${i + 1}章第${j + 1}课时视频:`, videoFile.name)
+              const videoFileRecord = await uploadFileToServer(videoFile, currentUserId)
+              if (videoFileRecord.fileUrl) {
+                lesson.videoUrl = videoFileRecord.fileUrl
+                console.log(`第${i + 1}章第${j + 1}课时视频上传成功，URL:`, lesson.videoUrl)
+              }
+            } catch (error) {
+              console.error(`第${i + 1}章第${j + 1}课时视频上传失败:`, error.message)
+              alert(`第${i + 1}章第${j + 1}课时视频上传失败: ${error.message}`)
+              isSubmitting.value = false
+              return
+            }
+          } else if (!lesson.videoUrl) {
+            console.log(`第${i + 1}章第${j + 1}课时没有视频文件`)
+            alert(`请为第${i + 1}章第${j + 1}课时上传视频`)
+            isSubmitting.value = false
+            return
+          } else {
+            console.log(`第${i + 1}章第${j + 1}课时已有视频URL:`, lesson.videoUrl)
+          }
+        }
+      }
+
+      // 3. 构造payload并提交
+      const payload = {
+        course: { ...course },
+        chapters: chapters.map((chapter, idx) => ({
+          chapter: { title: chapter.title },
+          lessons: (lessonsMap[idx] || []).map(lesson => ({
+            title: lesson.title,
+            videoUrl: lesson.videoUrl,
+            duration: lesson.duration,
+            isPreview: lesson.isPreview
+          }))
+        }))
+      }
+
+      const data = JSON.parse(JSON.stringify(payload))
+
+      // 4. 发送创建请求
+      const response = await axios.post('/api/teacher/course/create', data)
+
+      console.log('课程创建响应:', response.data)
+      
+      // 根据后端 ResponseCode 枚举处理响应
+      if (response.data && response.data.code === 0 || response.data && typeof response.data.courseId === 'number') {
+        // 成功状态码为 0
+        if (response.data.data && response.data.data.courseId) {
+          alert('课程创建成功！')
+          router.push('/teacher/courseList')
+          step.value = 1
+          const currentUserId = getCurrentUserId()
+          Object.assign(course, {
+            teacherId: currentUserId,
+            title: '',
+            category: '',
+            level: '基础',
+            coverUrl: '',
+            introMd: '',
+            price: 0,
+            previewPercent: 10,
+            status: 0
+          })
+          chapters.splice(0)
+          Object.keys(lessonsMap).forEach(k => delete lessonsMap[k])
+          
+          // 清理图片组件状态
+          if (coverFile.value) {
+            coverFile.value.removeImage()
+          }
+        } else {
+          alert('课程创建成功但未返回课程ID')
+        }
+      } else {
+        // 失败状态码为 1 或其他
+        const errorMessage = response.data?.description || response.data?.message || '课程创建失败'
+        alert('课程创建失败: ' + errorMessage)
+      }
+    } catch (error) {
+      console.error('请求错误:', error)
+      alert('课程创建失败: ' + (error.response?.data?.message || error.message || '网络错误'))
+    } finally {
+      isSubmitting.value = false
+    }
   }
   </script>
   
@@ -452,6 +599,17 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* 增加阴影 */
   }
 
+  .submit-btn:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  .submit-btn:disabled:hover {
+    background-color: #9ca3af;
+    box-shadow: none;
+  }
+
   .form-row {
   display: flex;
   align-items: center;
@@ -469,5 +627,60 @@
 .form-row textarea {
   flex: 1;
   margin: 0;
+}
+
+.nav-btn:disabled {
+  background-color: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.nav-btn:disabled:hover {
+  background-color: #d1d5db;
+  box-shadow: none;
+}
+
+.upload-progress {
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+}
+
+.progress-text {
+  text-align: center;
+  color: #0369a1;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background-color: #e0f2fe;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #0ea5e9;
+  border-radius: 2px;
+  animation: progress-animation 2s ease-in-out infinite;
+}
+
+@keyframes progress-animation {
+  0% {
+    width: 0%;
+  }
+  50% {
+    width: 70%;
+  }
+  100% {
+    width: 100%;
+  }
 }
   </style>

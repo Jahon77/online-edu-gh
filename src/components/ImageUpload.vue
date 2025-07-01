@@ -177,6 +177,7 @@ const imageInfo = ref(null)
 const showPreviewModal = ref(false)
 const zoomLevel = ref(1)
 const panState = ref({ x: 0, y: 0, startX: 0, startY: 0, isPanning: false })
+const uploadedFile = ref(null)
 
 // 计算属性
 const previewModeText = computed(() => {
@@ -280,24 +281,19 @@ const processFile = async (file) => {
     return
   }
   
-  // 创建预览URL
+  uploadedFile.value = file
+
+  // 预览显示（使用本地URL，不上传到服务器）
   const reader = new FileReader()
   reader.onload = async (e) => {
     imageUrl.value = e.target.result
-    emit('update:modelValue', e.target.result)
-    
-    // 获取图片信息
+    // 不触发上传事件，只用于本地预览
     try {
       imageInfo.value = await getImageInfo(file)
     } catch (error) {
       console.error('获取图片信息失败:', error)
     }
-    
-    emit('upload-success', {
-      file,
-      url: e.target.result,
-      info: imageInfo.value
-    })
+    emit('upload-success', { file, fileUrl: imageUrl.value })
   }
   reader.readAsDataURL(file)
 }
@@ -306,6 +302,7 @@ const processFile = async (file) => {
 const removeImage = () => {
   imageUrl.value = ''
   imageInfo.value = null
+  uploadedFile.value = null
   emit('update:modelValue', '')
   if (fileInput.value) {
     fileInput.value.value = ''
@@ -368,6 +365,14 @@ const resetZoom = () => {
   zoomLevel.value = 1
   panState.value = { x: 0, y: 0, startX: 0, startY: 0, isPanning: false }
 }
+
+// 获取上传的文件
+const getFile = () => uploadedFile.value
+
+// 检查是否有文件被选择
+const hasFile = () => uploadedFile.value !== null
+
+defineExpose({ getFile, removeImage, hasFile })
 </script>
 
 <style scoped>
