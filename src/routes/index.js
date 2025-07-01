@@ -156,6 +156,10 @@ const routes = [
             {
                 path: 'setting',
                 component: () => import('@/views/admin/setting.vue')
+            },
+            {
+                path: 'hot-courses',
+                component: () => import('@/views/admin/hot_courses.vue')
             }
         ]
     }
