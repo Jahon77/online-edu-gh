@@ -34,11 +34,11 @@
         <thead>
           <tr>
             <th>课程名称</th>
+            <th>课程编号</th>
+            <th>类型</th>
             <th>讲师</th>
-            <th>笔记</th>
+            <th>订阅</th>
             <th>价格</th>
-            <th>获训</th>
-            <th>总时间</th>
             <th>状态</th>
           </tr>
         </thead>
@@ -48,14 +48,13 @@
               <img class="cover" :src="item.cover" />
               <div class="info">
                 <div class="name">{{ item.name }}</div>
-                <div class="id">#{{ item.id }}</div>
               </div>
             </td>
+            <td>{{ item.id }}</td>
+            <td>{{ item.level }}</td>
             <td>{{ item.teacher }}</td>
             <td>{{ item.note }}</td>
             <td>{{ item.price }}</td>
-            <td>{{ item.train }}</td>
-            <td>{{ item.duration }}</td>
             <td>
               <span :class="['status', item.statusClass]">{{ item.statusText }}</span>
             </td>

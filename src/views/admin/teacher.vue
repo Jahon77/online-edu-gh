@@ -12,8 +12,9 @@
         <thead>
           <tr>
             <th>姓名</th>
-            <th>课程</th>
-            <th>加入日期</th>
+            <th>教工号</th>
+            <th>开设课程</th>
+            <th>入职日期</th>
             <th>收益</th>
             <th>操作</th>
           </tr>
@@ -24,16 +25,14 @@
               <img class="avatar" :src="item.avatar" />
               <div class="info">
                 <div class="name">{{ item.name }}</div>
-                <div class="id">#{{ item.id }}</div>
               </div>
             </td>
+            <td>{{ item.id }}</td>
             <td>{{ item.course }}</td>
             <td>{{ item.date }}</td>
             <td>￥{{ item.income }}</td>
             <td>
-              <button class="action view">👁️</button>
               <button class="action edit">✏️</button>
-              <button class="action delete">🗑️</button>
             </td>
           </tr>
         </tbody>
@@ -55,7 +54,7 @@ const teacherList = ref([
   { name: '姓名示例', id: '54124', avatar: 'https://randomuser.me/api/portraits/men/38.jpg', course: 10, date: '2024.1.5', income: 4450 },
   { name: '姓名示例', id: '54124', avatar: 'https://randomuser.me/api/portraits/men/39.jpg', course: 10, date: '2024.1.5', income: 4450 },
   { name: '姓名示例', id: '54124', avatar: 'https://randomuser.me/api/portraits/men/40.jpg', course: 10, date: '2024.1.5', income: 4450 },
-  { name: '姓名示例', id: '54124', avatar: 'https://randomuser.me/api/portraits/men/41.jpg', course: 80, date: '2024.1.5', income: 6245 },
+  { name: '姓名示例', id: '54124', avatar: 'https://randomuser.me/api/portraits/women/43.jpg', course: 80, date: '2024.1.5', income: 6245 },
 ])
 </script>
 
