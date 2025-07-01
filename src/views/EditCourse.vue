@@ -3,8 +3,7 @@
       <TeacherHeader />
   
       <div class="main-content">
-        
-  
+
         <!-- 课程编辑表单 -->
         <div class="form-container">
           <h3>课程信息</h3>
@@ -15,7 +14,14 @@
             </div>
             <div class="form-row">
               <label>分类：</label>
-              <input v-model="course.category" />
+              <select v-model="course.category" required>
+                <!-- <option disabled value="">请选择分类</option> -->
+                <option>学科主修</option>
+                <option>职场技能</option>
+                <option>人文通识</option>
+                <option>考研督学</option>
+                <option>兴趣探索</option>
+              </select>
             </div>
             <div class="form-row">
               <label>难度：</label>
@@ -31,13 +37,29 @@
             </div>
   
             <div class="form-row">
-              <label>封面图：</label>
-              <!-- <img :src="course.coverUrl" alt="课程封面" class="cover" /> -->
-              <ImageUpload
-                  v-model="coverPreview"
-                  @upload-success="handleImageUploadSuccess"
-                  @upload-error="handleImageUploadError"
+              <label>封面：</label>
+              <div class="cover-input-wrap">
+                <img
+                  v-if="coverPreview"
+                  :src="coverPreview"
+                  alt="课程封面"
+                  class="cover"
+                  @click="showPreview = true"
                 />
+                <button v-if="coverPreview" class="cover-btn" @click="triggerFileInput" type="button">更换</button>
+                <input
+                  ref="fileInput"
+                  type="file"
+                  accept="image/*"
+                  style="display:none"
+                  @change="handleFileChange"
+                />
+                <button v-if="!coverPreview" class="cover-btn" @click="triggerFileInput" type="button">上传封面</button>
+              </div>
+            </div>
+            <div v-if="showPreview" class="cover-modal" @click.self="showPreview = false">
+              <img :src="coverPreview" class="cover-large" />
+              <button class="close-btn" @click="showPreview = false">关闭</button>
             </div>
             <div class="form-row">
               <label>简介：</label>
@@ -143,7 +165,10 @@
         chapterList: [],
         newChapterTitle: "",
         newLessonTitle: {},
-        isCollapsed: false // 折叠状态，默认展开
+        isCollapsed: false, // 折叠状态，默认展开
+        coverFile: null,
+        coverPreview: '',
+        showPreview: false
       };
     },
     mounted() {
@@ -161,9 +186,37 @@
           .then((res) => res.json())
           .then((data) => {
             this.course = data;
+            this.coverPreview = data.coverUrl;
           });
       },
       saveCourse() {
+        const userId = this.getCurrentUserId();
+        if (this.coverFile) {
+          const formData = new FormData();
+          formData.append('file', this.coverFile);
+          formData.append('userId', userId);
+          fetch('http://localhost:8080/api/file/upload', {
+            method: 'POST',
+            body: formData
+          })
+            .then(res => res.json())
+            .then(result => {
+              console.log('图片上传返回:', result);
+              if (result.status === 0 && result.data && result.data.length > 0 && result.data[0].fileUrl) {
+                this.course.coverUrl = result.data[0].fileUrl;
+                this.doSaveCourse();
+              } else {
+                alert('图片上传失败');
+              }
+            })
+            .catch(() => {
+              alert('图片上传失败');
+            });
+        } else {
+          this.doSaveCourse();
+        }
+      },
+      doSaveCourse() {
         fetch(`http://localhost:8080/api/teacher/course/update`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -235,6 +288,28 @@
       goToQuestionManager() {
         // 跳转到课程作业管理页面
         this.$router.push(`/teacher/question-manager/${this.courseId}`);
+      },
+      triggerFileInput() {
+        this.$refs.fileInput.click();
+      },
+      handleFileChange(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        this.coverFile = file;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          this.coverPreview = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      },
+      getCurrentUserId() {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; userid=`);
+        if (parts.length === 2) {
+          const userId = parts.pop().split(';').shift();
+          return userId ? parseInt(userId) : null;
+        }
+        return null;
       }
     }
   };
@@ -294,14 +369,15 @@
   .form-row {
     display: flex;
     align-items: center;
-    margin-bottom: 1.2rem; 
+    margin-bottom: 1.2rem;
   }
   .form-row label {
     width: 120px; 
     font-size: 1.05rem;
-    color: #4a4a4a; 
-    margin-right: 1.5rem; 
+    color: #4a4a4a;
+    margin-right: 1.5rem;
     flex-shrink: 0;
+    text-align: right;
   }
   .form-row input,
   .form-row select,
@@ -446,7 +522,7 @@
   }
 
   .form-row img.cover {
-    width: 100px;
+    width: 100%;
     height: 100px;
     object-fit: cover;
     border-radius: 8px;
@@ -468,5 +544,73 @@
     transform: scale(1.02);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
 
+  }
+
+  .cover-input-wrap {
+    display: flex;
+    /* align-items: center; */
+    width: 500px; 
+    max-width: 500px;
+    gap: 18px;
+  }
+  .cover {
+    width: 90%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1.5px solid #e5e6eb;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+  .cover:hover {
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    transform: scale(1.04);
+  }
+  .cover-btn {
+    background: #ff8686;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(255,134,134,0.08);
+  }
+  .cover-btn:hover {
+    background: #ff5c5c;
+    box-shadow: 0 4px 16px rgba(255,92,92,0.15);
+  }
+  .cover-modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+  .cover-large {
+    max-width: 80vw;
+    max-height: 80vh;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+  .close-btn {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    background: #fff;
+    color: #333;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
 </style>
