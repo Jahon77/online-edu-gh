@@ -101,6 +101,15 @@
                 添加章节
               </button>
             </div>
+
+            <!-- 新增課程作業按鈕 -->
+            <div class="form-row">
+              <label>課程作業：</label>
+              <button @click="goToQuestionManager" class="question-btn">
+                <i class="fas fa-tasks"></i>
+                管理課程作業
+              </button>
+            </div>
           </div>
         </div>
         
@@ -217,6 +226,10 @@
         fetch(`http://localhost:8080/api/teacher/course/lesson/${lessonId}`, {
           method: "DELETE"
         }).then(() => this.fetchChapters());
+      },
+      goToQuestionManager() {
+        // 跳转到课程作业管理页面
+        this.$router.push(`/teacher/question-manager/${this.courseId}`);
       }
     }
   };
@@ -422,6 +435,21 @@
     transition: all 0.3s ease;
   }
   .delete-btn:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
+  }
+  .question-btn {
+    background-color: #67c23a;
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .question-btn:hover {
     opacity: 0.9;
     transform: scale(1.02);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 

@@ -74,6 +74,11 @@ const routes = [
         component: ()=> import('../views/EditCourse.vue')
     },
     {
+        path: '/teacher/question-manager/:courseId',
+        name: 'questionManager',
+        component: ()=> import('../views/QuestionManager.vue')
+    },
+    {
         path: '/notice',
         name: 'notice',
         component: Notice
