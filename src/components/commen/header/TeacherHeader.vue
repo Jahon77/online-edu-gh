@@ -92,7 +92,7 @@
           this.$router.push({ name: 'studentManagement' });
         } else if (type === 'chat') {
           this.$router.push({ name: 'chat' });
-        }
+        } 
       },
       updateCurrentPath() {
         const routeName = this.$route.name;

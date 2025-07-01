@@ -31,8 +31,13 @@
             </div>
   
             <div class="form-row">
-              <label>封面图地址：</label>
-              <input v-model="course.coverUrl" />
+              <label>封面图：</label>
+              <!-- <img :src="course.coverUrl" alt="课程封面" class="cover" /> -->
+              <ImageUpload
+                  v-model="coverPreview"
+                  @upload-success="handleImageUploadSuccess"
+                  @upload-error="handleImageUploadError"
+                />
             </div>
             <div class="form-row">
               <label>简介：</label>
@@ -425,5 +430,12 @@
     opacity: 0.9;
     transform: scale(1.02);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
+  }
+  .form-row img.cover {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-left: 10px;
   }
   </style>

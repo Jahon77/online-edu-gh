@@ -10,13 +10,11 @@ declare module 'vue' {
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCalendar: typeof import('element-plus/es')['ElCalendar']
-
     ElDialog: typeof import('element-plus/es')['ElDialog']
     ElForm: typeof import('element-plus/es')['ElForm']
     ElFormItem: typeof import('element-plus/es')['ElFormItem']
     ElInput: typeof import('element-plus/es')['ElInput']
     ElOption: typeof import('element-plus/es')['ElOption']
-    
     ElPagination: typeof import('element-plus/es')['ElPagination']
     ElSelect: typeof import('element-plus/es')['ElSelect']
     Footer: typeof import('./components/commen/footer/footer.vue')['default']
@@ -26,6 +24,7 @@ declare module 'vue' {
     Layout: typeof import('./components/commen/layout.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    StorageProviderSelector: typeof import('./components/StorageProviderSelector.vue')['default']
     TeacherHeader: typeof import('./components/commen/header/TeacherHeader.vue')['default']
     VideoUpload: typeof import('./components/VideoUpload.vue')['default']
   }
