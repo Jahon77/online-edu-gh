@@ -7,10 +7,10 @@ import Login from '../views/login.vue'
 import About from '../views/about.vue'
 import Use from '../views/use.vue'
 import Notice from '../views/notice.vue'
-import Chat from '../views/chat.vue'
 import FaceTest from '../views/FaceTest.vue'
 import CourseList from '../views/Course/CourseList.vue'
 import CourseDetail from '../views/Course/CourseDetail.vue'
+import Chat from '../views/chat.vue';
 
 
 const routes = [
@@ -79,6 +79,11 @@ const routes = [
         component: ()=> import('../views/QuestionManager.vue')
     },
     {
+        path: '/teacher/student-management',
+        name: 'studentManagement',
+        component: ()=> import('../views/StudentManagement.vue')
+    },
+    {
         path: '/notice',
         name: 'notice',
         component: Notice
@@ -101,6 +106,11 @@ const routes = [
         },
         component: ()=> import('../views/aichat.vue')
     },
+    // {
+    //     path: '/face-test',
+    //     name: 'face-test',
+    //     component: FaceTest
+    // },
     {
         path: '/face-test',
         name: 'face-test',
@@ -108,11 +118,16 @@ const routes = [
     },
     {
         path: '/chat-test',
-        component: () => import('../views/chat.vue'),
+        component: () => import('../views/chatTest.vue'),
         name: 'ChatTest',
+        
+    },
+    {
+        path: '/chat',
+        name: 'Chat',
+        component: Chat,
         meta: {
-            title: '聊天测试',
-            requiresAuth: false
+            requiresAuth: true
         }
     },
     {
@@ -138,6 +153,18 @@ const routes = [
             {
                 path: 'chat',
                 component: () => import('@/views/admin/chat.vue')
+            },
+            {
+                path: 'log',
+                component: () => import('@/views/admin/log.vue')
+            },
+            {
+                path: 'setting',
+                component: () => import('@/views/admin/setting.vue')
+            },
+            {
+                path: 'hot-courses',
+                component: () => import('@/views/admin/hot_courses.vue')
             }
         ]
     }

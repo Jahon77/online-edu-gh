@@ -49,6 +49,9 @@ export default {
   methods: {
     toggleStickyHeader() {
       const scrolled = document.documentElement.scrollTop;
+      const headerDefault = document.querySelector('.header-default');
+      if (!headerDefault) return; // 如果元素不存在，直接返回
+      
       if (scrolled > 100) {
         AppFunctions.addClass('.header-default', 'sticky');
       } else if (scrolled <= 100) {
