@@ -1,7 +1,7 @@
 <template>
   <div class="student-page">
     <div class="student-header">
-      <h2>学生</h2>
+      <h2>学生 / 打卡榜</h2>
       <div class="student-actions">
         <button class="btn export">导出</button>
         <button class="btn add">+ 添加学生</button>
@@ -35,7 +35,6 @@
             <td>
               <button class="action view">👁️</button>
               <button class="action edit">✏️</button>
-              <button class="action delete">🗑️</button>
             </td>
           </tr>
         </tbody>
@@ -177,9 +176,7 @@ const studentList = ref([
   background: var(--main-green);
   color: #333;
 }
-.action.delete:hover {
-  background: #e74c3c;
-}
+
 .table-footer {
   color: #888;
   font-size: 0.95em;

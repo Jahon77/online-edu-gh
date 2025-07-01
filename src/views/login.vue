@@ -824,7 +824,7 @@ export default {
           } else {
             // 根据角色跳转
             if (loginResp.role === 3) { // 管理员
-              await this.$router.push('/admin');
+              await this.$router.push('/admin/home');
             } else { // 学生或教师
               await this.$router.push('/index');
             }
@@ -918,7 +918,7 @@ export default {
           } else {
             // 根据角色跳转
             if (loginResp.role === 3) { // 管理员
-              await this.$router.push('/admin');
+              await this.$router.push('/admin/home');
             } else { // 学生或教师
               await this.$router.push('/index');
             }
@@ -1250,7 +1250,7 @@ export default {
           } else {
             // 根据角色跳转
             if (loginResp.userInfo.role === 3) { // 管理员
-              await this.$router.push('/admin');
+              await this.$router.push('/admin/home');
             } else { // 学生或教师
               await this.$router.push('/index');
             }
