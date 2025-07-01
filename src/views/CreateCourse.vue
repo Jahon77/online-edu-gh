@@ -138,6 +138,8 @@
   import VideoUpload from 'src/components/VideoUpload.vue'
   import { reactive, ref, onMounted } from 'vue'
   import axios from 'axios'
+  import { useRouter } from 'vue-router'
+  const router = useRouter()
   // import { nextTick } from 'vue'
   
   const step = ref(1)
@@ -416,6 +418,7 @@
         // 成功状态码为 0
         if (response.data.data && response.data.data.courseId) {
           alert('课程创建成功！')
+          router.push('/teacher/courseList')
           step.value = 1
           const currentUserId = getCurrentUserId()
           Object.assign(course, {
