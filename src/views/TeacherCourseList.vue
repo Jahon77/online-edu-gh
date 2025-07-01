@@ -50,24 +50,56 @@ export default {
   name: "TeacherCourseList",
   data() {
     return {
-      teacherId: 3,
+      teacherId: null,
       courses: [],
       showBackToTop: false
     };
   },
   mounted() {
+    this.initTeacherId();
+    this.$nextTick(() => {
+      if (this.teacherId) {
     this.fetchCourses();
+      }
+    });
     window.addEventListener('scroll', this.handleScroll);
   },
   beforeDestroy() {
     window.removeEventListener('scroll', this.handleScroll);
   },
   methods: {
+    getCurrentUserId() {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; userid=`);
+      if (parts.length === 2) {
+        const userId = parts.pop().split(';').shift();
+        return userId ? parseInt(userId) : null;
+      }
+      return null;
+    },
+    initTeacherId() {
+      const userId = this.getCurrentUserId();
+      if (userId) {
+        this.teacherId = userId;
+        console.log('当前教师ID:', userId);
+      } else {
+        console.error('无法获取当前用户ID，请确保已登录');
+        alert('无法获取用户信息，请重新登录');
+      }
+    },
     fetchCourses() {
+      if (!this.teacherId) {
+        console.error('教师ID未设置，无法获取课程列表');
+        return;
+      }
+
       fetch(`http://localhost:8080/api/teacher/course/list?teacherId=${this.teacherId}`)
         .then(res => res.json())
         .then(data => {
           this.courses = data;
+        })
+        .catch(error => {
+          console.error('获取课程列表失败:', error);
         });
     },
     editCourse(courseId) {
