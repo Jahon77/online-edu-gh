@@ -22,40 +22,95 @@
         <tbody>
           <tr v-for="(item, idx) in teacherList" :key="idx">
             <td>
-              <img class="avatar" :src="item.avatar" />
+              <img class="avatar" :src="item.avatarUrl || 'https://randomuser.me/api/portraits/men/32.jpg'" />
               <div class="info">
                 <div class="name">{{ item.name }}</div>
               </div>
             </td>
-            <td>{{ item.id }}</td>
-            <td>{{ item.course }}</td>
-            <td>{{ item.date }}</td>
-            <td>￥{{ item.income }}</td>
+            <td>{{ item.teacherId }}</td>
+            <td>{{ item.courseCount }}</td>
+            <td>{{ formatDate(item.createdAt) }}</td>
+            <td>￥{{ item.totalIncome || 0 }}</td>
             <td>
               <button class="action edit">✏️</button>
             </td>
           </tr>
         </tbody>
       </table>
-      <div class="table-footer">显示 {{ teacherList.length }} 个结果</div>
+      
+      <!-- 分页组件 -->
+      <div class="pagination-wrapper">
+        <div class="pagination-info">
+          显示 {{ (currentPage - 1) * pageSize + 1 }}-{{ Math.min(currentPage * pageSize, total) }} 条，共 {{ total }} 条
+        </div>
+        <div class="pagination">
+          <button 
+            :disabled="currentPage === 1" 
+            @click="changePage(currentPage - 1)"
+            class="page-btn prev"
+          >
+            上一页
+          </button>
+          <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
+          <button 
+            :disabled="currentPage === totalPages" 
+            @click="changePage(currentPage + 1)"
+            class="page-btn next"
+          >
+            下一页
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-const teacherList = ref([
-  { name: '姓名示例', id: '54124', avatar: 'https://randomuser.me/api/portraits/men/32.jpg', course: 10, date: '2024.1.5', income: 4450 },
-  { name: '姓名示例', id: '54124', avatar: 'https://randomuser.me/api/portraits/men/33.jpg', course: 20, date: '2024.1.5', income: 1345 },
-  { name: '姓名示例', id: '54124', avatar: 'https://randomuser.me/api/portraits/men/34.jpg', course: 40, date: '2024.1.5', income: 4645 },
-  { name: '姓名示例', id: '54124', avatar: 'https://randomuser.me/api/portraits/men/35.jpg', course: 10, date: '2024.1.5', income: 4450 },
-  { name: '姓名示例', id: '54124', avatar: 'https://randomuser.me/api/portraits/men/36.jpg', course: 10, date: '2024.1.5', income: 4450 },
-  { name: '姓名示例', id: '54124', avatar: 'https://randomuser.me/api/portraits/men/37.jpg', course: 80, date: '2024.1.5', income: 6245 },
-  { name: '姓名示例', id: '54124', avatar: 'https://randomuser.me/api/portraits/men/38.jpg', course: 10, date: '2024.1.5', income: 4450 },
-  { name: '姓名示例', id: '54124', avatar: 'https://randomuser.me/api/portraits/men/39.jpg', course: 10, date: '2024.1.5', income: 4450 },
-  { name: '姓名示例', id: '54124', avatar: 'https://randomuser.me/api/portraits/men/40.jpg', course: 10, date: '2024.1.5', income: 4450 },
-  { name: '姓名示例', id: '54124', avatar: 'https://randomuser.me/api/portraits/women/43.jpg', course: 80, date: '2024.1.5', income: 6245 },
-])
+import { ref, onMounted } from 'vue'
+import http from '@/utils/http.js'
+
+// 分页相关数据
+const teacherList = ref([])
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const totalPages = ref(0)
+
+// 获取教师列表
+const fetchTeacherList = async (page = 1) => {
+  try {
+    const response = await http.get(`/admin/teachers?page=${page}&size=${pageSize.value}`)
+    console.log("教师", response)
+    if (response.data.status === 200) {
+      const data = response.data.data
+      teacherList.value = data.records
+      total.value = data.total
+      totalPages.value = data.pages
+      currentPage.value = data.current
+    }
+  } catch (error) {
+    console.error('获取教师列表失败:', error)
+  }
+}
+
+// 切换页码
+const changePage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    fetchTeacherList(page)
+  }
+}
+
+// 格式化日期
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleDateString('zh-CN')
+}
+
+// 页面加载时获取数据
+onMounted(() => {
+  fetchTeacherList()
+})
 </script>
 
 <style scoped>
@@ -162,5 +217,55 @@ const teacherList = ref([
   color: #888;
   font-size: 0.95em;
   margin-top: 16px;
+}
+
+/* 分页组件样式 */
+.pagination-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.pagination-info {
+  color: #666;
+  font-size: 14px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-btn {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--main-orange);
+  color: #fff;
+  border-color: var(--main-orange);
+}
+
+.page-btn:disabled {
+  background: #f5f5f5;
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.page-info {
+  color: #666;
+  font-size: 14px;
+  min-width: 60px;
+  text-align: center;
 }
 </style>
