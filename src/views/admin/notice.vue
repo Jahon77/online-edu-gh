@@ -20,7 +20,7 @@
     <!-- 课程审批模块 -->
     <div v-if="activeTab === 'course-approval'" class="approval-section">
       <div class="section-header">
-        <h3>待审批课程</h3>
+        <h3>课程</h3>
         <div class="filter-actions">
           <select v-model="approvalFilter" class="filter-select">
             <option value="all">全部状态</option>

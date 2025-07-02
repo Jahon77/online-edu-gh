@@ -4,7 +4,8 @@ import { ElMessage } from 'element-plus'
 // 创建axios实例
 const instance = axios.create({
     timeout: 15000,  // 增加超时时间到15秒
-    withCredentials: true
+    withCredentials: true,
+    baseURL: 'http://localhost:8080', // 重要：设置后端地址
 })
 
 // 请求拦截器
@@ -26,7 +27,7 @@ instance.interceptors.request.use(
 // 响应拦截器
 instance.interceptors.response.use(
     response => {
-        if (response.data.status === 10000 || response.data.message === 'SUCCESS') {
+        if (response.data.status === 10000 || response.data.message === 'SUCCESS' || response.status === 200) {
             return response
         } else {
             ElMessage.error(response.data.message || '请求失败')

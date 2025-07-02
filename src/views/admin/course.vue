@@ -175,7 +175,7 @@ const totalPages = ref(0)
 const fetchCourseList = async (page = 1) => {
   try {
     const response = await http.get(`/admin/courses?page=${page}&size=${pageSize.value}`)
-    console.log("课程", response)
+    // console.log("课程", response)
     if (response.data.status === 200) {
       const data = response.data.data
       courseList.value = data.records
