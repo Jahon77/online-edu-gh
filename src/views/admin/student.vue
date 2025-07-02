@@ -17,7 +17,7 @@
       </div>
       <div class="student-actions">
         <div v-if="activeTab === 'ranking'" class="ranking-filter">
-          <select v-model="selection" class="month-select">
+          <select  class="ranking-select">
             <option value="duration">学习时长</option>
             <option value="completedCourses">完成课程</option>
             <option value="solveProblems">解题数</option>
@@ -61,59 +61,33 @@
 
     <!-- 学习榜排名 -->
     <div v-if="activeTab === 'ranking'" class="ranking-wrapper">
-      <!-- 前三名阶梯展示 -->
-      <div class="top-three">
-        <div class="podium">
-          <!-- 第二名 -->
-          <div class="podium-item second">
-            <div class="avatar-container">
-              <img :src="topStudents[1].avatar" class="avatar" />
-              <div class="crown second-crown">🥈</div>
-            </div>
-            <div class="podium-base">
-              <div class="name">{{ topStudents[1].name }}</div>
-              <div v-if="selection === 'duration'">{{ topStudents[1].studyTime }}</div>
-              <div v-if="selection === 'completedCourses'">{{ topStudents[1].completedCourses }}</div>
-              <div v-if="selection === 'solveProblems'">{{ topStudents[1].solveProblems }}</div>
-              <div class="rank">2</div>
-            </div>
-          </div>
-          
-          <!-- 第一名 -->
-          <div class="podium-item first">
-            <div class="avatar-container">
-              <img :src="topStudents[0].avatar" class="avatar" />
-              <div class="crown first-crown">👑</div>
-            </div>
-            <div class="podium-base">
-              <div class="name">{{ topStudents[0].name }}</div>
-              <div v-if="selection === 'duration'">{{ topStudents[0].studyTime }}</div>
-              <div v-if="selection === 'completedCourses'">{{ topStudents[0].completedCourses }}</div>
-              <div v-if="selection === 'solveProblems'">{{ topStudents[0].solveProblems }}</div>
-              <div class="rank">1</div>
-            </div>
-          </div>
-          
-          <!-- 第三名 -->
-          <div class="podium-item third">
-            <div class="avatar-container">
-              <img :src="topStudents[2].avatar" class="avatar" />
-              <div class="crown third-crown">🥉</div>
-            </div>
-            <div class="podium-base">
-              <div class="name">{{ topStudents[2].name }}</div>
-              <div v-if="selection === 'duration'">{{ topStudents[2].studyTime }}</div>
-              <div v-if="selection === 'completedCourses'">{{ topStudents[2].completedCourses }}</div>
-              <div v-if="selection === 'solveProblems'">{{ topStudents[2].solveProblems }}</div>
-              <div class="rank">3</div>
-            </div>
-          </div>
+      <div class="podium">
+        <!-- 第二名 -->
+        <div class="podium-item second" v-if="topThree[1]">
+          <img :src="topThree[1].avatar" class="avatar" />
+          <img :src="topImages[1]" class="rank-img" />
+          <div class="name">{{ topThree[1].name }}</div>
+          <div class="value">{{ getRankingValue(topThree[1]) }}</div>
+        </div>
+        <!-- 第一名 -->
+        <div class="podium-item first" v-if="topThree[0]">
+          <img :src="topThree[0].avatar" class="avatar" />
+          <img :src="topImages[0]" class="rank-img" />
+          <div class="name">{{ topThree[0].name }}</div>
+          <div class="value">{{ getRankingValue(topThree[0]) }}</div>
+        </div>
+        <!-- 第三名 -->
+        <div class="podium-item third" v-if="topThree[2]">
+          <img :src="topThree[2].avatar" class="avatar" />
+          <img :src="topImages[2]" class="rank-img" />
+          <div class="name">{{ topThree[2].name }}</div>
+          <div class="value">{{ getRankingValue(topThree[2]) }}</div>
         </div>
       </div>
 
       <!-- 4名以后的表格展示 -->
       <div class="other-rankings">
-        <h3>其他排名</h3>
+        <!-- <h3>其他排名</h3> -->
         <table class="ranking-table">
           <thead>
             <tr>
@@ -128,8 +102,12 @@
           <tbody>
             <tr v-for="(student, idx) in otherStudents" :key="student.id">
               <td>
-                <span class="rank-num">{{ idx + 4 }}</span>
+              <img v-if="idx < 5 - 3 && currentPage === 1" :src="topImages[idx + 3]" alt="top icon" class="rank-img" />
+              <span v-else class="rank-num">{{ idx + 4 + (currentPage - 1) * pageSize }}</span>
               </td>
+              <!-- <td>
+                <span class="rank-num">{{ idx + 4 }}</span>
+              </td> -->
               <td>
                 <img :src="student.avatar" class="avatar" />
                 <span class="name">{{ student.name }}</span>
@@ -176,6 +154,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import http from '@/utils/http.js'
+import top1 from '@/assets/images/top1.png'
+import top2 from '@/assets/images/top2.png'
+import top3 from '@/assets/images/top3.png'
+import top4 from '@/assets/images/top4.png'
+import top5 from '@/assets/images/top5.png'
+
+const topImages = [top1, top2, top3, top4, top5]
 
 const activeTab = ref('all')
 const selection = ref('duration')
@@ -218,13 +203,49 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString('zh-CN')
 }
 
-// 前三名数据
-const topStudents = ref([
-  { name: '张三', id: '10001', avatar: 'https://randomuser.me/api/portraits/men/1.jpg', solveProblems: 98, studyTime: '120小时', completedCourses: 15 },
-  { name: '李四', id: '10002', avatar: 'https://randomuser.me/api/portraits/women/2.jpg', solveProblems: 95, studyTime: '110小时', completedCourses: 14 },
-  { name: '王五', id: '10003', avatar: 'https://randomuser.me/api/portraits/men/3.jpg', solveProblems: 92, studyTime: '105小时', completedCourses: 13 }
+// mock 前5名学生数据
+const topThree = ref([
+  {
+    id: '10001',
+    name: '张三',
+    avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
+    studyTime: '120小时',
+    completedCourses: 15,
+    solveProblems: 98
+  },
+  {
+    id: '10002',
+    name: '李四',
+    avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
+    studyTime: '110小时',
+    completedCourses: 14,
+    solveProblems: 95
+  },
+  {
+    id: '10003',
+    name: '王五',
+    avatar: 'https://randomuser.me/api/portraits/men/3.jpg',
+    studyTime: '105小时',
+    completedCourses: 13,
+    solveProblems: 92
+  },
+  {
+    id: '10004',
+    name: '赵六',
+    avatar: 'https://randomuser.me/api/portraits/women/4.jpg',
+    studyTime: '98小时',
+    completedCourses: 12,
+    solveProblems: 89
+  },
+  {
+    id: '10005',
+    name: '钱七',
+    avatar: 'https://randomuser.me/api/portraits/men/5.jpg',
+    studyTime: '95小时',
+    completedCourses: 11,
+    solveProblems: 87
+  }
 ])
-
 // 4名以后的数据
 const otherStudents = ref([
   { name: '赵六', id: '10004', avatar: 'https://randomuser.me/api/portraits/women/4.jpg', solveProblems: 89, studyTime: '98小时', completedCourses: 12 },
@@ -235,6 +256,13 @@ const otherStudents = ref([
   { name: '郑十一', id: '10009', avatar: 'https://randomuser.me/api/portraits/men/9.jpg', solveProblems: 78, studyTime: '82小时', completedCourses: 7 },
   { name: '王十二', id: '10010', avatar: 'https://randomuser.me/api/portraits/women/10.jpg', solveProblems: 75, studyTime: '78小时', completedCourses: 6 }
 ])
+
+function getRankingValue(student) {
+  if (selection.value === 'duration') return student.studyTime
+  if (selection.value === 'completedCourses') return student.completedCourses
+  if (selection.value === 'solveProblems') return student.solveProblems
+  return ''
+}
 
 const switchTab = (tab) => {
   activeTab.value = tab
@@ -300,7 +328,7 @@ onMounted(() => {
   align-items: center;
 }
 
-.month-select {
+.ranking-select {
   border: 1px solid #eee;
   border-radius: 8px;
   padding: 8px 12px;
@@ -420,31 +448,96 @@ onMounted(() => {
   justify-content: center;
   align-items: flex-end;
   gap: 20px;
-  height: 300px;
+  margin-top: -60px;
+  margin-bottom: 8px;
 }
 
+/* ✅ 通用样式：添加 forwards 保证动画后不恢复 */
 .podium-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: relative;
+  border-radius: 12px 12px 4px 4px;
+  padding: 24px 12px 16px 12px;
+  width: 109px; 
+  transform: translateY(-50px) scale(0.8);
+  opacity: 0;
+  animation: enter 0.6s ease-out forwards; /* ✅ 加 forwards */
+  transition: transform 0.2s ease;
+  color: #fff;
+  box-shadow:
+    inset 0 6px 10px rgba(255, 255, 255, 0.3),
+    0 6px 10px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.1), transparent 60%);
 }
 
-.podium-item.first {
-  order: 2;
+/* ✅ 动画延迟分别给 */
+.podium-item.second  { height: 230px; background-color: #B0BEC5; animation-delay: 0.1s; }
+.podium-item.first   { height: 270px; background-color: #FFC107; animation-delay: 0.3s; }
+.podium-item.third   { height: 190px; background-color: #D7A86E; animation-delay: 0.5s; }
+
+/* ✅ 入场动画定义 */
+@keyframes enter {
+  0% {
+    transform: translateY(-50px) scale(0.8);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(10px) scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
 
-.podium-item.second {
-  order: 1;
+/* ✅ 保留你的头像样式 + 优化 */
+.podium-item .avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin-bottom: 8px;
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
 }
 
-.podium-item.third {
-  order: 3;
+/* ✅ 奖牌图标 */
+.rank-img {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 4px;
 }
+
+/* ✅ 名字+数值 */
+.podium-item .name {
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 4px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.podium-item .value {
+  font-size: 1.1em;
+  font-weight: bold;
+  color:  #0400f6;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+
 
 .avatar-container {
   position: relative;
   margin-bottom: 16px;
+}
+
+.rank-img {
+  width: 32px;
+  height: 32px;
+  vertical-align: middle;
 }
 
 .avatar-container .avatar {
