@@ -4,7 +4,6 @@
       <h2>教师</h2>
       <div class="teacher-actions">
         <button class="btn export">导出</button>
-        <button class="btn add">+ 添加教师</button>
       </div>
     </div>
     <div class="teacher-table-wrapper">

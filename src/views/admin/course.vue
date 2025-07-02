@@ -37,7 +37,7 @@
             <th>课程编号</th>
             <th>类型</th>
             <th>讲师</th>
-            <th>订阅</th>
+            <th>订阅数</th>
             <th>价格</th>
             <th>状态</th>
           </tr>
@@ -95,38 +95,56 @@
             <th>排名</th>
             <th>课程名称</th>
             <th>讲师</th>
-            <th>订阅数量</th>
+            <th>订阅数</th>
             <th>价格</th>
-            <th>节数</th>
-            <th>总时间</th>
             <th>状态</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(course, idx) in hotCourses" :key="course.id">
+          <tr v-for="(course, idx) in rankingList" :key="course.courseId">
             <td>
-              <img v-if="idx < 5" :src="topImages[idx]" alt="top icon" class="rank-img" />
-              <span v-else class="rank-num">{{ idx+1 }}</span>
+              <img v-if="idx < 5 && rankingCurrentPage === 1" :src="topImages[idx]" alt="top icon" class="rank-img" />
+              <span v-else class="rank-num">{{ idx + 1 + (rankingCurrentPage - 1) * rankingPageSize }}</span>
             </td>
             <td>
-              <img :src="course.img" class="cover" />
+              <img :src="course.coverUrl" class="cover" />
               <div class="info">
                 <div class="name">{{ course.title }}</div>
-                <div class="id">#{{ course.id }}</div>
+                <div class="id">#{{ course.courseId }}</div>
               </div>
             </td>
-            <td>{{ course.teacher }}</td>
-            <td>{{ course.count }}</td>
-            <td>{{ course.price }}</td>
-            <td>{{ course.lessons }}</td>
-            <td>{{ course.duration }}</td>
+            <td>{{ course.teacherName }}</td>
+            <td>{{ course.subscriberCount }}</td>
+            <td>￥{{ course.price }}</td>
             <td>
-              <span :class="['status', course.statusClass]">{{ course.statusText }}</span>
+              <span :class="['status', getStatusClass(course.status)]">{{ getStatusText(course.status) }}</span>
             </td>
           </tr>
         </tbody>
       </table>
-      <div class="table-footer">显示 {{ hotCourses.length }} 个结果</div>
+      
+      <div class="pagination-wrapper" v-if="activeTab === 'ranking'">
+        <div class="pagination-info">
+          显示 {{ (rankingCurrentPage - 1) * rankingPageSize + 1 }}-{{ Math.min(rankingCurrentPage * rankingPageSize, rankingTotal) }} 条，共 {{ rankingTotal }} 条
+        </div>
+        <div class="pagination">
+          <button 
+            :disabled="rankingCurrentPage === 1" 
+            @click="changeRankingPage(rankingCurrentPage - 1)"
+            class="page-btn prev"
+          >
+            上一页
+          </button>
+          <span class="page-info">{{ rankingCurrentPage }} / {{ rankingTotalPages }}</span>
+          <button 
+            :disabled="rankingCurrentPage === rankingTotalPages" 
+            @click="changeRankingPage(rankingCurrentPage + 1)"
+            class="page-btn next"
+          >
+            下一页
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -200,99 +218,36 @@ const getStatusText = (status) => {
   }
 }
 
-const hotCourses = ref([
-  {
-    id: '54204152',
-    title: '机器学习算法',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 24,
-    duration: '248小时',
-    statusText: '已发布',
-    statusClass: 'published'
-  },
-  {
-    id: '54204153',
-    title: '均衡饮食食谱',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '已发布',
-    statusClass: 'published'
-  },
-  {
-    id: '54204154',
-    title: '减少技术',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '已下架',
-    statusClass: 'offline'
-  },
-  {
-    id: '54204155',
-    title: '用户界面设计',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '即将发布',
-    statusClass: 'pending'
-  },
-  {
-    id: '54204156',
-    title: '网页设计与开发',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '已发布',
-    statusClass: 'published'
-  },
-  {
-    id: '54204157',
-    title: '心理学入门与心灵',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '已发布',
-    statusClass: 'published'
-  },
-  {
-    id: '54204158',
-    title: '利用数据进行决策',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '已发布',
-    statusClass: 'published'
-  },
-  {
-    id: '54204159',
-    title: '从零开始构建网站',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '已发布',
-    statusClass: 'published'
+const rankingList = ref([])
+const rankingCurrentPage = ref(1)
+const rankingPageSize = ref(10)
+const rankingTotal = ref(0)
+const rankingTotalPages = ref(0)
+
+const fetchRankingList = async (page = 1) => {
+  const response = await http.get(`/admin/courses/ranking?page=${page}&size=${rankingPageSize.value}`)
+  if (response.data.status === 200) {
+    const data = response.data.data
+    rankingList.value = data.records
+    rankingTotal.value = data.total
+    rankingTotalPages.value = Math.ceil(data.total / rankingPageSize.value)
+    rankingCurrentPage.value = data.current
   }
-])
+}
+
+const changeRankingPage = (page) => {
+  if (page >= 1 && page <= rankingTotalPages.value) {
+    fetchRankingList(page)
+  }
+}
 
 const switchTab = (tab) => {
   activeTab.value = tab
+  if (tab === 'ranking') {
+    fetchRankingList(1)
+  } else if (tab === 'all') {
+    fetchCourseList(1)
+  }
 }
 
 // 页面加载时获取数据

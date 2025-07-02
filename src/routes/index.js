@@ -12,7 +12,7 @@ import Chat from '../views/chat.vue'
 import FaceTest from '../views/FaceTest.vue'
 import CourseList from '../views/Course/CourseList.vue'
 import CourseDetail from '../views/Course/CourseDetail.vue'
-// import Chat from '../views/chat.vue';
+import Chat from '../views/chat.vue';
 
 
 const routes = [
@@ -167,6 +167,10 @@ const routes = [
             {
                 path: 'hot-courses',
                 component: () => import('@/views/admin/hot_courses.vue')
+            },
+            {
+                path: 'notice',
+                component: () => import('@/views/admin/notice.vue')
             }
         ]
     }
