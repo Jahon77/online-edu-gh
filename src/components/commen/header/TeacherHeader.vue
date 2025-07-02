@@ -14,14 +14,14 @@
              <ul class="dropdown-menu" v-show="showCourseDropdown">
                 <li class="dropdown-item" @click="goTo('create')">创建课程</li>
                 <li class="dropdown-item" @click="goTo('teacherCourseList')">课程列表</li>
-                <li class="dropdown-item" @click="goTo(' ')">草稿箱</li>
+                <li class="dropdown-item" @click="goTo('courseDraftBox')">草稿箱</li>
              </ul>
          </li>
          <li class="menu-item dropdown" @mouseenter="showStudentDropdown = true" @mouseleave="showStudentDropdown = false">
             学生管理与互动
              <ul class="dropdown-menu" v-show="showStudentDropdown">
                 <li class="dropdown-item" @click="goTo('studentManagement')">学生管理</li>
-                <li class="dropdown-item" @click="goTo('chat')">互动管理</li>
+                <li class="dropdown-item" @click="goTo('commentManagement')">互动管理</li>
              </ul>
          </li>
          <li class="menu-item dropdown" @mouseenter="showLiveDropdown = true" @mouseleave="showLiveDropdown = false">
@@ -90,6 +90,10 @@
           this.$router.push({ name: 'index' });
         } else if (type === 'studentManagement') {
           this.$router.push({ name: 'studentManagement' });
+        } else if (type === 'commentManagement') {
+          this.$router.push({ name: 'commentManagement' });
+        }else if (type === 'courseDraftBox') {
+          this.$router.push({ name: 'courseDraftBox' });
         } else if (type === 'chat') {
           this.$router.push({ name: 'chat' });
         } 
@@ -106,10 +110,13 @@
           case 'teacherCourseList':
             this.currentPath = '课程管理 > 课程列表';
             break;
+          case 'courseDraftBox':
+            this.currentPath = '课程管理 > 草稿箱';
+            break;
           case 'studentManagement':
             this.currentPath = '学生管理与互动 > 学生管理';
             break;
-          case 'chat':
+          case 'commentManagement':
             this.currentPath = '学生管理与互动 > 互动管理';
             break;
           case 'login':

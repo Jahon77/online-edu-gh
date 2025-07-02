@@ -219,7 +219,7 @@ const allRegisterData = ref([])
 const hotCourses = ref([])
 
 const fetchHotCourses = async () => {
-  const res = await http.get('/admin/courses/ranking?page=1&size=5')
+  const res = await http.get('http://localhost:8080/admin/courses/ranking?page=1&size=5')
   if (res.data.status === 200) {
     hotCourses.value = res.data.data.records
   }
@@ -249,7 +249,8 @@ const getStatusText = (status) => {
 // 获取学生统计数据
 const fetchStudentStats = async () => {
   try {
-    const response = await http.get('admin/student-stats')
+    const response = await http.get('http://localhost:8080/admin/student-stats')
+    // console.log("学生response", response)
     if (response.data.status === 200) {
       studentStats.value = response.data.data
     } else {
@@ -263,7 +264,8 @@ const fetchStudentStats = async () => {
 // 获取课程统计数据
 const fetchCourseStats = async () => {
   try {
-    const response = await http.get('admin/course-stats')
+    const response = await http.get('http://localhost:8080/admin/course-stats')
+    // console.log("response", response)
     if (response.data.status === 200) {
       courseStats.value = response.data.data
     } else {
@@ -277,8 +279,7 @@ const fetchCourseStats = async () => {
 // 获取教师统计数据
 const fetchTeacherStats = async () => {
   try {
-    const response = await http.get('admin/teacher-stats')
-    // console.log("教师response",response)
+    const response = await http.get('http://localhost:8080/admin/teacher-stats')
     if (response.data.status === 200) {
       teacherStats.value = response.data.data
     } else {
@@ -291,11 +292,12 @@ const fetchTeacherStats = async () => {
 
 // 获取月活量
 const fetchActiveStudents = async () => {
-  const res = await http.get('/admin/statistics/monthly-active-students')
-  if (res.data && Array.isArray(res.data)) {
-    allActiveData.value = res.data
+  const res = await http.get('http://localhost:8080/admin/statistics/monthly-active-students')
+  // console.log("res", res)
+  if (res.data && Array.isArray(res.data.data)) {
+    allActiveData.value = res.data.data
     // 提取所有年份
-    const years = [...new Set(res.data.map(item => item.month.slice(0, 4)))]
+    const years = [...new Set(res.data.data.map(item => item.month.slice(0, 4)))]
     activeYears.value = years
     activeYear.value = years[years.length - 1] // 默认最新年
     updateActiveChart()
@@ -304,11 +306,13 @@ const fetchActiveStudents = async () => {
 
 // 获取月注册量
 const fetchRegisterStudents = async () => {
-  const res = await http.get('/admin/statistics/monthly-registered-students')
-  if (res.data && Array.isArray(res.data)) {
-    allRegisterData.value = res.data
+  const res = await http.get('http://localhost:8080/admin/statistics/monthly-registered-students')
+
+  // console.log("res", res)
+  if (res.data && Array.isArray(res.data.data)) {
+    allRegisterData.value = res.data.data
     // 提取所有年份
-    const years = [...new Set(res.data.map(item => item.month.slice(0, 4)))]
+    const years = [...new Set(res.data.data.map(item => item.month.slice(0, 4)))]
     registerYears.value = years
     registerYear.value = years[years.length - 1] // 默认最新年
     updateRegisterChart()
@@ -332,7 +336,7 @@ function updateRegisterChart() {
 const fetchUserInfo = async () => {
   try {
     // console.log('开始获取用户信息...');
-    const response = await http.get('/user/user-info')
+    const response = await http.get('http://localhost:8080/user/user-info')
     // console.log('获取用户信息响应:', response);
     
     if (response.data && response.data.status === 0) { // 成功状态码是0
@@ -340,7 +344,7 @@ const fetchUserInfo = async () => {
       // console.log('用户信息数据:', data);
       if (data && data.username) {
         userStore.setUser(data);
-        console.log('用户信息已设置到store:', data);
+        // console.log('用户信息已设置到store:', data);
       } else {
         console.error('用户信息数据格式不正确:', data);
       }

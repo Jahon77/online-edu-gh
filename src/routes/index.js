@@ -84,6 +84,16 @@ const routes = [
         component: ()=> import('../views/StudentManagement.vue')
     },
     {
+        path: '/teacher/comment-management',
+        name: 'commentManagement',
+        component: ()=> import('../views/CommentManagement.vue')
+    },
+    {
+        path: '/teacher/course-draft-box',
+        name: 'courseDraftBox',
+        component: ()=> import('../views/CourseDraftBox.vue')
+    },
+    {
         path: '/notice',
         name: 'notice',
         component: Notice

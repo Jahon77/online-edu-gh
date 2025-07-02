@@ -79,7 +79,7 @@ const totalPages = ref(0)
 const fetchTeacherList = async (page = 1) => {
   try {
     const response = await http.get(`/admin/teachers?page=${page}&size=${pageSize.value}`)
-    console.log("教师", response)
+    // console.log("教师", response)
     if (response.data.status === 200) {
       const data = response.data.data
       teacherList.value = data.records
