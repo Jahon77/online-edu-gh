@@ -92,26 +92,28 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(course, idx) in hotCourses" :key="course.id">
-              <td>
-                <img v-if="idx < 5" :src="topImages[idx]" alt="top icon" class="rank-img" />
-              </td>
-              <td>
-                <img :src="course.img" class="course-img" />
-                <div class="course-info">
-                  <div class="course-title">{{ course.title }}</div>
-                  <div class="course-id">#{{ course.id }}</div>
-                </div>
-              </td>
-              <td>{{ course.teacher }}</td>
-              <td>{{ course.count }}</td>
-              <td>{{ course.price }}</td>
-              <td>{{ course.lessons }}</td>
-              <td>{{ course.duration }}</td>
-              <td>
-                <span :class="['status', course.statusClass]">{{ course.statusText }}</span>
-              </td>
-            </tr>
+            <!-- template 热门课程区块部分 -->
+              <tr v-for="(course, idx) in hotCourses" :key="course.courseId">
+                <td>
+                  <img v-if="idx < 5" :src="topImages[idx]" alt="top icon" class="rank-img" />
+                  <span v-else>{{ idx + 1 }}</span>
+                </td>
+                <td>
+                  <img :src="course.coverUrl" class="course-img" />
+                  <div class="course-info">
+                    <div class="course-title">{{ course.title }}</div>
+                    <div class="course-id">#{{ course.courseId }}</div>
+                  </div>
+                </td>
+                <td>{{ course.teacherName }}</td>
+                <td>{{ course.subscriberCount }}</td>
+                <td>￥{{ course.price }}</td>
+                <td>-</td> <!-- 节数和总时间后端如未返回可先留空或补充 -->
+                <td>-</td>
+                <td>
+                  <span :class="['status', getStatusClass(course.status)]">{{ getStatusText(course.status) }}</span>
+                </td>
+              </tr>
           </tbody>
         </table>
       </div>
@@ -214,56 +216,34 @@ const registerYears = ref([])
 const allActiveData = ref([])
 const allRegisterData = ref([])
 
-const hotCourses = [
-  {
-    id: '54204152',
-    // img: require('@/assets/images/1.jpg'),
-    title: '机器学习算法',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 24,
-    duration: '248小时',
-    statusText: '已发布',
-    statusClass: 'published'
-  },
-  {
-    id: '54204153',
-    // img: require('@/assets/images/2.jpg'),
-    title: '均衡饮食食谱',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '已发布',
-    statusClass: 'published'
-  },
-  {
-    id: '54204154',
-    // img: require('@/assets/images/3.jpg'),
-    title: '减少技术',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '已下架',
-    statusClass: 'offline'
-  },
-  {
-    id: '54204155',
-    // img: require('@/assets/images/4.jpg'),
-    title: '用户界面设计',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '即将发布',
-    statusClass: 'pending'
+const hotCourses = ref([])
+
+const fetchHotCourses = async () => {
+  const res = await http.get('/admin/courses/ranking?page=1&size=5')
+  if (res.data.status === 200) {
+    hotCourses.value = res.data.data.records
   }
-]
+}
+
+const getStatusClass = (status) => {
+  switch (status) {
+    case 1: return 'success'
+    case 2: return 'danger'
+    case 3: return 'warning'
+    case 4: return 'danger'
+    default: return 'warning'
+  }
+}
+const getStatusText = (status) => {
+  switch (status) {
+    case 0: return '草稿'
+    case 1: return '已发布'
+    case 2: return '已下架'
+    case 3: return '审核中'
+    case 4: return '拒绝'
+    default: return '未知'
+  }
+}
 
 
 // 获取学生统计数据
@@ -393,6 +373,9 @@ onMounted(() => {
 
   // 获取月注册量
   fetchRegisterStudents()
+
+  // 获取热门课程
+  fetchHotCourses()
 })
 </script>
 

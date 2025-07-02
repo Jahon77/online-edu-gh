@@ -883,6 +883,13 @@ export default {
     },
     async handleSubmit() {
       if (this.loginMode !== 'password') return;
+      
+      // 验证输入
+      if (!this.username || !this.password || !this.captchaCode) {
+        this.loginStatusMessage = '请填写完整的登录信息';
+        return;
+      }
+
       try {
         const loginData = {
           username: this.username,
@@ -891,7 +898,8 @@ export default {
           captchaKey: this.captchaKey
         };
         
-        this.loginStatusMessage = '';
+        // 清空之前的状态消息
+        this.loginStatusMessage = '正在登录中...';
         
         const response = await axios.post('http://localhost:8080/login', loginData, {
           headers: {
@@ -905,10 +913,14 @@ export default {
           const loginResp = response.data.data;
           this.loginStatusMessage = '您已成功登录，正在跳转...';
           
+          // 设置 cookie
           this.setCookie('satoken', loginResp.saTokenInfo.tokenValue, 1);
           this.setCookie('username', loginResp.username, 1);
           this.setCookie('userid', loginResp.userId, 1);
           this.setCookie('name', loginResp.name, 1);
+          
+          // 延迟3秒后跳转
+          await new Promise(resolve => setTimeout(resolve, 3000));
           
           // 检查是否有重定向路径
           const redirectPath = localStorage.getItem('redirectPath');

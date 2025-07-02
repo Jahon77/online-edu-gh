@@ -26,6 +26,10 @@
               <img src="@/assets/images/chat.png" alt="聊天" class="icon" />
               聊天
             </li>
+            <li :class="{active: $route.path === '/admin/notice'}" @click="goTo('/admin/notice')">
+              <img src="@/assets/images/notice2.png" alt="通知" class="icon" />
+              通知
+            </li>
             <div class="title">帮助</div>
             <li :class="{active: $route.path === '/admin/setting'}" @click="goTo('/admin/setting')">
               <img src="@/assets/images/setting.png" alt="设置" class="icon" />
