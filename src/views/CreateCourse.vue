@@ -74,7 +74,7 @@
             <h3>章节信息</h3>
             <div v-for="(chapter, index) in chapters" :key="index" class="chapter-card">
               <div class="form-row">
-                <label>章节标题</label>
+                <label class="wide-label">章节标题</label>
                 <input v-model="chapter.title" required />
               </div>
             </div>
@@ -87,7 +87,7 @@
             <h4>章节 {{ cIndex + 1 }}: {{ chapter.title }}</h4>
             <div v-for="(lesson, lIndex) in lessonsMap[cIndex]" :key="lIndex" class="lesson-card">
               <div class="form-row">
-                <label>课时标题</label>
+                <label class="wide-label">课时标题</label>
                 <input v-model="lesson.title" required />
               </div>
               <div class="form-row">
@@ -271,7 +271,7 @@
       throw error
     }
   }
-
+  
   function addChapterAndNext() {
     chapters.push({ title: '' })
     lessonsMap[chapters.length - 1] = []
@@ -393,15 +393,15 @@
       }
 
       // 3. 构造payload并提交
-      const payload = {
+    const payload = {
         course: { ...course },
-        chapters: chapters.map((chapter, idx) => ({
+      chapters: chapters.map((chapter, idx) => ({
           chapter: { title: chapter.title },
-          lessons: (lessonsMap[idx] || []).map(lesson => ({
-            title: lesson.title,
-            videoUrl: lesson.videoUrl,
-            duration: lesson.duration,
-            isPreview: lesson.isPreview
+        lessons: (lessonsMap[idx] || []).map(lesson => ({
+          title: lesson.title,
+          videoUrl: lesson.videoUrl,
+          duration: lesson.duration,
+          isPreview: lesson.isPreview
           }))
         }))
       }
@@ -413,46 +413,24 @@
 
       console.log('课程创建响应:', response.data)
       
+      // const courseId = response.data.data?.courseId
       // 根据后端 ResponseCode 枚举处理响应
       if (response.data && response.data.code === 0 || response.data && typeof response.data.courseId === 'number') {
         // 成功状态码为 0
         if (response.data.data && response.data.data.courseId) {
-          alert('课程创建成功！')
           router.push('/teacher/courseList')
-          step.value = 1
-          const currentUserId = getCurrentUserId()
-          Object.assign(course, {
-            teacherId: currentUserId,
-            title: '',
-            category: '',
-            level: '基础',
-            coverUrl: '',
-            introMd: '',
-            price: 0,
-            previewPercent: 10,
-            status: 0
-          })
-          chapters.splice(0)
-          Object.keys(lessonsMap).forEach(k => delete lessonsMap[k])
-          
-          // 清理图片组件状态
-          if (coverFile.value) {
-            coverFile.value.removeImage()
-          }
-        } else {
-          alert('课程创建成功但未返回课程ID')
         }
-      } else {
+    } else {
         // 失败状态码为 1 或其他
         const errorMessage = response.data?.description || response.data?.message || '课程创建失败'
         alert('课程创建失败: ' + errorMessage)
-      }
-    } catch (error) {
+    }
+  } catch (error) {
       console.error('请求错误:', error)
       alert('课程创建失败: ' + (error.response?.data?.message || error.message || '网络错误'))
     } finally {
       isSubmitting.value = false
-    }
+  }
   }
   </script>
   
@@ -682,5 +660,9 @@
   100% {
     width: 100%;
   }
+}
+
+.wide-label {
+  width: 120px;
 }
   </style>

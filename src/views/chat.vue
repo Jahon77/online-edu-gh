@@ -54,7 +54,8 @@
                     </div>
                   </div>
                   <div class="last-message" v-if="getFriendLastMessage(friend.id)">
-                    {{ getFriendLastMessage(friend.id).content }}
+                    <span v-if="getFriendLastMessage(friend.id).messageType === 'AUDIO'">【语音信息】</span>
+                    <span v-else>{{ getFriendLastMessage(friend.id).content }}</span>
                   </div>
                 </div>
                 <div class="unread-badge" v-if="getFriendUnreadCount(friend.id) > 0">
@@ -87,7 +88,9 @@
                     </div>
                   </div>
                   <div class="last-message" v-if="conv.lastMessage">
-                    {{ conv.lastMessage?.senderName || '未知用户' }}: {{ conv.lastMessage?.content }}
+                    {{ conv.lastMessage?.senderName || '未知用户' }}: 
+                    <span v-if="conv.lastMessage.messageType === 'AUDIO'">【语音信息】</span>
+                    <span v-else>{{ conv.lastMessage.content }}</span>
                   </div>
                 </div>
                 <div class="actions">
@@ -299,15 +302,31 @@
                <div class="message-avatar">{{ (msg?.senderName || 'U').substring(0, 1) }}</div>
                 <div class="message-content">
                   <div class="sender-name">{{ msg?.senderName || '未知用户' }}</div>
-                  <div class="message-text">{{ msg?.content || '' }}</div>
+                  
+                  <!-- Audio Message -->
+                  <div v-if="msg.messageType === 'AUDIO'">
+                    <audio controls :src="msg.content" style="width: 250px; height: 40px;"></audio>
+                  </div>
+                  
+                  <!-- Text Message -->
+                  <div v-else class="message-text">{{ msg?.content || '' }}</div>
                   <div class="message-time">{{ formatMessageTime(msg?.createdAt) }}</div>
                 </div>
             </div>
           </div>
           <div class="input-area">
             <template v-if="isUserAllowedToSendMessage">
-              <el-input type="textarea" :rows="3" placeholder="输入消息..." v-model="messageInput" @keyup.enter.native="sendMessage"></el-input>
-              <el-button type="primary" @click="sendMessage">发送</el-button>
+              <div v-if="isRecording" class="recording-indicator">
+                <span>正在录音中...</span>
+                <el-button type="danger" @click="toggleRecording" size="small">停止</el-button>
+              </div>
+              <template v-else>
+                <el-input type="textarea" :rows="3" placeholder="输入消息..." v-model="messageInput" @keyup.enter.native="sendMessage"></el-input>
+                <el-button type="primary" @click="sendMessage">发送</el-button>
+                <el-button @click="toggleRecording" circle :disabled="!currentConversation">
+                  <i class="el-icon-microphone">录音</i>
+                </el-button>
+              </template>
             </template>
             <template v-else>
               <div class="muted-message">{{ getMuteMessage() }}</div>
@@ -504,6 +523,12 @@ export default {
       participantsMap: {}, // 存储会话的参与者列表
       systemNotifications: [], // 确保初始化为空数组
       unreadCount: 0,
+      
+      // 录音
+      isRecording: false,
+      mediaRecorder: null,
+      audioChunks: [],
+      recordingStartTime: 0,
     };
   },
   computed: {
@@ -887,6 +912,26 @@ export default {
         this.socket.send(JSON.stringify(message));
         this.messages.push({ ...message, createdAt: new Date() });
         this.messageInput = '';
+        this.$nextTick(this.scrollToBottom);
+    },
+    sendAudioMessage(audioUrl, duration) {
+        if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+            this.$message.error('无法发送消息，请检查连接');
+            return;
+        }
+
+        const message = {
+            conversationId: this.currentConversation.conversation.id,
+            senderId: this.currentUser.id,
+            senderName: this.currentUser.name,
+            content: audioUrl,
+            messageType: 'AUDIO', // 消息类型
+            type: this.currentConversation.conversation.type, // 会话类型
+            duration: duration
+        };
+
+        this.socket.send(JSON.stringify(message));
+        this.messages.push({ ...message, createdAt: new Date() });
         this.$nextTick(this.scrollToBottom);
     },
      scrollToBottom() {
@@ -1539,6 +1584,85 @@ export default {
       });
       
       return conversation ? conversation.unreadCount || 0 : 0;
+    },
+    // 语音相关方法
+    toggleRecording() {
+      if (this.isRecording) {
+        this.stopRecording();
+      } else {
+        this.startRecording();
+      }
+    },
+    
+    startRecording() {
+      if (!this.currentConversation) {
+        this.$message.warning('请先选择一个会话');
+        return;
+      }
+      
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          this.mediaRecorder = new MediaRecorder(stream);
+          this.audioChunks = [];
+          
+          this.mediaRecorder.ondataavailable = event => {
+            this.audioChunks.push(event.data);
+          };
+          
+          this.mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+            const duration = Math.round((Date.now() - this.recordingStartTime) / 1000);
+            
+            // 如果录音时间太短，则不发送
+            if (duration < 1) {
+              this.$message.warning('录音时间太短');
+              stream.getTracks().forEach(track => track.stop());
+              return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', audioBlob, `audio_${Date.now()}.webm`);
+            formData.append('userId', this.currentUser.id);
+            
+            this.$message.info('正在上传语音...');
+
+            // 创建一个没有拦截器的临时axios实例来上传文件
+            const uploadInstance = axios.create();
+            uploadInstance.post('/api/file/upload/audio', formData, {
+              headers: { 
+                'Content-Type': 'multipart/form-data',
+                'satoken': this.getCookie('satoken') || ''
+              }
+            }).then(res => {
+              if (res.data.status === 0) {
+                this.$message.success('语音发送成功');
+                const { fileUrl } = res.data.data;
+                this.sendAudioMessage(fileUrl, duration);
+              } else {
+                this.$message.error(res.data.message || '语音上传失败');
+              }
+            }).catch(() => {
+              this.$message.error('语音上传失败');
+            }).finally(() => {
+              // 停止录音后需要关闭媒体流
+              stream.getTracks().forEach(track => track.stop());
+            });
+          };
+          
+          this.mediaRecorder.start();
+          this.recordingStartTime = Date.now();
+          this.isRecording = true;
+        })
+        .catch(() => {
+          this.$message.error('无法获取麦克风权限，请检查设置');
+        });
+    },
+
+    stopRecording() {
+      if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+        this.mediaRecorder.stop();
+      }
+      this.isRecording = false;
     },
   },
   created() {
@@ -2278,5 +2402,22 @@ export default {
   text-align: center;
 }
 
+.recording-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  color: #333;
+  font-style: italic;
+}
+
+.recording-indicator span {
+  margin-right: 15px;
+}
+
+:deep(.input-area .el-button[circle]) {
+  margin-left: 10px;
+}
 
 </style> 
