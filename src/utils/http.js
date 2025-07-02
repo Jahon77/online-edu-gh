@@ -1,92 +1,68 @@
 import axios from 'axios'
+import { ElMessage } from 'element-plus'
 
 // 创建axios实例
-const service = axios.create({
-  baseURL: 'http://localhost:8080', // api的base_url
-  timeout: 5000 // 请求超时时间
+const instance = axios.create({
+    timeout: 15000,  // 增加超时时间到15秒
+    withCredentials: true
 })
 
-// request拦截器
-service.interceptors.request.use(
-  config => {
-    // 从Cookie中读取Token
-    const token = getCookie('satoken');
-    if (token) {
-      console.log('发送请求到:', config.url, '携带token:', token);
-      
-      // 在请求头中添加token
-      config.headers['satoken'] = token;
-      
-      // 如果是POST请求，且没有指定Content-Type，则设置为application/json
-      if (config.method === 'post' && !config.headers['Content-Type']) {
-        config.headers['Content-Type'] = 'application/json';
-      }
-    } else {
-      console.warn('No token found in cookies for URL:', config.url);
-    }
-    return config;
-  },
-  error => {
-    console.log(error)
-    return Promise.reject(error)
-  }
-)
-
-// response拦截器
-service.interceptors.response.use(
-  response => {
-    return response;
-    //修改
-    // const res = response.data
-    // if (res.code !== 200) {
-    //   // 处理错误
-    //   return Promise.reject(res)
-    // } else {
-    //   return res
-    // }
-  },
-  error => {
-    console.log('err' + error);
-    // 如果是未登录错误，判断是否需要重定向到登录页
-    if (error.response && error.response.status === 500) {
-      const message = error.response.data?.message;
-      if (message && message.includes('未能读取到有效Token')) {
-        console.error('登录已过期或未登录，请重新登录');
-        // 如果不是登录页面，则重定向到登录页
-        if (window.location.pathname !== '/login') {
-          // 保存当前路径，以便登录后返回
-          localStorage.setItem('redirectPath', window.location.pathname);
-          window.location.href = '/login';
-          return Promise.reject(new Error('登录已过期，正在跳转到登录页面'));
+// 请求拦截器
+instance.interceptors.request.use(
+    config => {
+        // 从cookie中获取token
+        const token = document.cookie.split(';').find(item => item.trim().startsWith('satoken='))
+        if (token) {
+            config.headers['satoken'] = token.split('=')[1]
         }
-      }
+        return config
+    },
+    error => {
+        console.error('Request error:', error)
+        return Promise.reject(error)
     }
-    return Promise.reject(error)
-  }
 )
 
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) {
-    const tokenValue = parts.pop().split(';').shift();
-    console.log(`读取到token: ${name}=${tokenValue}`);
-    return tokenValue;
-  }
-  
-  // 如果cookie中没有找到，尝试从localStorage获取
-  const localToken = localStorage.getItem(name);
-  if (localToken) {
-    console.log(`从localStorage读取到token: ${name}=${localToken}`);
-    // 重新设置到cookie中
-    const date = new Date();
-    date.setTime(date.getTime() + (24 * 60 * 60 * 1000)); // 1天过期
-    const expires = '; expires=' + date.toUTCString();
-    document.cookie = name + '=' + localToken + expires + '; path=/';
-    return localToken;
-  }
-  
-  return null;
-}
+// 响应拦截器
+instance.interceptors.response.use(
+    response => {
+        if (response.data.status === 10000 || response.data.message === 'SUCCESS') {
+            return response
+        } else {
+            ElMessage.error(response.data.message || '请求失败')
+            return Promise.reject(new Error(response.data.message || '请求失败'))
+        }
+    },
+    error => {
+        if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
+            ElMessage.error('请求超时，请检查网络连接')
+        } else if (error.response) {
+            switch (error.response.status) {
+                case 401:
+                    ElMessage.error('未登录或登录已过期')
+                    // 清除本地存储的登录信息
+                    document.cookie = 'satoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+                    localStorage.removeItem('satoken')
+                    // 跳转到登录页
+                    window.location.href = '/login'
+                    break
+                case 403:
+                    ElMessage.error('没有权限访问')
+                    break
+                case 404:
+                    //ElMessage.error('请求的资源不存在')
+                    break
+                case 500:
+                    ElMessage.error('服务器错误')
+                    break
+                default:
+                    ElMessage.error('网络错误')
+            }
+        } else {
+            ElMessage.error('网络连接失败，请检查网络')
+        }
+        return Promise.reject(error)
+    }
+)
 
-export default service
+export default instance

@@ -249,7 +249,7 @@
     formData.append('userId', userId)
 
     try {
-      const response = await axios.post('http://localhost:8080/file/upload', formData, {
+      const response = await axios.post('http://localhost:8080/api/file/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
