@@ -151,7 +151,11 @@
         聊天测试
       </el-button>
     </div>
-
+    //////////////////////////////////////////////////////////////////////////////////////
+    <el-button type="success" @click="goToSurveyText" class="survey-text-button">
+        问卷填写
+      </el-button>
+      ////////////////////////////////////////////////////////////////////////////////
   </Layout>
 </template>
 
@@ -252,6 +256,9 @@ export default {
     },
     goToChatTest() {
       this.$router.push('/chat');
+    },
+    goToSurveyText() {
+      this.$router.push('/survey-text');
     }
   }
 }

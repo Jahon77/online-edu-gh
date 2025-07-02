@@ -919,6 +919,15 @@ export default {
           this.setCookie('userid', loginResp.userId, 1);
           this.setCookie('name', loginResp.name, 1);
           
+            // 存入 localStorage
+          localStorage.setItem('user', JSON.stringify({
+            token: loginResp.saTokenInfo.tokenValue,
+            username: loginResp.username,
+            userId: loginResp.userId,
+            name: loginResp.name,
+            role: loginResp.role
+          }));
+          
           // 延迟3秒后跳转
           await new Promise(resolve => setTimeout(resolve, 3000));
           

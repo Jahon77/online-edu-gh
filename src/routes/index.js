@@ -132,6 +132,14 @@ const routes = [
         }
     },
     {
+        path: '/survey-text',
+        name: 'SurveyText',
+        component: () => import('../views/survey_text.vue'),
+        meta: {
+            requiresAuth: true
+        }
+    },
+    {
         path: '/admin',
         component: () => import('@/views/admin/admin_layout.vue'),
         children: [
