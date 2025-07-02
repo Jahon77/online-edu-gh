@@ -13,7 +13,6 @@ import FaceTest from '../views/FaceTest.vue'
 import CourseList from '../views/Course/CourseList.vue'
 import CourseDetail from '../views/Course/CourseDetail.vue'
 
-
 const routes = [
     {
         path: '/',
@@ -83,6 +82,16 @@ const routes = [
         path: '/teacher/student-management',
         name: 'studentManagement',
         component: ()=> import('../views/StudentManagement.vue')
+    },
+    {
+        path: '/teacher/comment-management',
+        name: 'commentManagement',
+        component: ()=> import('../views/CommentManagement.vue')
+    },
+    {
+        path: '/teacher/course-draft-box',
+        name: 'courseDraftBox',
+        component: ()=> import('../views/CourseDraftBox.vue')
     },
     {
         path: '/notice',

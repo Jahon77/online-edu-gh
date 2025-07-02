@@ -38,9 +38,9 @@
                 </div>
                 <div class="student-details">
                   <div style="display: flex; justify-content: flex-start; gap: 3rem; align-items: center;">
-  <h4 style="margin: 0;">{{ student.name }}</h4>
-  <p style="margin: 0; color: #6b7280; font-size: 0.95rem;">{{ student.phone }}</p>
-</div>
+                  <h4 style="margin: 0;">{{ student.name }}</h4>
+                  <p style="margin: 0; color: #6b7280; font-size: 0.95rem;">{{ student.phone }}</p>
+                </div>
 
                   <p>订阅时间：{{ formatDate(student.subscribeTime) }}</p>
                 </div>
@@ -130,7 +130,17 @@ import TeacherHeader from '@/components/commen/header/TeacherHeader.vue'
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 
-const teacherId = 3
+function getCurrentUserId() {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; userid=`);
+  if (parts.length === 2) {
+    const userId = parts.pop().split(";").shift();
+    return userId ? parseInt(userId) : null;
+  }
+  return null;
+}
+
+const teacherId = getCurrentUserId()
 const selectedCourseId = ref('')
 const teacherCourses = ref([])
 const students = ref([])
