@@ -2,6 +2,17 @@
   <Layout>
     <div class="course-nav-page">
       <h1>课程导航</h1>
+      
+      <!-- 添加学生个人中心链接 -->
+      <div class="student-dashboard-link-container">
+        <router-link to="/dashboard" class="student-dashboard-link">
+          <div class="dashboard-button">
+            <i class="dashboard-icon">👤</i>
+            <span>进入学生个人中心</span>
+          </div>
+        </router-link>
+      </div>
+      
       <div class="course-links">
         <router-link to="/courses" class="course-link">
           <div class="link-card">
@@ -26,6 +37,19 @@
             class="course-detail-link"
           >
             课程 #{{ id }}
+          </router-link>
+        </div>
+        
+        <!-- 添加视频播放页链接 -->
+        <h2>视频播放页直接链接</h2>
+        <div class="video-links">
+          <router-link 
+            v-for="lessonId in [1, 2, 3, 4, 5]" 
+            :key="`video-${lessonId}`" 
+            :to="`/student/video/${lessonId}?courseId=1&studentId=7`"
+            class="video-link"
+          >
+            视频 #{{ lessonId }}
           </router-link>
         </div>
       </div>
@@ -62,6 +86,41 @@ h1 {
   color: #333;
   margin-bottom: 24px;
   text-align: center;
+}
+
+/* 学生个人中心链接样式 */
+.student-dashboard-link-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.student-dashboard-link {
+  text-decoration: none;
+}
+
+.dashboard-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #F98C53, #FF6B6B);
+  color: white;
+  padding: 15px 30px;
+  border-radius: 50px;
+  font-size: 18px;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(249, 140, 83, 0.4);
+  transition: all 0.3s ease;
+}
+
+.dashboard-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(249, 140, 83, 0.6);
+}
+
+.dashboard-icon {
+  font-size: 24px;
+  margin-right: 10px;
 }
 
 .course-links {
@@ -121,6 +180,29 @@ h1 {
 
 .course-detail-link:hover {
   background: #2560c8;
+}
+
+/* 视频链接样式 */
+.video-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+  margin-bottom: 20px;
+}
+
+.video-link {
+  display: inline-block;
+  background: #4CAF50;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.video-link:hover {
+  background: #388E3C;
 }
 
 .note {
