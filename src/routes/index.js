@@ -13,9 +13,6 @@ import FaceTest from '../views/FaceTest.vue'
 import CourseList from '../views/Course/CourseList.vue'
 import CourseDetail from '../views/Course/CourseDetail.vue'
 
-
-
-
 const routes = [
     {
         path: '/',
@@ -139,6 +136,14 @@ const routes = [
         path: '/chat',
         name: 'Chat',
         component: Chat,
+        meta: {
+            requiresAuth: true
+        }
+    },
+    {
+        path: '/survey-text',
+        name: 'SurveyText',
+        component: () => import('../views/survey_text.vue'),
         meta: {
             requiresAuth: true
         }

@@ -162,8 +162,9 @@
                 <option value="single">单选题</option>
                 <option value="multiple">多选题</option>
                 <option value="text">文本题</option>
+                <option value="rating">评分题</option>
               </select>
-              <div v-if="question.type !== 'text'" class="options">
+              <div v-if="question.type !== 'text' && question.type !== 'rating'" class="options">
                 <div v-for="(option, optIndex) in question.options" :key="optIndex" class="option-item">
                   <input v-model="question.options[optIndex]" type="text" placeholder="选项内容" />
                   <button @click="removeOption(index, optIndex)" class="remove-option">×</button>
@@ -311,29 +312,30 @@ const getStatusText = (status) => {
 // 获取问卷调查列表
 const fetchSurveyList = async () => {
   try {
-    // 模拟数据，实际应该调用后端接口
-    surveyList.value = [
-      {
-        id: 1,
-        title: '课程满意度调查',
-        description: '了解学生对课程内容的满意程度',
-        target: 'students',
-        status: 'active',
-        createdAt: new Date(),
-        participantCount: 156
-      },
-      {
-        id: 2,
-        title: '教师教学反馈',
-        description: '收集学生对教师教学质量的反馈',
-        target: 'students',
-        status: 'draft',
-        createdAt: new Date(),
-        participantCount: 0
-      }
-    ]
+    const response = await http.get('/surveys')
+    if (response.data.status === 200) {
+      surveyList.value = response.data.data.records.map(survey => ({
+        id: survey.id,
+        title: survey.title,
+        description: survey.description,
+        target: getTargetFromRole(survey.targetRole),
+        status: 'active', // 暂时都设为active，后续可以添加状态字段
+        createdAt: new Date(survey.createdAt),
+        participantCount: survey.participantCount || 0
+      }))
+    }
   } catch (error) {
     console.error('获取问卷列表失败:', error)
+  }
+}
+
+// 根据角色获取目标文本
+const getTargetFromRole = (role) => {
+  switch (role) {
+    case 1: return 'students'
+    case 2: return 'teachers'
+    case 3: return 'all'
+    default: return 'all'
   }
 }
 
@@ -373,8 +375,20 @@ const formatDate = (date) => {
 }
 
 // 查看问卷结果
-const viewSurveyResults = (surveyId) => {
-  alert(`查看问卷 ${surveyId} 的结果`)
+const viewSurveyResults = async (surveyId) => {
+  try {
+    const response = await http.get(`/surveys/${surveyId}/statistics`)
+    if (response.data.status === 200) {
+      const statistics = response.data.data
+      console.log('问卷统计结果:', statistics)
+      alert(`问卷参与人数: ${statistics.participantCount}\n请查看控制台获取详细统计信息`)
+    } else {
+      alert('获取问卷结果失败：' + response.data.message)
+    }
+  } catch (error) {
+    console.error('获取问卷结果失败:', error)
+    alert('获取问卷结果失败，请重试')
+  }
 }
 
 // 编辑问卷
@@ -383,9 +397,20 @@ const editSurvey = (surveyId) => {
 }
 
 // 删除问卷
-const deleteSurvey = (surveyId) => {
+const deleteSurvey = async (surveyId) => {
   if (confirm('确定要删除这个问卷吗？')) {
-    alert(`删除问卷 ${surveyId}`)
+    try {
+      const response = await http.delete(`/surveys/${surveyId}`)
+      if (response.data.status === 200) {
+        alert('问卷删除成功')
+        fetchSurveyList()
+      } else {
+        alert('问卷删除失败：' + response.data.message)
+      }
+    } catch (error) {
+      console.error('删除问卷失败:', error)
+      alert('删除问卷失败，请重试')
+    }
   }
 }
 
@@ -426,22 +451,48 @@ const createSurvey = async () => {
   }
   
   try {
-    // 这里应该调用后端接口创建问卷
-    console.log('创建问卷:', newSurvey.value)
-    alert('问卷创建成功')
-    showCreateSurveyModal.value = false
-    fetchSurveyList()
+    // 构建创建问卷的数据
+    const createSurveyData = {
+      title: newSurvey.value.title,
+      description: newSurvey.value.description,
+      targetRole: getRoleFromTarget(newSurvey.value.target),
+      questions: newSurvey.value.questions.map(q => ({
+        questionText: q.text,
+        questionType: q.type,
+        sortOrder: 0,
+        options: q.type !== 'text' ? q.options.filter(opt => opt.trim()) : []
+      }))
+    }
     
-    // 重置表单
-    newSurvey.value = {
-      title: '',
-      description: '',
-      target: 'all',
-      questions: []
+    const response = await http.post('/surveys', createSurveyData)
+    if (response.data.status === 200) {
+      alert('问卷创建成功')
+      showCreateSurveyModal.value = false
+      fetchSurveyList()
+      
+      // 重置表单
+      newSurvey.value = {
+        title: '',
+        description: '',
+        target: 'all',
+        questions: []
+      }
+    } else {
+      alert('问卷创建失败：' + response.data.message)
     }
   } catch (error) {
     console.error('创建问卷失败:', error)
     alert('创建问卷失败，请重试')
+  }
+}
+
+// 根据目标获取角色
+const getRoleFromTarget = (target) => {
+  switch (target) {
+    case 'students': return 1
+    case 'teachers': return 2
+    case 'all': return 3
+    default: return 3
   }
 }
 
