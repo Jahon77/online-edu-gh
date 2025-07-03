@@ -107,13 +107,20 @@
                     <p>评价时间：{{ formatDate(comment.createdAt) }}</p>
                   </div>
                 </div>
-                <div class="comment-actions">
-                  <button class="chat-btn" @click="openChat(comment.userId)">
+                <div class="comment-actions" style="display: flex; gap: 10px; align-items: center;">
+                  <button class="action-btn chat-btn" @click="openChat(comment.userId)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
                     聊天
                   </button>
+                  <button class="action-btn block-btn" @click="blockComment(comment.id)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18"/>
+                        <path d="M6 6l12 12"/>
+                    </svg>
+                    拉黑
+                </button>
                 </div>
               </div>
 
@@ -223,6 +230,17 @@ const filteredComments = computed(() => {
   if (filterType.value === 'bad') return comments.value.filter(c => c.rating <= 2)
   return comments.value
 })
+const blockComment = async (commentId) => {
+  if (!confirm('确定要屏蔽该条评论吗？')) return;
+  try {
+    await axios.post(`http://localhost:8080/api/teacher/course/comment/${commentId}/block`);
+    alert('评论已成功屏蔽');
+    loadComments(); // 重新加载评论
+  } catch (e) {
+    alert('屏蔽失败，请重试');
+    console.error(e);
+  }
+};
 
 const loadTeacherCourses = async () => {
   loading.value = true
@@ -512,12 +530,12 @@ onMounted(() => loadTeacherCourses())
   font-size: 0.9rem;
 }
 
-.chat-btn {
+/* 通用操作按钮样式 */
+.action-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background-color: #3b82f6;
   color: white;
   border: none;
   border-radius: 8px;
@@ -527,9 +545,22 @@ onMounted(() => loadTeacherCourses())
   transition: background-color 0.2s;
 }
 
+/* 聊天按钮特定样式 */
+.chat-btn {
+  background-color: #3b82f6;
+}
 .chat-btn:hover {
   background-color: #2563eb;
 }
+
+/* 屏蔽按钮特定样式 */
+.block-btn {
+  background-color: #f87171;
+}
+.block-btn:hover {
+  background-color: #ef4444;
+}
+
 
 .comment-content {
   font-size: 0.9rem;
@@ -665,6 +696,7 @@ onMounted(() => loadTeacherCourses())
   margin: 0;
   font-size: 1rem;
 }
+
 
 /* 响应式设计 */
 @media (max-width: 768px) {
