@@ -43,8 +43,13 @@ app.use(metaManager)
 app.use(router)
 app.use(ElementPlus)
 
+
 // 全局挂载axios
 app.config.globalProperties.$axios = axios
+
+// 添加环境变量日志，帮助调试
+console.log('当前环境:', import.meta.env.MODE);
+console.log('API URL:', import.meta.env.VITE_API_URL);
 
 app.mount('#app')
 

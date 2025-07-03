@@ -157,7 +157,8 @@
                 <span>问题 {{ index + 1 }}</span>
                 <button @click="removeQuestion(index)" class="remove-btn">删除</button>
               </div>
-              <input v-model="question.text" type="text" placeholder="请输入问题内容" />
+              <input v-model="question.text" type="text" placeholder="请输入问题内容"
+                :class="{ error: questionErrors[index] && questionErrors[index].text }" />
               <select v-model="question.type">
                 <option value="single">单选题</option>
                 <option value="multiple">多选题</option>
@@ -166,7 +167,8 @@
               </select>
               <div v-if="question.type !== 'text' && question.type !== 'rating'" class="options">
                 <div v-for="(option, optIndex) in question.options" :key="optIndex" class="option-item">
-                  <input v-model="question.options[optIndex]" type="text" placeholder="选项内容" />
+                  <input v-model="question.options[optIndex]" type="text" placeholder="选项内容"
+                    :class="{ error: questionErrors[index] && questionErrors[index].options && questionErrors[index].options[optIndex] }" />
                   <button @click="removeOption(index, optIndex)" class="remove-option">×</button>
                 </div>
                 <button @click="addOption(index)" class="add-option">添加选项</button>
@@ -187,6 +189,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import http from '@/utils/http.js'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const activeTab = ref('course-approval')
 
@@ -207,6 +210,7 @@ const newSurvey = ref({
   target: 'all',
   questions: []
 })
+const questionErrors = ref([])
 
 // 切换标签页
 const switchTab = (tab) => {
@@ -260,11 +264,11 @@ const filteredApprovalCourses = computed(() => {
 const approveCourse = async (courseId) => {
   try {
     await http.put(`/admin/courses/${courseId}/approve`)
-    alert('审批通过成功')
+    ElMessage.success('审批通过成功')
     fetchApprovalCourses(approvalCurrentPage.value)
   } catch (error) {
     console.error('审批失败:', error)
-    alert('审批失败，请重试')
+    ElMessage.error('审批失败，请重试')
   }
 }
 
@@ -272,11 +276,11 @@ const approveCourse = async (courseId) => {
 const rejectCourse = async (courseId) => {
   try {
     await http.put(`/admin/courses/${courseId}/reject`)
-    alert('拒绝成功')
+    ElMessage.success('拒绝成功')
     fetchApprovalCourses(approvalCurrentPage.value)
   } catch (error) {
     console.error('拒绝失败:', error)
-    alert('拒绝失败，请重试')
+    ElMessage.error('拒绝失败，请重试')
   }
 }
 
@@ -381,13 +385,13 @@ const viewSurveyResults = async (surveyId) => {
     if (response.data.status === 200) {
       const statistics = response.data.data
       console.log('问卷统计结果:', statistics)
-      alert(`问卷参与人数: ${statistics.participantCount}\n请查看控制台获取详细统计信息`)
+      ElMessage.info(`问卷参与人数: ${statistics.participantCount}，详细统计见控制台`)
     } else {
-      alert('获取问卷结果失败：' + response.data.message)
+      ElMessage.error('获取问卷结果失败：' + response.data.message)
     }
   } catch (error) {
     console.error('获取问卷结果失败:', error)
-    alert('获取问卷结果失败，请重试')
+    ElMessage.error('获取问卷结果失败，请重试')
   }
 }
 
@@ -398,18 +402,23 @@ const editSurvey = (surveyId) => {
 
 // 删除问卷
 const deleteSurvey = async (surveyId) => {
-  if (confirm('确定要删除这个问卷吗？')) {
-    try {
-      const response = await http.delete(`/surveys/${surveyId}`)
-      if (response.data.status === 200) {
-        alert('问卷删除成功')
-        fetchSurveyList()
-      } else {
-        alert('问卷删除失败：' + response.data.message)
-      }
-    } catch (error) {
+  try {
+    await ElMessageBox.confirm('确定要删除这个问卷吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+    const response = await http.delete(`/surveys/${surveyId}`)
+    if (response.data.status === 200) {
+      ElMessage.success('问卷删除成功')
+      fetchSurveyList()
+    } else {
+      ElMessage.error('问卷删除失败：' + response.data.message)
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
       console.error('删除问卷失败:', error)
-      alert('删除问卷失败，请重试')
+      ElMessage.error('删除问卷失败，请重试')
     }
   }
 }
@@ -421,35 +430,51 @@ const addQuestion = () => {
     type: 'single',
     options: ['', '']
   })
+  questionErrors.value.push({ text: false, options: [false, false] })
 }
 
 // 删除问题
 const removeQuestion = (index) => {
   newSurvey.value.questions.splice(index, 1)
+  questionErrors.value.splice(index, 1)
 }
 
 // 添加选项
 const addOption = (questionIndex) => {
   newSurvey.value.questions[questionIndex].options.push('')
+  questionErrors.value[questionIndex].options.push(false)
 }
 
 // 删除选项
 const removeOption = (questionIndex, optionIndex) => {
   newSurvey.value.questions[questionIndex].options.splice(optionIndex, 1)
+  questionErrors.value[questionIndex].options.splice(optionIndex, 1)
 }
 
 // 创建问卷
 const createSurvey = async () => {
   if (!newSurvey.value.title.trim()) {
-    alert('请输入问卷标题')
+    ElMessage.warning('请输入问卷标题')
     return
   }
-  
   if (newSurvey.value.questions.length === 0) {
-    alert('请至少添加一个问题')
+    ElMessage.warning('请至少添加一个问题')
     return
   }
-  
+  // 校验每个问题和选项
+  let hasError = false
+  questionErrors.value = newSurvey.value.questions.map(q => ({
+    text: !q.text.trim(),
+    options: (q.type !== 'text' && q.type !== 'rating') ? q.options.map(opt => !opt.trim()) : []
+  }))
+  for (let i = 0; i < questionErrors.value.length; i++) {
+    if (questionErrors.value[i].text) hasError = true
+    if (questionErrors.value[i].options.some(Boolean)) hasError = true
+  }
+  if (hasError) {
+    ElMessage.warning('请完善所有问题内容和选项，红框处不能为空！')
+    return
+  }
   try {
     // 构建创建问卷的数据
     const createSurveyData = {
@@ -466,7 +491,7 @@ const createSurvey = async () => {
     
     const response = await http.post('/surveys', createSurveyData)
     if (response.data.status === 200) {
-      alert('问卷创建成功')
+      ElMessage.success('问卷创建成功')
       showCreateSurveyModal.value = false
       fetchSurveyList()
       
@@ -477,12 +502,13 @@ const createSurvey = async () => {
         target: 'all',
         questions: []
       }
+      questionErrors.value = []
     } else {
-      alert('问卷创建失败：' + response.data.message)
+      ElMessage.error('问卷创建失败：' + response.data.message)
     }
   } catch (error) {
     console.error('创建问卷失败:', error)
-    alert('创建问卷失败，请重试')
+    ElMessage.error('创建问卷失败，请重试')
   }
 }
 
@@ -1016,5 +1042,11 @@ onMounted(() => {
   font-size: 14px;
   min-width: 60px;
   text-align: center;
+}
+
+/* 新增：错误高亮样式 */
+.error {
+  border-color: #e74c3c !important;
+  background: #fff0f0;
 }
 </style>

@@ -24,7 +24,10 @@
           <div class="user-profile">
             <div class="avatar">{{ currentUser?.name?.substring(0, 1) || 'U' }}</div>
             <div class="user-info">
-              <span class="username">{{ currentUser?.name || '未登录' }}</span>
+              <div class="username-container">
+                <span class="username">{{ currentUser?.name || '未登录' }}</span>
+                <span v-if="currentUser?.role === 2" class="role-tag">【老师】</span>
+              </div>
             </div>
           </div>
           <div class="actions">
@@ -48,7 +51,10 @@
                 <div class="avatar" @click="startPrivateChatWithFriend(friend)">{{ friend?.name?.substring(0, 1) || 'U' }}</div>
                 <div class="info" @click="startPrivateChatWithFriend(friend)">
                   <div class="title-time-wrapper">
-                    <div class="title">{{ friend?.name || '未知用户' }}</div>
+                    <div class="title">
+                      {{ friend?.name || '未知用户' }}
+                      <span v-if="friend?.role === 2" class="role-tag">【老师】</span>
+                    </div>
                     <div class="last-message-time" v-if="getFriendLastMessage(friend.id)">
                       {{ formatMessageTime(getFriendLastMessage(friend.id).createdAt) }}
                     </div>
@@ -107,6 +113,43 @@
                       </el-dropdown-menu>
                     </template>
                   </el-dropdown>
+                </div>
+              </div>
+            </div>
+          </el-tab-pane>
+          <el-tab-pane label="临时会话" name="temporary">
+            <div class="conversation-list">
+              <div v-for="conv in temporaryChats" :key="conv.conversation.id"
+                   class="conversation-item"
+                   :class="{ active: currentConversation && currentConversation.conversation.id === conv.conversation.id }">
+                <div class="avatar" @click="selectConversation(conv)">{{ (conv.targetUser?.name || 'T').substring(0, 1) }}</div>
+                <div class="info" @click="selectConversation(conv)">
+                  <div class="title-time-wrapper">
+                    <div class="title">
+                      {{ conv.targetUser?.name || '未知用户' }}
+                      <span v-if="conv.targetUser?.role === 2" class="role-tag">【老师】</span>
+                    </div>
+                    <div class="last-message-time" v-if="conv.lastMessage">
+                      {{ formatMessageTime(conv.lastMessage.createdAt) }}
+                    </div>
+                  </div>
+                  <div class="last-message" v-if="conv.lastMessage">
+                    <span v-if="conv.lastMessage.messageType === 'AUDIO'">【语音信息】</span>
+                    <span v-else>{{ conv.lastMessage.content }}</span>
+                  </div>
+                </div>
+                <div class="actions">
+                  <div class="badge" v-if="conv.unreadCount > 0">{{ conv.unreadCount }}</div>
+                  <el-button
+                    type="danger"
+                    size="small"
+                    circle
+                    class="delete-btn"
+                    @click.stop="confirmDeleteTemporaryChat(conv)"
+                    title="删除会话"
+                  >
+                    <el-icon><Delete /></el-icon>
+                  </el-button>
                 </div>
               </div>
             </div>
@@ -290,7 +333,10 @@
       <div class="chat-area">
         <template v-if="currentConversation">
           <div class="chat-header">
-            <h3>{{ currentConversation.title }}</h3>
+            <h3>
+              {{ currentConversation.title }}
+              <span v-if="currentConversation.conversation.type === 'PRIVATE' && currentConversation.targetUser?.role === 2" class="role-tag">【老师】</span>
+            </h3>
             <div class="participants" v-if="currentConversation.conversation.type === 'GROUP'">
                 <el-button size="small" @click="showGroupMembersDialog = true">查看成员</el-button>
                 <el-button v-if="currentUserIsOwner" size="small" type="danger" @click="confirmDisbandGroup(currentConversation)">解散群聊</el-button>
@@ -301,7 +347,10 @@
             <div v-for="(msg, index) in messages" :key="index" class="message-item" :class="{'self': msg.senderId === currentUser?.id}">
                <div class="message-avatar">{{ (msg?.senderName || 'U').substring(0, 1) }}</div>
                 <div class="message-content">
-                  <div class="sender-name">{{ msg?.senderName || '未知用户' }}</div>
+                  <div class="sender-name">
+                    {{ msg?.senderName || '未知用户' }}
+                    <span v-if="msg?.senderRole === 2" class="role-tag">【老师】</span>
+                  </div>
                   
                   <!-- Audio Message -->
                   <div v-if="msg.messageType === 'AUDIO'">
@@ -468,6 +517,17 @@
           </span>
         </template>
       </el-dialog>
+
+      <!-- 删除临时会话对话框 -->
+      <el-dialog title="删除临时会话" v-model="deleteTemporaryChatDialogVisible" width="30%">
+        <p>确定要删除与 "{{ selectedTemporaryChat?.targetUser?.name || '未知用户' }}" 的临时会话吗？删除后聊天记录将被清空。</p>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="deleteTemporaryChatDialogVisible = false">取消</el-button>
+            <el-button type="danger" @click="deleteTemporaryChat" :loading="isDeletingTemporaryChat">确认删除</el-button>
+          </span>
+        </template>
+      </el-dialog>
     </template>
   </div>
 </template>
@@ -475,6 +535,7 @@
 <script>
 import axios from '@/utils/http.js';
 import { ref, onMounted, computed, reactive, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 export default {
   name: 'Chat',
@@ -529,6 +590,9 @@ export default {
       mediaRecorder: null,
       audioChunks: [],
       recordingStartTime: 0,
+      deleteTemporaryChatDialogVisible: false,
+      selectedTemporaryChat: null,
+      isDeletingTemporaryChat: false,
     };
   },
   computed: {
@@ -539,6 +603,19 @@ export default {
           c.group.id && 
           c.title
         );
+    },
+    temporaryChats() {
+      return this.conversations.filter(c => {
+        if (c.conversation.type !== 'PRIVATE' || !c.targetUser) {
+          return false;
+        }
+        // 如果没有最后一条消息，不显示该会话
+        if (!c.lastMessage) {
+          return false;
+        }
+        // If the other user is not in the friends list, it's a temporary chat
+        return !this.friends.some(friend => friend.id === c.targetUser.id);
+      });
     },
     currentUserIsOwnerOrAdmin() {
         if (!this.currentConversation || this.currentConversation.conversation.type !== 'GROUP' || !this.currentUser) return false;
@@ -603,11 +680,15 @@ export default {
         
         if (userId && username && token) {
           this.loginRequired = false;
+          // 先设置基本信息
+          const role = this.getCookie('role');
           this.currentUser = {
             id: parseInt(userId),
             name: this.getCookie('name') || username,
-            username: username
+            username: username,
+            role: parseInt(role) || 1
           };
+          console.log('Current user info:', this.currentUser);
           
           // 使用 Promise.all 并行加载数据
           await Promise.all([
@@ -944,7 +1025,10 @@ export default {
     const currentUserId = this.currentUser.id; // 从当前用户对象获取ID
     axios.get(`/api/friend/list?userId=${currentUserId}`) // 显式传参
         .then(res => {
-            if (res.data.status === 10000) this.friends = res.data.data;
+            if (res.data.status === 10000) {
+                this.friends = res.data.data;
+                console.log('Friends list with roles:', this.friends);
+            }
         })
         .catch(error => {
             console.error("获取好友列表失败:", error);
@@ -1664,6 +1748,42 @@ export default {
       }
       this.isRecording = false;
     },
+
+    confirmDeleteTemporaryChat(conv) {
+      this.selectedTemporaryChat = conv;
+      this.deleteTemporaryChatDialogVisible = true;
+    },
+
+    deleteTemporaryChat() {
+      if (!this.selectedTemporaryChat) return;
+      
+      this.isDeletingTemporaryChat = true;
+      const currentUserId = this.currentUser.id;
+      axios.delete(`/api/chat/conversation/${this.selectedTemporaryChat.conversation.id}?userId=${currentUserId}`)
+        .then(res => {
+          if (res.data.status === 10000) {
+            this.$message.success('临时会话删除成功');
+            
+            // 从列表移除临时会话
+            this.conversations = this.conversations.filter(c => c.conversation.id !== this.selectedTemporaryChat.conversation.id);
+            
+            // 清空当前会话
+            this.currentConversation = null;
+            this.messages = [];
+            
+            this.deleteTemporaryChatDialogVisible = false;
+            this.showGroupMembersDialog = false;
+          } else {
+            this.$message.error(res.data.message || '删除失败');
+          }
+        })
+        .catch(err => {
+          this.$message.error('操作失败: ' + err.message);
+        })
+        .finally(() => {
+          this.isDeletingTemporaryChat = false;
+        });
+    },
   },
   created() {
     this.searchTimeout = null;
@@ -1739,9 +1859,23 @@ export default {
   flex-direction: column;
 }
 
+.username-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .username {
   font-weight: 600;
   font-size: 16px;
+}
+
+.role-tag {
+  color: var(--primary-color);
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+  margin-left: 4px;
 }
 
 /* 选项卡样式 */
@@ -1780,17 +1914,37 @@ export default {
 }
 
 .conversation-item, .friend-item, .friend-request-item {
+  position: relative;
   display: flex;
   align-items: center;
-  padding: 12px 20px;
+  padding: 10px;
   cursor: pointer;
-  border-bottom: 1px solid var(--border-color);
-  transition: background-color 0.2s;
-  position: relative;
-}
-
-.conversation-item:hover, .friend-item:hover {
-  background-color: rgba(249, 140, 83, 0.05);
+  border-bottom: 1px solid #eee;
+  
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    .delete-btn {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      padding: 6px;
+      
+      &:hover {
+        background-color: #f56c6c;
+        color: white;
+      }
+    }
+  }
+  
+  &:hover {
+    .actions {
+      .delete-btn {
+        opacity: 1;
+      }
+    }
+  }
 }
 
 .conversation-item.active {
@@ -1917,10 +2071,19 @@ export default {
 }
 
 .sender-name {
-    font-size: 12px;
+  font-size: 12px;
   color: var(--text-light);
-    margin-bottom: 5px;
+  margin-bottom: 5px;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.role-tag {
+  color: var(--primary-color);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .message-text {
@@ -2418,6 +2581,19 @@ export default {
 
 :deep(.input-area .el-button[circle]) {
   margin-left: 10px;
+}
+
+.el-icon {
+  width: 1em;
+  height: 1em;
+  line-height: 1em;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  fill: currentColor;
+  color: inherit;
+  font-size: inherit;
 }
 
 </style> 

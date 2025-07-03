@@ -108,7 +108,7 @@
                   </div>
                 </div>
                 <div class="comment-actions" style="display: flex; gap: 10px; align-items: center;">
-                  <button class="action-btn chat-btn" @click="openChat(comment.studentId)">
+                  <button class="action-btn chat-btn" @click="openChat(comment.userId)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
@@ -203,12 +203,21 @@
         </div>
       </div>
     </div>
+    <ChatModal
+      v-if="isChatModalVisible"
+      :student="selectedStudentForChat"
+      :is-visible="isChatModalVisible"
+      @close="closeChatModal"
+    />
   </div>
 </template>
 
 <script setup>
 import TeacherHeader from '@/components/commen/header/TeacherHeader.vue'
+
 import { ref, onMounted, computed, watch } from 'vue'
+import ChatModal from '@/components/ChatModal.vue'
+
 import axios from 'axios'
 import ReplyNode from '@/components/ReplyNode.vue'
 
@@ -229,8 +238,13 @@ const comments = ref([])
 const courseStats = ref(null)
 const loading = ref(false)
 const filterType = ref('all')
+
 const repliesMap = ref({})
 const rootReplyInput = ref({})
+
+const isChatModalVisible = ref(false)
+const selectedStudentForChat = ref(null)
+
 
 const filteredComments = computed(() => {
   if (filterType.value === 'all') return comments.value
@@ -314,10 +328,20 @@ const loadComments = async () => {
 }
 
 const openChat = (studentId) => {
-  // 跳转到聊天页面，暂时使用alert提示
-  alert(`即将跳转到与学生的聊天页面，学生ID: ${studentId}`)
-  // 这里可以添加路由跳转逻辑
-  // router.push(`/chat/${studentId}`)
+  const comment = comments.value.find(c => c.userId === studentId);
+  if (comment) {
+    selectedStudentForChat.value = {
+      id: comment.userId,
+      name: comment.username,
+      avatar: comment.userAvatar
+    };
+    isChatModalVisible.value = true;
+  }
+}
+
+const closeChatModal = () => {
+  isChatModalVisible.value = false;
+  selectedStudentForChat.value = null;
 }
 
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('zh-CN')
