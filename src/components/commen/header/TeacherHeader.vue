@@ -31,7 +31,7 @@
                 <li class="dropdown-item" @click="goTo('teacherCourseList')">直播回放</li>
              </ul>
          </li>
-          <li class="menu-item">收入统计</li>
+          <li class="menu-item" @click="goTo('teacherProfile')">个人中心</li>
           <li class="menu-item">帮助中心</li>
           <li class="menu-item">智能客服</li>
         </ul>
@@ -94,7 +94,9 @@
           this.$router.push({ name: 'commentManagement' });
         }else if (type === 'courseDraftBox') {
           this.$router.push({ name: 'courseDraftBox' });
-        } else if (type === 'chat') {
+        } else if (type === 'teacherProfile') {
+          this.$router.push({ name: 'teacherProfile' });
+        }else if (type === 'chat') {
           this.$router.push({ name: 'chat' });
         } 
       },
@@ -118,6 +120,9 @@
             break;
           case 'commentManagement':
             this.currentPath = '学生管理与互动 > 互动管理';
+            break;
+          case 'teacherProfile':
+            this.currentPath = '个人中心';
             break;
           case 'login':
             this.currentPath = '登录';

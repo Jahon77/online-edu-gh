@@ -94,6 +94,11 @@ const routes = [
         component: ()=> import('../views/CourseDraftBox.vue')
     },
     {
+        path: '/teacher/profile',
+        name: 'teacherProfile',
+        component: ()=> import('../views/TeacherProfile.vue')
+    },
+    {
         path: '/notice',
         name: 'notice',
         component: Notice
