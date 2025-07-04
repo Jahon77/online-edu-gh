@@ -155,6 +155,9 @@ onMounted(() => {
   font-size: 1em;
   cursor: pointer;
   transition: background 0.2s;
+  margin-top: 30px;
+  margin-bottom: 25px;
+  width: 200px;
 }
 .teacher-actions .btn.export:hover {
   background: var(--main-green);

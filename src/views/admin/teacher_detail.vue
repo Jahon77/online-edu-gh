@@ -1,6 +1,6 @@
 <template>
     <div class="teacher-detail-container">
-      <button class="back-btn" @click="goBack">← 返回教师列表</button>
+      <button class="back-btn" @click="goBack">返回教师列表</button>
       <div class="teacher-info-card" v-if="!loading && teacher">
         <img class="avatar" :src="teacher.avatarUrl" alt="头像" />
         <div class="name">{{ teacher.name }}</div>
@@ -167,7 +167,7 @@ onMounted(async () => {
 
 .back-btn {
   position: absolute;
-  left: 1230px;
+  left: 2020px;
   top: 94px;
   background: var(--main-orange);
   color: #fff;
@@ -195,6 +195,7 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   border: none;
+  height: 1000px;
 }
 
 .avatar {
@@ -280,6 +281,7 @@ onMounted(async () => {
   border: none;
   min-width: 0;
   overflow-x: auto;
+  height: 1000px;
 }
 .header {
   display: flex;
