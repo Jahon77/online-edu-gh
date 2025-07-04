@@ -47,7 +47,7 @@
       <!-- 欢迎区域 -->
       <div class="welcome-section">
         <div class="welcome-text">
-          <h1>欢迎回来，{{ username }} 👋</h1>
+          <h1>欢迎回来，{{ name }} 👋</h1>
           <p>您已完成 <strong>{{ completionRate }}%</strong> 的学习目标！继续努力，提高您的学习进度！</p>
         </div>
         <div class="welcome-image">
@@ -67,7 +67,7 @@
         <div class="user-avatar">
           <img :src="userAvatar" :alt="username">
         </div>
-        <div class="user-name">{{ username }} <span class="dropdown-icon">▼</span></div>
+        <div class="user-name">{{ name }} <span class="dropdown-icon">▼</span></div>
       </div>
       
       <!-- 学习进度日历 -->
@@ -241,39 +241,69 @@ export default {
       this.calendarDays = days;
     },
     fetchUserData() {
-      // 设置默认用户ID为7
-      const userId = 7;
+      // 从localStorage或cookie中获取用户信息
+      const userStr = localStorage.getItem('user');
+      let userId;
+      
+      if (userStr) {
+        // 如果localStorage中有用户信息，则从中获取
+        const userData = JSON.parse(userStr);
+        userId = userData.userId;
+        this.username = userData.username || userData.name || '用户';
+        this.name = userData.name || '用户';
+      } else {
+        // 如果localStorage中没有，则尝试从cookie中获取
+        userId = this.getCookie('userid');
+        this.username = this.getCookie('username') || this.getCookie('name') || '用户';
+        this.name = this.getCookie('name') || '用户';
+      }
+      
+      // 如果没有获取到用户ID，则使用默认值
+      if (!userId) {
+        console.warn('未找到用户ID，使用默认值');
+        userId = 1;
+      }
+      
+      // 存储用户ID到localStorage
       localStorage.setItem('userId', userId);
       
-      // 直接使用默认用户信息，不调用后端API
-      this.username = '测试用户';
-      this.userAvatar = '/src/assets/pictures/logo.png';
-      
-      console.log('使用默认用户信息:', {
+      console.log('当前用户信息:', {
         userId: userId,
         username: this.username
       });
       
-      // 以下是原来的代码，暂时注释掉
-      /*
+      // 设置默认头像
+      this.userAvatar = '/src/assets/pictures/logo.png';
+      
+      // 调用后端API获取更多用户信息
       axios.get(`http://localhost:8080/api/user/${userId}`)
         .then(response => {
           if (response.data.status === 200) {
             const userData = response.data.data;
-            this.username = userData.username || 'User';
-            this.userAvatar = userData.avatarUrl || '/src/assets/pictures/logo.png';
+            if (userData) {
+              this.username = userData.username || this.username;
+              this.userAvatar = userData.avatarUrl || this.userAvatar;
+            }
           }
         })
         .catch(error => {
           console.error('获取用户数据失败:', error);
-          // 如果API调用失败，设置默认值
-          this.username = '测试用户';
-          this.userAvatar = '/src/assets/pictures/logo.png';
         });
-      */
     },
     navigateTo(path) {
       this.$router.push(path);
+    },
+    // 获取cookie的方法
+    getCookie(name) {
+      const cookieArr = document.cookie.split(';');
+      for (let i = 0; i < cookieArr.length; i++) {
+        const cookiePair = cookieArr[i].split('=');
+        const cookieName = cookiePair[0].trim();
+        if (cookieName === name) {
+          return decodeURIComponent(cookiePair[1]);
+        }
+      }
+      return null;
     }
   }
 };

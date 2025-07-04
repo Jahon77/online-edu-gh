@@ -179,9 +179,9 @@
       <div class="user-profile">
         <div class="notification-icon">🔔</div>
         <div class="user-avatar">
-          <img :src="userAvatar" :alt="username">
+          <img :src="userAvatar" :alt="name || username">
         </div>
-        <div class="user-name">{{ username }} <span class="dropdown-icon">▼</span></div>
+        <div class="user-name">{{ name || username }} <span class="dropdown-icon">▼</span></div>
       </div>
       
       <!-- 学习统计 -->
@@ -228,8 +228,9 @@ export default {
   name: 'StudentCenterCourseList',
   data() {
     return {
-      userId: 7, // 默认用户ID
-      username: '测试用户',
+      userId: null, // 用户ID将从登录信息中获取
+      username: '',
+      name: '',
       userAvatar: '/src/assets/pictures/logo.png',
       uncompletedCourses: [],
       completedCourses: [],
@@ -257,16 +258,72 @@ export default {
     }
   },
   mounted() {
-    // 设置默认用户ID
-    localStorage.setItem('userId', this.userId);
-    
-    // 加载数据
-    this.loadAllData();
-    
-    // 获取用户信息
-    this.fetchUserData();
+    // 获取当前登录用户的ID
+    this.getUserId();
   },
   methods: {
+    // 获取当前登录用户ID
+    getUserId() {
+      // 首先尝试从localStorage中获取用户信息
+      const userStr = localStorage.getItem('user');
+      let userId;
+      
+      if (userStr) {
+        // 如果localStorage中有用户信息，则从中获取
+        try {
+          const userData = JSON.parse(userStr);
+          userId = userData.userId;
+          this.username = userData.username || '';
+          this.name = userData.name || '';
+        } catch (error) {
+          console.error('解析用户数据失败:', error);
+        }
+      } 
+      
+      // 如果localStorage中没有，则尝试从cookie中获取
+      if (!userId) {
+        userId = this.getCookie('userid');
+        this.username = this.getCookie('username') || '';
+        this.name = this.getCookie('name') || '';
+      }
+      
+      // 如果仍然没有获取到，则尝试从localStorage中的userId获取
+      if (!userId) {
+        userId = localStorage.getItem('userId');
+      }
+      
+      // 如果都没有找到，则使用默认值
+      if (!userId) {
+        console.warn('未找到用户ID，使用默认值');
+        userId = 1;
+      }
+      
+      this.userId = userId;
+      console.log('StudentCenterCourseList 当前用户ID:', userId);
+      
+      // 存储用户ID到localStorage
+      localStorage.setItem('userId', userId);
+      
+      // 加载数据
+      this.loadAllData();
+      
+      // 获取更多用户信息
+      this.fetchUserData();
+    },
+    
+    // 获取cookie的方法
+    getCookie(name) {
+      const cookieArr = document.cookie.split(';');
+      for (let i = 0; i < cookieArr.length; i++) {
+        const cookiePair = cookieArr[i].split('=');
+        const cookieName = cookiePair[0].trim();
+        if (cookieName === name) {
+          return decodeURIComponent(cookiePair[1]);
+        }
+      }
+      return null;
+    },
+    
     async loadAllData() {
       try {
         // 获取未完成课程
@@ -287,13 +344,15 @@ export default {
     
     fetchUserData() {
       // 获取用户信息
-      // axios.get(`http://localhost:8080/api/user/${this.userId}`)
-      axios.get(`http://localhost:8080/${this.userId}`)
+      axios.get(`http://localhost:8080/api/user/${this.userId}`)
         .then(response => {
           if (response.data.status === 200) {
             const userData = response.data.data;
-            this.username = userData.username || '测试用户';
-            this.userAvatar = userData.avatarUrl || '/src/assets/pictures/logo.png';
+            if (userData) {
+              this.username = userData.username || this.username || '用户';
+              this.name = userData.name || this.name || '用户';
+              this.userAvatar = userData.avatarUrl || '/src/assets/pictures/logo.png';
+            }
           }
         })
         .catch(error => {
