@@ -17,7 +17,7 @@
       </div>
       <div class="student-actions">
         <div v-if="activeTab === 'ranking'" class="ranking-filter">
-          <select  class="ranking-select">
+          <select  class="ranking-select" v-model="selection">
             <option value="duration">学习时长</option>
             <option value="completedCourses">完成课程</option>
             <option value="solveProblems">解题数</option>
@@ -48,7 +48,7 @@
             </td>
             <td>{{ item.studentId }}</td>
             <td>{{ item.phone }}</td>
-            <td>{{ item.createdAt }}</td>
+            <td>{{ formatDate(item.createdAt) }}</td>
           </tr>
         </tbody>
       </table>
@@ -81,21 +81,21 @@
       <div class="podium">
         <!-- 第二名 -->
         <div class="podium-item second hover-row" v-if="topThree[1]" @click="goToDetail(topThree[1])" style="cursor: pointer;">
-          <img :src="topThree[1].avatar" class="avatar" />
+          <img :src="topThree[1].avatarUrl" class="avatar" />
           <img :src="topImages[1]" class="rank-img" />
           <div class="name">{{ topThree[1].name }}</div>
           <div class="value">{{ getRankingValue(topThree[1]) }}</div>
         </div>
         <!-- 第一名 -->
         <div class="podium-item first hover-row" v-if="topThree[0]" @click="goToDetail(topThree[0])" style="cursor: pointer;">
-          <img :src="topThree[0].avatar" class="avatar" />
+          <img :src="topThree[0].avatarUrl" class="avatar" />
           <img :src="topImages[0]" class="rank-img" />
           <div class="name">{{ topThree[0].name }}</div>
           <div class="value">{{ getRankingValue(topThree[0]) }}</div>
         </div>
         <!-- 第三名 -->
         <div class="podium-item third hover-row" v-if="topThree[2]" @click="goToDetail(topThree[2])" style="cursor: pointer;" >
-          <img :src="topThree[2].avatar" class="avatar" />
+          <img :src="topThree[2].avatarUrl" class="avatar" />
           <img :src="topImages[2]" class="rank-img" />
           <div class="name">{{ topThree[2].name }}</div>
           <div class="value">{{ getRankingValue(topThree[2]) }}</div>
@@ -119,21 +119,18 @@
           <tbody>
             <tr v-for="(student, idx) in otherStudents" :key="student.id" @click="goToDetail(student)" style="cursor: pointer;" class="hover-row">
               <td>
-              <img v-if="idx < 5 - 3 && currentPage === 1" :src="topImages[idx + 3]" alt="top icon" class="rank-img" />
-              <span v-else class="rank-num">{{ idx + 4 + (currentPage - 1) * pageSize }}</span>
+                <img v-if="idx < 5 - 3 && currentPage === 1" :src="topImages[idx + 3]" alt="top icon" class="rank-img" />
+                <span v-else class="rank-num">{{ idx + 4 + (currentPage - 1) * pageSize }}</span>
               </td>
-              <!-- <td>
-                <span class="rank-num">{{ idx + 4 }}</span>
-              </td> -->
               <td>
-                <img :src="student.avatar" class="avatar" />
+                <img :src="student.avatarUrl" class="avatar" />
                 <span class="name">{{ student.name }}</span>
               </td>
-              <td>{{ student.id }}</td>
+              <td>{{ student.studentId }}</td>
               <td>{{ student.studyTime }}</td>
-              <td>{{ student.completedCourses }}</td>
+              <td>{{ student.finishCourseNum }}</td>
               <td>
-                <span>{{ student.solveProblems }}</span>
+                <span>{{ student.solveQuestionNum }}</span>
               </td>
             </tr>
           </tbody>
@@ -166,7 +163,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import http from '@/utils/http.js'
 import top1 from '@/assets/images/top1.png'
 import top2 from '@/assets/images/top2.png'
@@ -191,6 +188,25 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const totalPages = ref(0)
+
+// 排序字段映射
+const sortKeyMap = {
+  duration: 'studyTime',
+  completedCourses: 'finishCourseNum',
+  solveProblems: 'solveQuestionNum'
+}
+
+// 计算排序后的学生榜
+const sortedStudents = computed(() => {
+  const key = sortKeyMap[selection.value]
+  // 拷贝一份，避免影响原始 studentList
+  return [...studentList.value].sort((a, b) => (b[key] || 0) - (a[key] || 0))
+})
+
+// 榜单前三
+const topThree = computed(() => sortedStudents.value.slice(0, 3))
+// 榜单其余
+const otherStudents = computed(() => sortedStudents.value.slice(3))
 
 // 获取学生列表
 const fetchStudentList = async (page = 1) => {
@@ -223,64 +239,10 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString('zh-CN')
 }
 
-// mock 前5名学生数据
-const topThree = ref([
-  {
-    id: '10001',
-    name: '张三',
-    avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-    studyTime: '120小时',
-    completedCourses: 15,
-    solveProblems: 98
-  },
-  {
-    id: '10002',
-    name: '李四',
-    avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
-    studyTime: '110小时',
-    completedCourses: 14,
-    solveProblems: 95
-  },
-  {
-    id: '10003',
-    name: '王五',
-    avatar: 'https://randomuser.me/api/portraits/men/3.jpg',
-    studyTime: '105小时',
-    completedCourses: 13,
-    solveProblems: 92
-  },
-  {
-    id: '10004',
-    name: '赵六',
-    avatar: 'https://randomuser.me/api/portraits/women/4.jpg',
-    studyTime: '98小时',
-    completedCourses: 12,
-    solveProblems: 89
-  },
-  {
-    id: '10005',
-    name: '钱七',
-    avatar: 'https://randomuser.me/api/portraits/men/5.jpg',
-    studyTime: '95小时',
-    completedCourses: 11,
-    solveProblems: 87
-  }
-])
-// 4名以后的数据
-const otherStudents = ref([
-  { name: '赵六', id: '10004', avatar: 'https://randomuser.me/api/portraits/women/4.jpg', solveProblems: 89, studyTime: '98小时', completedCourses: 12 },
-  { name: '钱七', id: '10005', avatar: 'https://randomuser.me/api/portraits/men/5.jpg', solveProblems: 87, studyTime: '95小时', completedCourses: 11 },
-  { name: '孙八', id: '10006', avatar: 'https://randomuser.me/api/portraits/women/6.jpg', solveProblems: 85, studyTime: '92小时', completedCourses: 10 },
-  { name: '周九', id: '10007', avatar: 'https://randomuser.me/api/portraits/men/7.jpg', solveProblems: 83, studyTime: '88小时', completedCourses: 9 },
-  { name: '吴十', id: '10008', avatar: 'https://randomuser.me/api/portraits/women/8.jpg', solveProblems: 80, studyTime: '85小时', completedCourses: 8 },
-  { name: '郑十一', id: '10009', avatar: 'https://randomuser.me/api/portraits/men/9.jpg', solveProblems: 78, studyTime: '82小时', completedCourses: 7 },
-  { name: '王十二', id: '10010', avatar: 'https://randomuser.me/api/portraits/women/10.jpg', solveProblems: 75, studyTime: '78小时', completedCourses: 6 }
-])
-
 function getRankingValue(student) {
-  if (selection.value === 'duration') return student.studyTime
-  if (selection.value === 'completedCourses') return student.completedCourses
-  if (selection.value === 'solveProblems') return student.solveProblems
+  if (selection.value === 'duration') return student.studyTime + '分钟'
+  if (selection.value === 'completedCourses') return student.finishCourseNum + '门'
+  if (selection.value === 'solveProblems') return student.solveQuestionNum + '道'
   return ''
 }
 
@@ -371,6 +333,7 @@ onMounted(() => {
   outline: none;
   cursor: pointer;
   margin-right: 8px;
+  font-size: 1em;
 }
 
 .month-select:focus {
@@ -387,6 +350,9 @@ onMounted(() => {
   font-size: 1em;
   cursor: pointer;
   transition: background 0.2s;
+  margin-top: 30px;
+  margin-bottom: 25px;
+  width: 200px;
 }
 
 .student-actions .btn.export:hover {
@@ -468,7 +434,7 @@ onMounted(() => {
 .ranking-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 10px;
 }
 
 .top-three {
