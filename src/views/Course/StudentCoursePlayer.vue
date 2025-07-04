@@ -9,10 +9,9 @@
             <nav class="main-nav">
               <ul>
                 <li class="active"><router-link to="/courses">课程中心</router-link></li>
-                <li><router-link to="/index">首页</router-link></li>
-                <li><router-link to="/notice">通知公告</router-link></li>
-                <li><router-link to="/about">关于我们</router-link></li>
-                <li><router-link to="/use">使用指南</router-link></li>
+                <li><router-link to="/dashboard">我的学习</router-link></li>
+                <li><a href="#" @click.prevent>论坛</a></li>
+                <li><a href="#" @click.prevent>学习助手</a></li>
               </ul>
             </nav>
             <div class="user-actions">
@@ -20,6 +19,7 @@
               <div class="user-avatar">
                 <img src="https://via.placeholder.com/36" alt="用户头像">
               </div>
+              <button class="btn-logout" @click="logout">退出登录</button>
             </div>
           </div>
         </header>
@@ -466,6 +466,20 @@
         next();
       },
       methods: {
+        logout() {
+          // 清除本地存储的用户信息
+          localStorage.removeItem('userToken');
+          localStorage.removeItem('userInfo');
+          sessionStorage.removeItem('userToken');
+          sessionStorage.removeItem('userInfo');
+          
+          // 显示退出成功提示
+          alert('已成功退出登录');
+          
+          // 跳转到登录页面或首页
+          this.$router.push('/login');
+        },
+        
         async initPlayer() {
           // 初始化视频播放器
           console.log('初始化视频播放器，课时ID:', this.lessonId);
@@ -958,7 +972,7 @@
           
           // 生成随机颜色
           const color = this.danmakuColors[Math.floor(Math.random() * this.danmakuColors.length)];
-          const fontSize = 20 + Math.floor(Math.random() * 8);
+          const fontSize = 16 + Math.random() * 8;
           
           try {
             // 创建弹幕对象
@@ -977,10 +991,11 @@
               text: this.danmakuText,
               time: this.currentTime,
               color: color,
-              speed: 5 + Math.random() * 3,
+              speed: 0.8 + Math.random() * 0.4,
               fontSize: fontSize,
-              track: Math.floor(Math.random() * 15),
-              displayed: false
+              track: Math.floor(Math.random() * 10),
+              displayed: false,
+              isNewSent: true // 标记为新发送的弹幕
             };
             
             // 立即添加到弹幕列表并显示
@@ -1006,22 +1021,32 @@
           const containerHeight = this.$refs.videoPlayer.offsetHeight;
           const danmakuWidth = danmaku.text.length * (danmaku.fontSize / 1.8);
           
-          // 计算动画时间（基于弹幕长度、容器宽度和速度）
-          const animationDuration = (containerWidth + danmakuWidth) / (100 * danmaku.speed);
-          
-          // 确保轨道不超出容器高度
-          const maxTracks = Math.floor(containerHeight / 30) - 1;
-          const track = danmaku.track % maxTracks;
-          
           // 创建弹幕元素
           const danmakuEl = document.createElement('div');
-          danmakuEl.className = 'danmaku';
+          danmakuEl.className = danmaku.isNewSent ? 'danmaku danmaku-new' : 'danmaku danmaku-normal';
           danmakuEl.textContent = danmaku.text;
           danmakuEl.style.color = danmaku.color;
           danmakuEl.style.fontSize = `${danmaku.fontSize}px`;
-          danmakuEl.style.top = `${track * 30 + 10}px`;
-          danmakuEl.style.right = `-${danmakuWidth}px`;
-          danmakuEl.style.animation = `danmaku-move ${animationDuration}s linear forwards`;
+          
+          if (danmaku.isNewSent) {
+            // 新发送的弹幕：在屏幕上方中间显示
+            danmakuEl.style.top = '20px';
+            danmakuEl.style.left = '50%';
+            danmakuEl.style.transform = 'translateX(-50%)';
+            danmakuEl.style.animation = 'danmaku-new-send 3s ease-out forwards';
+          } else {
+            // 原有弹幕：从右向左飘动
+            // 计算动画时间（基于弹幕长度、容器宽度和速度）
+            const animationDuration = (containerWidth + danmakuWidth) / (100 * danmaku.speed);
+            
+            // 确保轨道不超出容器高度
+            const maxTracks = Math.floor(containerHeight / 30) - 1;
+            const track = danmaku.track % maxTracks;
+            
+            danmakuEl.style.top = `${track * 30 + 50}px`; // 避开新弹幕区域
+            danmakuEl.style.right = `-${danmakuWidth}px`;
+            danmakuEl.style.animation = `danmaku-move ${animationDuration}s linear forwards`;
+          }
           
           // 添加到弹幕容器
           const container = this.$refs.videoPlayer.parentNode.querySelector('.danmaku-container');
@@ -1029,11 +1054,12 @@
             container.appendChild(danmakuEl);
             
             // 动画结束后移除元素
+            const removeDelay = danmaku.isNewSent ? 3000 : (containerWidth + danmakuWidth) / (100 * danmaku.speed) * 1000;
             setTimeout(() => {
               if (container.contains(danmakuEl)) {
                 container.removeChild(danmakuEl);
               }
-            }, animationDuration * 1000);
+            }, removeDelay);
           }
           
           // 添加到活动弹幕列表（用于跟踪）
@@ -1057,9 +1083,9 @@
         updateDanmakus() {
           if (!this.danmakuEnabled || !this.$refs.videoPlayer) return;
           
-          // 显示当前时间点附近的弹幕
+          // 显示当前时间点附近的弹幕（不包括新发送的弹幕）
           const currentTimeDanmakus = this.danmakus.filter(
-            d => Math.abs(d.time - this.currentTime) < 0.5 && !d.displayed
+            d => Math.abs(d.time - this.currentTime) < 0.5 && !d.displayed && !d.isNewSent
           );
           
           // 标记已显示的弹幕
@@ -1320,6 +1346,22 @@
       object-fit: cover;
     }
     
+    .btn-logout {
+      background: #ff4757;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 10px;
+      transition: background-color 0.3s ease;
+    }
+    
+    .btn-logout:hover {
+      background: #ff3838;
+    }
+    
     /* 视频容器样式 */
     .video-container {
       display: flex;
@@ -1391,12 +1433,43 @@
       user-select: none;
     }
     
+    .danmaku-new {
+      z-index: 10;
+      text-shadow: 0 0 5px rgba(255, 255, 255, 0.7), 0 0 10px rgba(255, 255, 255, 0.5);
+      font-weight: 800;
+    }
+    
+    .danmaku-normal {
+      z-index: 5;
+    }
+    
     @keyframes danmaku-move {
       from {
         transform: translateX(100%);
       }
       to {
         transform: translateX(-100%);
+      }
+    }
+    
+    @keyframes danmaku-new-send {
+      0% {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.5);
+      }
+      20% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.2);
+      }
+      40% {
+        transform: translateX(-50%) scale(1);
+      }
+      80% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: translateX(-50%) scale(1);
       }
     }
     
