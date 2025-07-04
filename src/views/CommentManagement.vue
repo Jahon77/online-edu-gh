@@ -108,7 +108,7 @@
                   </div>
                 </div>
                 <div class="comment-actions" style="display: flex; gap: 10px; align-items: center;">
-                  <button class="action-btn chat-btn" @click="openChat(comment.userId)">
+                  <button class="action-btn chat-btn" @click="openChat(comment.id)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
@@ -302,14 +302,20 @@ const loadComments = async () => {
 }
 
 const openChat = (studentId) => {
-  const comment = comments.value.find(c => c.userId === studentId);
+  const comment = comments.value.find(c => c.id === studentId);
   if (comment) {
+    console.log('Current user ID:', getCurrentUserId());
+    console.log('Comment object:', comment);
+    
     selectedStudentForChat.value = {
-      id: comment.userId,
+      id: comment.studentId,
       name: comment.username,
-      avatar: comment.userAvatar
+      avatar: comment.userAvatar || '/default-avatar.png',
+      role: 1
     };
     isChatModalVisible.value = true;
+  } else {
+    alert('无法找到该学生信息');
   }
 }
 
