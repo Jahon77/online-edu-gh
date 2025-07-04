@@ -15,11 +15,10 @@
             <th>开设课程</th>
             <th>入职日期</th>
             <th>收益</th>
-            <th>操作</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(item, idx) in teacherList" :key="idx">
+          <tr v-for="(item, idx) in teacherList" :key="idx" @click="goToDetail(item)" style="cursor: pointer;" class="hover-row">
             <td>
               <img class="avatar" :src="item.avatarUrl || 'https://randomuser.me/api/portraits/men/32.jpg'" />
               <div class="info">
@@ -30,9 +29,6 @@
             <td>{{ item.courseCount }}</td>
             <td>{{ formatDate(item.createdAt) }}</td>
             <td>￥{{ item.totalIncome || 0 }}</td>
-            <td>
-              <button class="action edit">✏️</button>
-            </td>
           </tr>
         </tbody>
       </table>
@@ -67,6 +63,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import http from '@/utils/http.js'
+
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
+const goToDetail = (teacher) => {
+  router.push(`/admin/teacherDetail/${teacher.id}`)
+}
 
 // 分页相关数据
 const teacherList = ref([])
@@ -113,6 +116,18 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.hover-row td {
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
+  background-color: #f9fafb;  /* 默认背景 */
+}
+
+/* 鼠标悬停整行时改变所有单元格样式 */
+.teacher-table tr.hover-row:hover td {
+  background-color: #9ac9ff !important;       /* 背景加深 */
+  outline: 2px solid #409eff; /* 不占用布局空间 */      /* 蓝色边框 */
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3); /* 淡淡阴影 */
+}
+
 .teacher-page {
   background: var(--main-light);
   min-height: 100vh;
@@ -127,7 +142,7 @@ onMounted(() => {
 }
 .teacher-header h2 {
   color: var(--main-orange);
-  font-size: 1.4rem;
+  font-size: 2em;
   margin: 0;
 }
 .teacher-actions .btn {
@@ -153,6 +168,7 @@ onMounted(() => {
   border-radius: 18px;
   box-shadow: 0 2px 12px #e0e0e0;
   padding: 24px 18px;
+  font-size: 1.3em;
 }
 .teacher-table {
   width: 100%;
@@ -170,6 +186,7 @@ onMounted(() => {
   border-radius: 10px;
   padding: 10px 8px;
   vertical-align: middle;
+  font-size: 1.2em;
 }
 .teacher-table .avatar {
   width: 32px;
@@ -230,7 +247,7 @@ onMounted(() => {
 
 .pagination-info {
   color: #666;
-  font-size: 14px;
+  font-size: 1em;
 }
 
 .pagination {
@@ -246,7 +263,7 @@ onMounted(() => {
   padding: 8px 16px;
   cursor: pointer;
   transition: all 0.2s;
-  font-size: 14px;
+  font-size: 1em;
 }
 
 .page-btn:hover:not(:disabled) {
@@ -266,5 +283,6 @@ onMounted(() => {
   font-size: 14px;
   min-width: 60px;
   text-align: center;
+  font-size: 1.1em;
 }
 </style>

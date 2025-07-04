@@ -183,6 +183,18 @@ const routes = [
             {
                 path: 'notice',
                 component: () => import('@/views/admin/notice.vue')
+            },
+            {
+                path: 'teacherDetail/:id',
+                component: () => import('@/views/admin/teacher_detail.vue')
+            },
+            {
+                path: 'studentDetail/:id',
+                component: () => import('@/views/admin/student_detail.vue')
+            },
+            {
+                path: 'courseDetail/:id',
+                component: () => import('@/views/admin/course_detail.vue')
             }
         ]
     }

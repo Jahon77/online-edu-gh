@@ -563,7 +563,7 @@ onMounted(() => {
   font-weight: 500;
   color: #666;
   transition: all 0.3s ease;
-  font-size: 1rem;
+  font-size: 1.2rem;
 }
 
 .tab.active {
@@ -583,6 +583,7 @@ onMounted(() => {
   border-radius: 18px;
   box-shadow: 0 2px 12px #e0e0e0;
   padding: 24px;
+  font-size: 1.3em;
 }
 
 .section-header {
@@ -595,7 +596,7 @@ onMounted(() => {
 .section-header h3 {
   margin: 0;
   color: #333;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
 }
 
 .filter-actions {
@@ -612,6 +613,7 @@ onMounted(() => {
   background: #fff;
   outline: none;
   cursor: pointer;
+  font-size: 1.2em;
 }
 
 .approval-table-wrapper {
@@ -629,6 +631,7 @@ onMounted(() => {
   font-weight: 500;
   text-align: left;
   padding-bottom: 8px;
+  font-size: 1.2em;
 }
 
 .approval-table td {
@@ -739,6 +742,7 @@ onMounted(() => {
   border-radius: 18px;
   box-shadow: 0 2px 12px #e0e0e0;
   padding: 24px;
+  font-size: 1.2em;
 }
 
 .create-btn {
@@ -758,6 +762,19 @@ onMounted(() => {
 
 .survey-list {
   margin-top: 20px;
+  max-height: 900px;
+  overflow-y: auto;
+}
+
+.survey-list::-webkit-scrollbar {
+  width: 6px;
+}
+.survey-list::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+.survey-list::-webkit-scrollbar-track {
+  background-color: transparent;
 }
 
 .survey-card {
@@ -778,7 +795,7 @@ onMounted(() => {
 .survey-header h4 {
   margin: 0;
   color: #333;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
 }
 
 .survey-status {
@@ -994,7 +1011,6 @@ onMounted(() => {
   cursor: pointer;
 }
 
-/* 分页组件样式 */
 .pagination-wrapper {
   display: flex;
   justify-content: space-between;
@@ -1006,7 +1022,7 @@ onMounted(() => {
 
 .pagination-info {
   color: #666;
-  font-size: 14px;
+  font-size: 1em;
 }
 
 .pagination {
@@ -1022,7 +1038,7 @@ onMounted(() => {
   padding: 8px 16px;
   cursor: pointer;
   transition: all 0.2s;
-  font-size: 14px;
+  font-size: 1em;
 }
 
 .page-btn:hover:not(:disabled) {
@@ -1042,6 +1058,7 @@ onMounted(() => {
   font-size: 14px;
   min-width: 60px;
   text-align: center;
+  font-size: 1.1em;
 }
 
 /* 新增：错误高亮样式 */
