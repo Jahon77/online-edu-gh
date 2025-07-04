@@ -36,11 +36,10 @@
             <th>学号</th>
             <th>电话</th>
             <th>注册时间</th>
-            <th>操作</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(item, idx) in studentList" :key="idx">
+          <tr v-for="(item, idx) in studentList" :key="idx" @click="goToDetail(item)" style="cursor: pointer;" class="hover-row">
             <td>
               <img class="avatar" :src="item.avatarUrl" />
               <div class="info">
@@ -50,34 +49,52 @@
             <td>{{ item.studentId }}</td>
             <td>{{ item.phone }}</td>
             <td>{{ item.createdAt }}</td>
-            <td>
-              <button class="action edit">✏️</button>
-            </td>
           </tr>
         </tbody>
       </table>
-      <div class="table-footer">显示 {{ studentList.length }} 个结果</div>
+      <div class="pagination-wrapper">
+        <div class="pagination-info">
+          显示 {{ (currentPage - 1) * pageSize + 1 }}-{{ Math.min(currentPage * pageSize, total) }} 条，共 {{ total }} 条
+        </div>
+        <div class="pagination">
+          <button 
+            :disabled="currentPage === 1" 
+            @click="changePage(currentPage - 1)"
+            class="page-btn prev"
+          >
+            上一页
+          </button>
+          <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
+          <button 
+            :disabled="currentPage === totalPages" 
+            @click="changePage(currentPage + 1)"
+            class="page-btn next"
+          >
+            下一页
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- 学习榜排名 -->
     <div v-if="activeTab === 'ranking'" class="ranking-wrapper">
       <div class="podium">
         <!-- 第二名 -->
-        <div class="podium-item second" v-if="topThree[1]">
+        <div class="podium-item second hover-row" v-if="topThree[1]" @click="goToDetail(topThree[1])" style="cursor: pointer;">
           <img :src="topThree[1].avatar" class="avatar" />
           <img :src="topImages[1]" class="rank-img" />
           <div class="name">{{ topThree[1].name }}</div>
           <div class="value">{{ getRankingValue(topThree[1]) }}</div>
         </div>
         <!-- 第一名 -->
-        <div class="podium-item first" v-if="topThree[0]">
+        <div class="podium-item first hover-row" v-if="topThree[0]" @click="goToDetail(topThree[0])" style="cursor: pointer;">
           <img :src="topThree[0].avatar" class="avatar" />
           <img :src="topImages[0]" class="rank-img" />
           <div class="name">{{ topThree[0].name }}</div>
           <div class="value">{{ getRankingValue(topThree[0]) }}</div>
         </div>
         <!-- 第三名 -->
-        <div class="podium-item third" v-if="topThree[2]">
+        <div class="podium-item third hover-row" v-if="topThree[2]" @click="goToDetail(topThree[2])" style="cursor: pointer;" >
           <img :src="topThree[2].avatar" class="avatar" />
           <img :src="topImages[2]" class="rank-img" />
           <div class="name">{{ topThree[2].name }}</div>
@@ -100,7 +117,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(student, idx) in otherStudents" :key="student.id">
+            <tr v-for="(student, idx) in otherStudents" :key="student.id" @click="goToDetail(student)" style="cursor: pointer;" class="hover-row">
               <td>
               <img v-if="idx < 5 - 3 && currentPage === 1" :src="topImages[idx + 3]" alt="top icon" class="rank-img" />
               <span v-else class="rank-num">{{ idx + 4 + (currentPage - 1) * pageSize }}</span>
@@ -121,31 +138,28 @@
             </tr>
           </tbody>
         </table>
-        <div class="table-footer">显示 {{ otherStudents.length }} 个结果</div>
+        <div class="pagination-wrapper">
+        <div class="pagination-info">
+          显示 {{ (currentPage - 1) * pageSize + 4 }}-{{ Math.min(currentPage * pageSize, total) }} 条，共 {{ total }} 条
+        </div>
+        <div class="pagination">
+          <button 
+            :disabled="currentPage === 1" 
+            @click="changePage(currentPage - 1)"
+            class="page-btn prev"
+          >
+            上一页
+          </button>
+          <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
+          <button 
+            :disabled="currentPage === totalPages" 
+            @click="changePage(currentPage + 1)"
+            class="page-btn next"
+          >
+            下一页
+          </button>
+        </div>
       </div>
-    </div>
-
-    <!-- 在学生表格下方添加分页组件 -->
-    <div class="pagination-wrapper">
-      <div class="pagination-info">
-        显示 {{ (currentPage - 1) * pageSize + 1 }}-{{ Math.min(currentPage * pageSize, total) }} 条，共 {{ total }} 条
-      </div>
-      <div class="pagination">
-        <button 
-          :disabled="currentPage === 1" 
-          @click="changePage(currentPage - 1)"
-          class="page-btn prev"
-        >
-          上一页
-        </button>
-        <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-        <button 
-          :disabled="currentPage === totalPages" 
-          @click="changePage(currentPage + 1)"
-          class="page-btn next"
-        >
-          下一页
-        </button>
       </div>
     </div>
   </div>
@@ -159,6 +173,12 @@ import top2 from '@/assets/images/top2.png'
 import top3 from '@/assets/images/top3.png'
 import top4 from '@/assets/images/top4.png'
 import top5 from '@/assets/images/top5.png'
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
+const goToDetail = (student) => {
+  router.push(`/admin/studentDetail/${student.id}`)
+}
 
 const topImages = [top1, top2, top3, top4, top5]
 
@@ -176,7 +196,7 @@ const totalPages = ref(0)
 const fetchStudentList = async (page = 1) => {
   try {
     const response = await http.get(`/admin/students?page=${page}&size=${pageSize.value}`)
-    console.log("学生", response)
+    // console.log("学生", response)
     if (response.data.status === 200) {
       const data = response.data.data
       studentList.value = data.records
@@ -274,6 +294,19 @@ onMounted(() => {
 </script>
 
 <style scoped>
+
+.hover-row td {
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
+  background-color: #f9fafb;  /* 默认背景 */
+}
+
+/* 鼠标悬停整行时改变所有单元格样式 */
+.student-table tr.hover-row:hover td,.ranking-table tr.hover-row:hover td,.podium-item.hover-row:hover {
+  background-color: #9ac9ff !important;       /* 背景加深 */
+  outline: 2px solid #409eff; /* 不占用布局空间 */      /* 蓝色边框 */
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3); /* 淡淡阴影 */
+}
+
 .student-page {
   background: var(--main-light);
   min-height: 100vh;
@@ -303,7 +336,7 @@ onMounted(() => {
   font-weight: 500;
   color: #666;
   transition: all 0.3s ease;
-  font-size: 1rem;
+  font-size: 1.2rem;
 }
 
 .tab.active {
@@ -371,6 +404,7 @@ onMounted(() => {
   border-radius: 18px;
   box-shadow: 0 2px 12px #e0e0e0;
   padding: 24px 18px;
+  font-size: 1.4em;
 }
 
 .student-table {
@@ -391,6 +425,7 @@ onMounted(() => {
   border-radius: 10px;
   padding: 10px 8px;
   vertical-align: middle;
+  font-size: 1.2em;
 }
 
 .student-table .avatar {
@@ -460,7 +495,7 @@ onMounted(() => {
   align-items: center;
   border-radius: 12px 12px 4px 4px;
   padding: 24px 12px 16px 12px;
-  width: 109px; 
+  width: 140px; 
   transform: translateY(-50px) scale(0.8);
   opacity: 0;
   animation: enter 0.6s ease-out forwards; /* ✅ 加 forwards */
@@ -506,8 +541,8 @@ onMounted(() => {
 
 /* ✅ 奖牌图标 */
 .rank-img {
-  width: 32px;
-  height: 32px;
+  width: 45px;
+  height: 45px;
   margin-bottom: 4px;
 }
 
@@ -535,8 +570,8 @@ onMounted(() => {
 }
 
 .rank-img {
-  width: 32px;
-  height: 32px;
+  width: 45px;
+  height: 45px;
   vertical-align: middle;
 }
 
@@ -615,6 +650,7 @@ onMounted(() => {
   border-radius: 18px;
   box-shadow: 0 2px 12px #e0e0e0;
   padding: 24px 18px;
+  font-size: 1.4em;
 }
 
 .other-rankings h3 {
@@ -657,7 +693,7 @@ onMounted(() => {
 }
 
 .rank-num {
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   color: #aaa;
   font-weight: bold;
   display: inline-block;

@@ -75,7 +75,7 @@
               <option>2024-05</option>
               <option>2024-04</option>
             </select>
-            <button class="view-all-btn">查看全部</button>
+            <button class="view-all-btn" @click="goTo('/admin/course?tab=ranking')">查看全部</button>
           </div>
         </div>
         <table class="hot-courses-table">
@@ -127,6 +127,7 @@ import ApexCharts from 'apexcharts'
 import VueApexCharts from 'vue3-apexcharts'
 import http from '@/utils/http.js'
 import { useUserStore } from '@/stores/user'
+import { useRouter } from 'vue-router'
 
 import top1 from '@/assets/images/top1.png'
 import top2 from '@/assets/images/top2.png'
@@ -135,6 +136,8 @@ import top4 from '@/assets/images/top4.png'
 import top5 from '@/assets/images/top5.png'
 
 const topImages = [top1, top2, top3, top4, top5]
+
+const router = useRouter() 
 
 const userStore = useUserStore()
 const apexchart = VueApexCharts
@@ -304,6 +307,10 @@ const fetchActiveStudents = async () => {
   }
 }
 
+const goTo = (path) => {
+  router.push(path)
+}
+
 // 获取月注册量
 const fetchRegisterStudents = async () => {
   const res = await http.get('http://localhost:8080/admin/statistics/monthly-registered-students')
@@ -332,6 +339,7 @@ function updateRegisterChart() {
   const dataMap = Object.fromEntries(allRegisterData.value.filter(item => item.month.startsWith(registerYear.value)).map(item => [item.month, item.registerCount]))
   registerChartSeries.value[0].data = months.map(m => dataMap[m] || 0)
 }
+
 
 const fetchUserInfo = async () => {
   try {
@@ -395,6 +403,7 @@ onMounted(() => {
   margin-left: 8px;
   outline: none;
   cursor: pointer;
+  font-size: 1em;
 }
 .year-select:focus {
   border-color: #FF914D;
@@ -405,7 +414,7 @@ onMounted(() => {
   background: #fff;
   border-radius: 18px;
   box-shadow: 0 2px 12px #e0e0e0;
-  padding: 32px 24px;
+  padding: 20px 48px 0px 48px;
   margin-bottom: 32px;
 }
 .hot-courses-header {
@@ -431,6 +440,7 @@ onMounted(() => {
   outline: none;
   cursor: pointer;
   margin-right: 8px;
+  font-size: 1em;
 }
 
 .month-select:focus {
@@ -458,6 +468,7 @@ onMounted(() => {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0 12px;
+  font-size: 1.2em;
 }
 .hot-courses-table th, .hot-courses-table td {
   padding: 12px 10px;
@@ -598,10 +609,10 @@ onMounted(() => {
 }
 .main-content {
   flex: 1;
-  padding: 40px 48px 32px 48px;
+  padding: 20px 48px 0px 48px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 23px;
 }
 
 .stats-cards {
@@ -621,7 +632,7 @@ onMounted(() => {
 }
 .card-title {
   color: #888;
-  font-size: 1em;
+  font-size: 1.2em;
 }
 .card-value {
   font-size: 1.6em;
@@ -654,12 +665,13 @@ onMounted(() => {
   padding: 20px 18px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  /* gap: 12px; */
 }
 .chart-title {
   color: var(--main-orange);
   font-weight: bold;
   margin-bottom: 8px;
+  font-size: 1.3em;
 }
 .chart-placeholder {
   background: var(--main-blue);

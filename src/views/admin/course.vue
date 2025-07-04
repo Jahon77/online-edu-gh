@@ -43,7 +43,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(item, idx) in courseList" :key="idx">
+          <tr v-for="(item, idx) in courseList" :key="idx" @click="goToDetail(item)" style="cursor: pointer;" class="hover-row">
             <td>
               <img class="cover" :src="item.coverUrl || 'https://randomuser.me/api/portraits/men/60.jpg'" />
               <div class="info">
@@ -101,7 +101,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(course, idx) in rankingList" :key="course.courseId">
+          <tr v-for="(course, idx) in rankingList" :key="course.courseId" @click="goToDetail(course)" style="cursor: pointer;" class="hover-row">
             <td>
               <img v-if="idx < 5 && rankingCurrentPage === 1" :src="topImages[idx]" alt="top icon" class="rank-img" />
               <span v-else class="rank-num">{{ idx + 1 + (rankingCurrentPage - 1) * rankingPageSize }}</span>
@@ -152,6 +152,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import http from '@/utils/http.js'
+import { useRouter } from 'vue-router'
+const router = useRouter()
+const route = useRoute()
+
+
+const goToDetail = (course) => {
+  router.push(`/admin/courseDetail/${course.id}`)
+}
 
 const activeTab = ref('all')
 const selectedMonth = ref('2024-06')
@@ -163,6 +171,7 @@ import top4 from '@/assets/images/top4.png'
 import top5 from '@/assets/images/top5.png'
 
 const topImages = [top1, top2, top3, top4, top5]
+
 
 // 分页相关数据
 const courseList = ref([])
@@ -252,11 +261,34 @@ const switchTab = (tab) => {
 
 // 页面加载时获取数据
 onMounted(() => {
+  if (route.query.tab === 'ranking') {
+    activeTab.value = 'ranking'
+    fetchRankingList(1)
+  } else {
+    activeTab.value = 'all'
+    fetchCourseList(1)
+  }
+  
   fetchCourseList()
 })
 </script>
 
 <style scoped>
+
+.hover-row td {
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
+  background-color: #f9fafb;  /* 默认背景 */
+}
+
+/* 鼠标悬停整行时改变所有单元格样式 */
+.course-table tr.hover-row:hover td {
+  background-color: #9ac9ff !important;       /* 背景加深 */
+  outline: 2px solid #409eff; /* 不占用布局空间 */      /* 蓝色边框 */
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3); /* 淡淡阴影 */
+}
+
+
+
 .course-page {
   background: var(--main-light);
   min-height: 100vh;
@@ -286,7 +318,7 @@ onMounted(() => {
   font-weight: 500;
   color: #666;
   transition: all 0.3s ease;
-  font-size: 1rem;
+  font-size: 1.2em;
 }
 
 .tab.active {
@@ -345,12 +377,14 @@ onMounted(() => {
   border-radius: 18px;
   box-shadow: 0 2px 12px #e0e0e0;
   padding: 24px 18px;
+  font-size: 1.2em;
 }
 
 .course-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0 10px;
+  font-size: 1.2em;
 }
 
 .course-table th {
@@ -358,6 +392,7 @@ onMounted(() => {
   font-weight: 500;
   text-align: left;
   padding-bottom: 8px;
+  font-size: 1.2em;
 }
 
 .course-table td {
@@ -464,7 +499,6 @@ onMounted(() => {
   margin-top: 16px;
 }
 
-/* 分页组件样式 */
 .pagination-wrapper {
   display: flex;
   justify-content: space-between;
@@ -476,7 +510,7 @@ onMounted(() => {
 
 .pagination-info {
   color: #666;
-  font-size: 14px;
+  font-size: 1em;
 }
 
 .pagination {
@@ -492,7 +526,7 @@ onMounted(() => {
   padding: 8px 16px;
   cursor: pointer;
   transition: all 0.2s;
-  font-size: 14px;
+  font-size: 1em;
 }
 
 .page-btn:hover:not(:disabled) {
@@ -512,5 +546,6 @@ onMounted(() => {
   font-size: 14px;
   min-width: 60px;
   text-align: center;
+  font-size: 1.1em;
 }
 </style>
