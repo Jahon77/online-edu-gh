@@ -2,7 +2,7 @@
   <div class="chat-modal-overlay" @click.self="closeModal">
     <div class="chat-modal-container">
       <div class="chat-header">
-        <h2>与 {{ student.name }}{{ student.role === 'TEACHER' ? '【老师】' : '' }} 的临时对话</h2>
+        <h2>与 {{ student.name }}{{ student.role === 2 ? '【老师】' : '' }} 的临时对话</h2>
         <button class="close-button" @click="closeModal">&times;</button>
       </div>
       <div class="chat-body" ref="chatBody">
