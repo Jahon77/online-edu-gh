@@ -218,7 +218,7 @@ export default {
       this.$router.push({name: 'CoursePage'});
     },
     teacher() {
-      this.$router.push({name: 'create'});
+      this.$router.push({name: 'teacherProfile'});
     },
     use() {
       this.$router.push({name: 'use'});

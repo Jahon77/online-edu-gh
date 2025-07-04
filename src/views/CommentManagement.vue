@@ -160,6 +160,21 @@
                   </div>
                 </div>
               </div>
+
+              <div class="reply-tree" style="margin-top: 12px;">
+                <ReplyNode
+                  v-for="reply in repliesMap[comment.id] || []"
+                  :key="reply.id"
+                  :reply="reply"
+                  :level="0"
+                  @reply="payload => handleReply(comment.id, payload)"
+                />
+                <!-- 回复根评论的输入框 -->
+                <div style="margin-top: 8px;">
+                  <input v-model="rootReplyInput[comment.id]" placeholder="回复该评论..." />
+                  <button @click="submitRootReply(comment.id)">回复</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -199,9 +214,12 @@
 
 <script setup>
 import TeacherHeader from '@/components/commen/header/TeacherHeader.vue'
+
+import { ref, onMounted, computed, watch } from 'vue'
 import ChatModal from '@/components/ChatModal.vue'
-import { ref, onMounted, computed } from 'vue'
+
 import axios from 'axios'
+import ReplyNode from '@/components/ReplyNode.vue'
 
 function getCurrentUserId() {
   const value = `; ${document.cookie}`;
@@ -220,8 +238,13 @@ const comments = ref([])
 const courseStats = ref(null)
 const loading = ref(false)
 const filterType = ref('all')
+
+const repliesMap = ref({})
+const rootReplyInput = ref({})
+
 const isChatModalVisible = ref(false)
 const selectedStudentForChat = ref(null)
+
 
 const filteredComments = computed(() => {
   if (filterType.value === 'all') return comments.value
@@ -287,6 +310,9 @@ const loadComments = async () => {
         satisfactionRate: 0
       }
     }
+
+    // 加载每条评论的回复树
+    await loadAllReplies()
   } catch (e) {
     console.error('加载评价失败:', e)
     comments.value = []
@@ -319,6 +345,46 @@ const closeChatModal = () => {
 }
 
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('zh-CN')
+
+// 加载根评论后，加载每条评论的回复树
+const loadReplies = async (commentId) => {
+  const res = await axios.get(`http://localhost:8080/api/comment/${commentId}/replies`)
+  repliesMap.value[commentId] = res.data
+}
+
+const loadAllReplies = async () => {
+  for (const comment of comments.value) {
+    await loadReplies(comment.id)
+  }
+}
+
+// 在loadComments后调用
+watch(comments, () => {
+  loadAllReplies()
+})
+
+const submitRootReply = async (commentId) => {
+  const content = rootReplyInput.value[commentId]
+  if (!content) return
+  await axios.post('http://localhost:8080/api/comment/reply', {
+    commentId,
+    parentReplyId: null,
+    userId: teacherId,
+    content
+  })
+  rootReplyInput.value[commentId] = ''
+  await loadReplies(commentId)
+}
+
+const handleReply = async (commentId, { parentReplyId, content }) => {
+  await axios.post('http://localhost:8080/api/comment/reply', {
+    commentId,
+    parentReplyId,
+    userId: teacherId,
+    content
+  })
+  await loadReplies(commentId)
+}
 
 onMounted(() => loadTeacherCourses())
 </script>

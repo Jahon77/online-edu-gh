@@ -5,7 +5,8 @@ import { ElMessage } from 'element-plus'
 const instance = axios.create({
     timeout: 15000,  // 增加超时时间到15秒
     withCredentials: true,
-    baseURL: 'http://localhost:8080', // 重要：设置后端地址
+  // 使用环境变量作为baseURL，不包含/api
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080', 
 })
 
 // 请求拦截器
@@ -22,6 +23,7 @@ instance.interceptors.request.use(
         console.error('Request error:', error)
         return Promise.reject(error)
     }
+// <<<<<<< HEAD
 )
 
 // 响应拦截器
@@ -64,6 +66,35 @@ instance.interceptors.response.use(
         }
         return Promise.reject(error)
     }
+// =======
+//     // 默认超时设置为30秒
+//     config.timeout = config.timeout || 30000;
+    
+//     // 日志每个请求
+//     if (import.meta.env.DEV) {
+//       console.log(`API请求: ${config.method.toUpperCase()} ${config.url}`, config);
+//     }
+    
+//     return config
+//   },
+//   error => {
+//     console.error('请求拦截器错误:', error);
+//     return Promise.reject(error)
+//   }
+// )
+
+// // response拦截器
+// service.interceptors.response.use(
+//   response => {
+//     // 直接返回响应数据，不做额外处理
+//     // 因为我们的后端使用status: 0表示成功，在具体业务代码中处理
+//     return response
+//   },
+//   error => {
+//     console.log('err' + error)
+//     return Promise.reject(error)
+//   }
+// >>>>>>> 172193e (学生课程与学生个人中心)注释掉可能会导致运行问题，等等，我稍后解决
 )
 
 export default instance

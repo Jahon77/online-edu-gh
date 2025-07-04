@@ -9,9 +9,13 @@ import Use from '../views/use.vue'
 import Notice from '../views/notice.vue'
 import Chat from '../views/chat.vue'
 
+
 import FaceTest from '../views/FaceTest.vue'
+
+//import FaceTest from '../views/FaceTest.vue'
 import CourseList from '../views/Course/CourseList.vue'
 import CourseDetail from '../views/Course/CourseDetail.vue'
+import StudentCenterCourseList from '@/views/Course/StudentCenterCourseList.vue'
 
 const routes = [
     {
@@ -54,6 +58,16 @@ const routes = [
         component: () => import('../views/Course/CourseFilterPage.vue')
     },
     {
+        path: '/student/video/:lessonId',
+        name: 'StudentCoursePlayer',
+        component: () => import('../views/Course/StudentCoursePlayer.vue'),
+        props: route => ({
+            lessonId: Number(route.params.lessonId),
+            courseId: Number(route.query.courseId),
+            studentId: Number(route.query.studentId || 1)
+        })
+    },
+    {
         path: '/dashboard',
         name: 'Dashboard',
         component: ()=> import('../views/Course/Dashboard.vue')
@@ -92,6 +106,11 @@ const routes = [
         path: '/teacher/course-draft-box',
         name: 'courseDraftBox',
         component: ()=> import('../views/CourseDraftBox.vue')
+    },
+    {
+        path: '/teacher/profile',
+        name: 'teacherProfile',
+        component: ()=> import('../views/TeacherProfile.vue')
     },
     {
         path: '/notice',
@@ -197,7 +216,42 @@ const routes = [
                 component: () => import('@/views/admin/course_detail.vue')
             }
         ]
+    },
+    {  path: '/course/list',
+        name: 'StudentCenterCourseList',
+        component: StudentCenterCourseList
     }
+    // {
+    //     path: '/face-test',
+    //     name: 'face-test',
+    //     component: FaceTest
+    // },
+    // {
+    //     path: '/admin',
+    //     component: () => import('@/views/admin/admin_layout.vue'),
+    //     children: [
+    //         {
+    //             path: 'home',
+    //             component: () => import('@/views/admin/admin_home.vue')
+    //         },
+    //         {
+    //             path: 'teacher',
+    //             component: () => import('@/views/admin/teacher.vue')
+    //         },
+    //         {
+    //             path: 'student',
+    //             component: () => import('@/views/admin/student.vue')
+    //         },
+    //         {
+    //             path: 'course',
+    //             component: () => import('@/views/admin/course.vue')
+    //         },
+    //         {
+    //             path: 'chat',
+    //             component: () => import('@/views/admin/chat.vue')
+    //         }
+    //     ]
+    // }
 ];
 
 
