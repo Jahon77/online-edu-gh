@@ -92,12 +92,8 @@ export default {
     };
   },
   mounted() {
-    // 设置默认用户ID为7
-    this.userId = 7;
-    localStorage.setItem('userId', this.userId);
-    
-    // 加载数据
-    this.loadAllData();
+    // 获取当前登录用户的ID
+    this.getUserId();
     
     // 设置日期范围
     const now = new Date();
@@ -114,6 +110,58 @@ export default {
     this.currentDateRange = `${formatDate(lastWeek)} - ${formatDate(now)}`;
   },
   methods: {
+    // 获取当前登录用户ID
+    getUserId() {
+      // 首先尝试从localStorage中获取用户信息
+      const userStr = localStorage.getItem('user');
+      let userId;
+      
+      if (userStr) {
+        // 如果localStorage中有用户信息，则从中获取
+        try {
+          const userData = JSON.parse(userStr);
+          userId = userData.userId;
+        } catch (error) {
+          console.error('解析用户数据失败:', error);
+        }
+      } 
+      
+      // 如果localStorage中没有，则尝试从cookie中获取
+      if (!userId) {
+        userId = this.getCookie('userid');
+      }
+      
+      // 如果仍然没有获取到，则尝试从localStorage中的userId获取
+      if (!userId) {
+        userId = localStorage.getItem('userId');
+      }
+      
+      // 如果都没有找到，则使用默认值
+      if (!userId) {
+        console.warn('未找到用户ID，使用默认值');
+        userId = 1;
+      }
+      
+      this.userId = userId;
+      console.log('StudentDashboard 当前用户ID:', userId);
+      
+      // 加载数据
+      this.loadAllData();
+    },
+    
+    // 获取cookie的方法
+    getCookie(name) {
+      const cookieArr = document.cookie.split(';');
+      for (let i = 0; i < cookieArr.length; i++) {
+        const cookiePair = cookieArr[i].split('=');
+        const cookieName = cookiePair[0].trim();
+        if (cookieName === name) {
+          return decodeURIComponent(cookiePair[1]);
+        }
+      }
+      return null;
+    },
+    
     async loadAllData() {
       try {
         // 获取最近观看的课程

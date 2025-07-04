@@ -300,7 +300,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  /* margin-bottom: 10px; */
 }
 
 .course-tabs {
@@ -369,6 +369,9 @@ onMounted(() => {
   font-size: 1em;
   cursor: pointer;
   transition: background 0.2s;
+  margin-top: 30px;
+  margin-bottom: 25px;
+  width: 200px;
 }
 
 
@@ -376,8 +379,9 @@ onMounted(() => {
   background: #fff;
   border-radius: 18px;
   box-shadow: 0 2px 12px #e0e0e0;
-  padding: 24px 18px;
-  font-size: 1.2em;
+  padding: 10px 18px;
+  font-size: 1em;
+  margin-top: -10px;
 }
 
 .course-table {

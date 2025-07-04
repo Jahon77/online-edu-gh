@@ -119,7 +119,11 @@ function logout() {
         type: 'success',
         message: '退出成功！'
       })
-      router.push('/login')
+       // 清除登录相关cookie
+      document.cookie = "satoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "userid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      router.push('/index')
     })
     .catch(() => {
       // 点击取消或关闭弹窗

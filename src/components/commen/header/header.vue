@@ -29,7 +29,7 @@
       </div>
     </div>
 
-    <div class="nav-wrapper header-default">
+    <!-- <div class="nav-wrapper header-default">
       <div class="nav">
         <div class="nav-links">
           <router-link to="/index" class="nav-link">首页</router-link>
@@ -40,7 +40,7 @@
           <router-link to="/use" class="nav-link">使用指南</router-link>
         </div>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 
@@ -77,7 +77,7 @@ export default {
       document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       document.cookie = "userid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       // 跳转到登录页
-      this.$router.push({ name: 'login' });
+      this.$router.push({ name: 'index' });
     },
     checkLoginStatus() {
       // 检查cookie中是否有用户信息
@@ -103,9 +103,6 @@ export default {
   mounted() {
     this.toggleStickyHeader();
     this.checkLoginStatus();
-    
-    // 为了演示目的，设置isLoggedIn为true
-    this.isLoggedIn = true;
   },
   beforeDestroy() {
     window.removeEventListener('scroll', this.toggleStickyHeader);

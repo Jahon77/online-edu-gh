@@ -1,6 +1,6 @@
 <template>
   <div class="footer" >
-    <div style="background-color:#383d61" class="footer--bg"></div>
+    <div style="background-color:#2c3e50" class="footer--bg"></div>
     <div class="footer--inner">
       <div class="am-g">
         <div class="am-u-md-3 ">
@@ -56,5 +56,74 @@ export default {
 </script>
 
 <style scoped>
+.footer {
+  background-color: #2c3e50;
+  color: #ffffff;
+  padding: 40px 0 20px;
+  position: relative;
+}
 
+.footer--inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+.footer_main--column_title {
+  color: #ecf0f1;
+  font-size: 18px;
+  margin-bottom: 20px;
+  display: block;
+  font-weight: 600;
+}
+
+.footer_navigation {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer_navigation--item {
+  margin-bottom: 10px;
+}
+
+.footer_navigation--link {
+  color: #bdc3c7;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer_navigation--link:hover {
+  color: #3498db;
+}
+
+.footer_about--text {
+  color: #bdc3c7;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.footer_contact_info {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer_contact_info--item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  color: #bdc3c7;
+}
+
+.footer_contact_info--item .image {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  filter: brightness(0) invert(0.8);
+}
+
+.footer_contact_info--item span {
+  font-size: 14px;
+}
 </style>

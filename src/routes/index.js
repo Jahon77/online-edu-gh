@@ -21,7 +21,7 @@ const routes = [
     {
         path: '/',
         name: 'root',
-        redirect: '/login'
+        redirect: '/index'
     },
     {
         path: '/login',
@@ -34,7 +34,10 @@ const routes = [
     {
         path: '/index',
         name: 'index',
-        component: Index
+        component: Index,
+        meta: {
+            requiresAuth: false
+        }
     },
     { 
         path: '/courses', 
@@ -115,17 +118,26 @@ const routes = [
     {
         path: '/notice',
         name: 'notice',
-        component: Notice
+        component: Notice,
+        meta: {
+            requiresAuth: false
+        }
     },
     {
         path: '/use',
         name: 'use',
-        component: Use
+        component: Use,
+        meta: {
+            requiresAuth: false
+        }
     },
     {
         path: '/about',
         name: 'about',
-        component: About
+        component: About,
+        meta: {
+            requiresAuth: false
+        }
     },
     {
         path: '/aichat',
