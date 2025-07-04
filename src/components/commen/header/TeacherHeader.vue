@@ -79,7 +79,7 @@
         document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         document.cookie = "userid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         // 返回登录页
-        this.$router.push({ name: 'login' });
+        this.$router.push({ name: 'index' });
       },
       goTo(type) {
         if (type === 'create') {

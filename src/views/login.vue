@@ -823,10 +823,17 @@ export default {
             await this.$router.push(redirectPath);
           } else {
             // 根据角色跳转
-            if (loginResp.role === 3) { // 管理员
+            // if (loginResp.role === 3) { // 管理员
+            //   await this.$router.push('/admin/home');
+            // } else { // 学生或教师
+            //   await this.$router.push('/index');
+            // }
+            if (loginResp.role === 3) {
               await this.$router.push('/admin/home');
-            } else { // 学生或教师
-              await this.$router.push('/index');
+            }else if(loginResp.role === 2){
+              await this.$router.push('/teacher/profile');
+            }else{
+              await this.$router.push('/courses');
             }
           }
         } else {
@@ -938,10 +945,17 @@ export default {
             await this.$router.push(redirectPath);
           } else {
             // 根据角色跳转
-            if (loginResp.role === 3) { // 管理员
+            // if (loginResp.role === 3) { // 管理员
+            //   await this.$router.push('/admin/home');
+            // } else { // 学生或教师
+            //   await this.$router.push('/index');
+            // }
+            if (loginResp.role === 3) {
               await this.$router.push('/admin/home');
-            } else { // 学生或教师
-              await this.$router.push('/index');
+            }else if(loginResp.role === 2){
+              await this.$router.push('/teacher/profile');
+            }else{
+              await this.$router.push('/courses');
             }
           }
         } else {
@@ -1270,10 +1284,17 @@ export default {
             await this.$router.push(redirectPath);
           } else {
             // 根据角色跳转
-            if (loginResp.userInfo.role === 3) { // 管理员
+            // if (loginResp.userInfo.role === 3) { // 管理员
+            //   await this.$router.push('/admin/home');
+            // } else { // 学生或教师
+            //   await this.$router.push('/index');
+            // }
+            if (loginResp.userInfo.role === 3) {
               await this.$router.push('/admin/home');
-            } else { // 学生或教师
-              await this.$router.push('/index');
+            }else if(loginResp.userInfo.role === 2){
+              await this.$router.push('/teacher/profile');
+            }else{
+              await this.$router.push('/courses');
             }
           }
         } else {
