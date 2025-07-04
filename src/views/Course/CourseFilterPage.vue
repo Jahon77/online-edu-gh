@@ -9,10 +9,9 @@
         <nav class="main-nav">
           <ul>
             <li class="active"><router-link to="/courses">课程中心</router-link></li>
-            <li><router-link to="/index">首页</router-link></li>
-            <li><router-link to="/notice">通知公告</router-link></li>
-            <li><router-link to="/about">关于我们</router-link></li>
-            <li><router-link to="/use">使用指南</router-link></li>
+            <li><router-link to="/dashboard">我的学习</router-link></li>
+            <li><a href="#" @click.prevent>论坛</a></li>
+            <li><a href="#" @click.prevent>学习助手</a></li>
           </ul>
         </nav>
         <div class="user-actions">
@@ -20,6 +19,7 @@
           <div class="user-avatar">
             <img src="https://via.placeholder.com/36" alt="用户头像">
           </div>
+          <button class="btn-logout" @click="logout">退出</button>
         </div>
       </div>
     </header>
@@ -260,6 +260,19 @@ export default {
       
       // 更新URL参数，保持筛选条件在URL中，方便分享和刷新
       this.updateUrlParams()
+    },
+    logout() {
+      // 清除本地存储的用户信息
+      localStorage.removeItem('userToken');
+      localStorage.removeItem('userInfo');
+      sessionStorage.removeItem('userToken');
+      sessionStorage.removeItem('userInfo');
+      
+      // 显示退出成功提示
+      alert('已成功退出登录');
+      
+      // 跳转到登录页面或首页
+      this.$router.push('/login');
     },
     selectCategory(category) {
       this.selectedCategory = category
@@ -569,6 +582,25 @@ export default {
 
 .user-avatar:hover img {
   transform: scale(1.1);
+}
+
+.btn-logout {
+  background: #ff4757;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-left: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(255, 71, 87, 0.3);
+}
+
+.btn-logout:hover {
+  background: #ff3838;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(255, 71, 87, 0.4);
 }
 
 /* 主内容区域 */
@@ -1235,4 +1267,4 @@ export default {
     background-position: 200% 0;
   }
 }
-</style> 
+</style>

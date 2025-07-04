@@ -21,7 +21,7 @@ const routes = [
     {
         path: '/',
         name: 'root',
-        redirect: '/index'
+        redirect: '/login'
     },
     {
         path: '/login',
@@ -34,10 +34,7 @@ const routes = [
     {
         path: '/index',
         name: 'index',
-        component: Index,
-        meta: {
-            requiresAuth: false
-        }
+        component: Index
     },
     { 
         path: '/courses', 
@@ -111,33 +108,19 @@ const routes = [
         component: ()=> import('../views/CourseDraftBox.vue')
     },
     {
-        path: '/teacher/profile',
-        name: 'teacherProfile',
-        component: ()=> import('../views/TeacherProfile.vue')
-    },
-    {
         path: '/notice',
         name: 'notice',
-        component: Notice,
-        meta: {
-            requiresAuth: false
-        }
+        component: Notice
     },
     {
         path: '/use',
         name: 'use',
-        component: Use,
-        meta: {
-            requiresAuth: false
-        }
+        component: Use
     },
     {
         path: '/about',
         name: 'about',
-        component: About,
-        meta: {
-            requiresAuth: false
-        }
+        component: About
     },
     {
         path: '/aichat',
@@ -214,18 +197,6 @@ const routes = [
             {
                 path: 'notice',
                 component: () => import('@/views/admin/notice.vue')
-            },
-            {
-                path: 'teacherDetail/:id',
-                component: () => import('@/views/admin/teacher_detail.vue')
-            },
-            {
-                path: 'studentDetail/:id',
-                component: () => import('@/views/admin/student_detail.vue')
-            },
-            {
-                path: 'courseDetail/:id',
-                component: () => import('@/views/admin/course_detail.vue')
             }
         ]
     },

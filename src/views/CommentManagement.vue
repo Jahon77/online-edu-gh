@@ -167,10 +167,12 @@
                   :key="reply.id"
                   :reply="reply"
                   :level="0"
+                  :current-user-id="teacherId"
                   @reply="payload => handleReply(comment.id, payload)"
+                  @deleted="emitDeleted"
                 />
                 <!-- 回复根评论的输入框 -->
-                <div style="margin-top: 8px;">
+                <div class="root-reply-box">
                   <input v-model="rootReplyInput[comment.id]" placeholder="回复该评论..." />
                   <button @click="submitRootReply(comment.id)">回复</button>
                 </div>
@@ -359,7 +361,10 @@ const closeChatModal = () => {
   selectedStudentForChat.value = null;
 }
 
-const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('zh-CN')
+const formatDate = (dateStr) => {
+  const date = new Date(dateStr)
+  return date.toLocaleString('zh-CN', { hour12: false })
+}
 
 // 加载根评论后，加载每条评论的回复树
 const loadReplies = async (commentId) => {
@@ -399,6 +404,10 @@ const handleReply = async (commentId, { parentReplyId, content }) => {
     content
   })
   await loadReplies(commentId)
+}
+
+const emitDeleted = () => {
+  loadAllReplies();
 }
 
 onMounted(() => loadTeacherCourses())
@@ -778,6 +787,49 @@ onMounted(() => loadTeacherCourses())
   font-size: 1rem;
 }
 
+.root-reply-box {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 0.7rem;
+  margin-left: 0.5rem;
+  background: #f7f9fb;
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+
+.root-reply-box input {
+  flex: 1;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  background: #f8fafc;
+  transition: border 0.2s;
+}
+
+.root-reply-box input:focus {
+  border-color: #3b82f6;
+  outline: none;
+  background: #fff;
+}
+
+.root-reply-box button {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.root-reply-box button:hover {
+  background: #1749b1;
+}
 
 /* 响应式设计 */
 @media (max-width: 768px) {

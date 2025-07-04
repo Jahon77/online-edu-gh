@@ -1,127 +1,153 @@
 <template>
-  <div class="dashboard-page">
-    <!-- 左侧导航栏 -->
-    <div class="sidebar">
-      <div class="logo">
-        <span class="logo-icon">📚</span>
-        <span class="logo-text">智学通</span>
-      </div>
-      
-      <div class="nav-item active">
-        <div class="nav-icon">📊</div>
-        <div class="nav-text">Dashboard</div>
-      </div>
-      
-      <div class="nav-item" @click="navigateTo('/course/list')">
-        <div class="nav-icon">📝</div>
-        <div class="nav-text">所有课程</div>
-      </div>
-      
-      <div class="nav-item">
-        <div class="nav-icon">📚</div>
-        <div class="nav-text">资源</div>
-      </div>
-      
-      <div class="nav-item" @click="navigateTo('/chat')">
-        <div class="nav-icon">💬</div>
-        <div class="nav-text">聊天</div>
-      </div>
-      
-      <div class="nav-item">
-        <div class="nav-icon">⚙️</div>
-        <div class="nav-text">设置</div>
-      </div>
-      
-      <div class="upgrade-container">
-        <div class="upgrade-lock">🔒</div>
-        <div class="upgrade-text">
-          升级到 <span class="pro-text">Pro</span><br>
-          获取更多资源
+  <div>
+    <!-- 添加统一的顶部导航栏 -->
+    <header class="site-header">
+      <div class="header-container">
+        <div class="logo">
+          <h1>智学通</h1>
         </div>
-        <button class="upgrade-btn">升级</button>
+        <nav class="main-nav">
+          <ul>
+            <li><router-link to="/courses">课程中心</router-link></li>
+            <li class="active"><router-link to="/dashboard">我的学习</router-link></li>
+            <li><a href="#" @click.prevent>论坛</a></li>
+            <li><a href="#" @click.prevent>学习助手</a></li>
+          </ul>
+        </nav>
+        <div class="user-actions">
+          <button class="btn-download">APP下载</button>
+          <div class="user-avatar">
+            <img :src="userAvatar" :alt="username">
+          </div>
+          <button class="btn-logout" @click="logout">退出登录</button>
+        </div>
       </div>
-    </div>
+    </header>
     
-    <!-- 主内容区 -->
-    <div class="main-content">
-      <!-- 欢迎区域 -->
-      <div class="welcome-section">
-        <div class="welcome-text">
-          <h1>欢迎回来，{{ username }} 👋</h1>
-          <p>您已完成 <strong>{{ completionRate }}%</strong> 的学习目标！继续努力，提高您的学习进度！</p>
-        </div>
-        <div class="welcome-image">
-          <img src="/src/assets/images/6402d73b1c4a9f72c60a257bac3cd93a.png" alt="Welcome illustration">
-        </div>
-      </div>
-      
-      <!-- 使用StudentDashboard组件 -->
-      <StudentDashboard />
-    </div>
-    
-    <!-- 右侧边栏 -->
-    <div class="right-sidebar">
-      <!-- 个人信息 -->
-      <div class="user-profile">
-        <div class="notification-icon">🔔</div>
-        <div class="user-avatar">
-          <img :src="userAvatar" :alt="username">
-        </div>
-        <div class="user-name">{{ username }} <span class="dropdown-icon">▼</span></div>
-      </div>
-      
-      <!-- 学习进度日历 -->
-      <div class="progress-section">
-        <div class="section-header">
-          <h3>我的进度</h3>
-          <div class="month-selector">{{ currentMonth }}</div>
+    <div class="dashboard-page">
+      <!-- 左侧导航栏 -->
+      <div class="sidebar">
+        <div class="logo">
+          <span class="logo-icon">📚</span>
+          <span class="logo-text">智学通</span>
         </div>
         
-        <div class="calendar">
-          <div class="calendar-header">
-            <div v-for="day in weekDays" :key="day" class="calendar-day-header">{{ day }}</div>
+        <div class="nav-item active">
+          <div class="nav-icon">📊</div>
+          <div class="nav-text">Dashboard</div>
+        </div>
+        
+        <div class="nav-item" @click="navigateTo('/course/list')">
+          <div class="nav-icon">📝</div>
+          <div class="nav-text">所有课程</div>
+        </div>
+        
+        <div class="nav-item">
+          <div class="nav-icon">📚</div>
+          <div class="nav-text">资源</div>
+        </div>
+        
+        <div class="nav-item" @click="navigateTo('/chat')">
+          <div class="nav-icon">💬</div>
+          <div class="nav-text">聊天</div>
+        </div>
+        
+        <div class="nav-item">
+          <div class="nav-icon">⚙️</div>
+          <div class="nav-text">设置</div>
+        </div>
+        
+        <div class="upgrade-container">
+          <div class="upgrade-lock">🔒</div>
+          <div class="upgrade-text">
+            升级到 <span class="pro-text">Pro</span><br>
+            获取更多资源
           </div>
-          <div class="calendar-body">
-            <div v-for="(day, index) in calendarDays" :key="index" 
-                 :class="['calendar-day', { 'has-activity': day.hasActivity, 'current': day.isCurrent, 'other-month': !day.isCurrentMonth }]">
-              {{ day.date }}
+          <button class="upgrade-btn">升级</button>
+        </div>
+      </div>
+      
+      <!-- 主内容区 -->
+      <div class="main-content">
+        <!-- 欢迎区域 -->
+        <div class="welcome-section">
+          <div class="welcome-text">
+            <h1>欢迎回来，{{ name }} 👋</h1>
+            <p>您已完成 <strong>{{ completionRate }}%</strong> 的学习目标！继续努力，提高您的学习进度！</p>
+          </div>
+          <div class="welcome-image">
+            <img src="/src/assets/images/6402d73b1c4a9f72c60a257bac3cd93a.png" alt="Welcome illustration">
+          </div>
+        </div>
+        
+        <!-- 使用StudentDashboard组件 -->
+        <StudentDashboard />
+      </div>
+      
+      <!-- 右侧边栏 -->
+      <div class="right-sidebar">
+        <!-- 个人信息 -->
+        <div class="user-profile">
+          <div class="notification-icon">🔔</div>
+          <div class="user-avatar">
+            <img :src="userAvatar" :alt="username">
+          </div>
+          <div class="user-name">{{ name }} <span class="dropdown-icon">▼</span></div>
+        </div>
+        
+        <!-- 学习进度日历 -->
+        <div class="progress-section">
+          <div class="section-header">
+            <h3>我的进度</h3>
+            <div class="month-selector">{{ currentMonth }}</div>
+          </div>
+          
+          <div class="calendar">
+            <div class="calendar-header">
+              <div v-for="day in weekDays" :key="day" class="calendar-day-header">{{ day }}</div>
+            </div>
+            <div class="calendar-body">
+              <div v-for="(day, index) in calendarDays" :key="index" 
+                   :class="['calendar-day', { 'has-activity': day.hasActivity, 'current': day.isCurrent, 'other-month': !day.isCurrentMonth }]">
+                {{ day.date }}
+              </div>
+            </div>
+          </div>
+          
+          <div class="activity-legend">
+            <div class="legend-item">
+              <div class="legend-color light"></div>
+              <div class="legend-text">轻度</div>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color medium"></div>
+              <div class="legend-text">中度</div>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color heavy"></div>
+              <div class="legend-text">重度</div>
             </div>
           </div>
         </div>
         
-        <div class="activity-legend">
-          <div class="legend-item">
-            <div class="legend-color light"></div>
-            <div class="legend-text">轻度</div>
+        <!-- 待办事项 -->
+        <div class="tasks-section">
+          <div class="section-header">
+            <h3>待办任务</h3>
+            <div class="view-all">查看全部</div>
           </div>
-          <div class="legend-item">
-            <div class="legend-color medium"></div>
-            <div class="legend-text">中度</div>
-          </div>
-          <div class="legend-item">
-            <div class="legend-color heavy"></div>
-            <div class="legend-text">重度</div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- 待办事项 -->
-      <div class="tasks-section">
-        <div class="section-header">
-          <h3>待办任务</h3>
-          <div class="view-all">查看全部</div>
-        </div>
-        
-        <div class="task-list">
-          <div v-for="task in upcomingTasks" :key="task.id" class="task-item">
-            <div class="task-icon" :style="{ backgroundColor: task.iconBg }">
-              <img :src="task.icon" alt="Task icon">
+          
+          <div class="task-list">
+            <div v-for="task in upcomingTasks" :key="task.id" class="task-item">
+              <div class="task-icon" :style="{ backgroundColor: task.iconBg }">
+                <img :src="task.icon" alt="Task icon">
+              </div>
+              <div class="task-content">
+                <div class="task-title">{{ task.title }}</div>
+                <div class="task-time">{{ task.time }}</div>
+              </div>
+              <div class="task-arrow">›</div>
             </div>
-            <div class="task-content">
-              <div class="task-title">{{ task.title }}</div>
-              <div class="task-time">{{ task.time }}</div>
-            </div>
-            <div class="task-arrow">›</div>
           </div>
         </div>
       </div>
@@ -132,15 +158,18 @@
 <script>
 import axios from 'axios';
 import StudentDashboard from '@/components/studentCenter/StudentDashboard.vue';
+import Header from '@/components/commen/header/header.vue';
 
 export default {
   name: 'Dashboard',
   components: {
-    StudentDashboard
+    StudentDashboard,
+    Header
   },
   data() {
     return {
       username: 'Deena',
+      name: 'Deena',
       userAvatar: '/src/assets/pictures/logo.png',
       completionRate: 80,
       currentMonth: 'October',
@@ -241,39 +270,86 @@ export default {
       this.calendarDays = days;
     },
     fetchUserData() {
-      // 设置默认用户ID为7
-      const userId = 7;
+      // 从localStorage或cookie中获取用户信息
+      const userStr = localStorage.getItem('user');
+      let userId;
+      
+      if (userStr) {
+        // 如果localStorage中有用户信息，则从中获取
+        const userData = JSON.parse(userStr);
+        userId = userData.userId;
+        this.username = userData.username || userData.name || '用户';
+        this.name = userData.name || '用户';
+      } else {
+        // 如果localStorage中没有，则尝试从cookie中获取
+        userId = this.getCookie('userid');
+        this.username = this.getCookie('username') || this.getCookie('name') || '用户';
+        this.name = this.getCookie('name') || '用户';
+      }
+      
+      // 如果没有获取到用户ID，则使用默认值
+      if (!userId) {
+        console.warn('未找到用户ID，使用默认值');
+        userId = 1;
+      }
+      
+      // 存储用户ID到localStorage
       localStorage.setItem('userId', userId);
       
-      // 直接使用默认用户信息，不调用后端API
-      this.username = '测试用户';
-      this.userAvatar = '/src/assets/pictures/logo.png';
-      
-      console.log('使用默认用户信息:', {
+      console.log('当前用户信息:', {
         userId: userId,
         username: this.username
       });
       
-      // 以下是原来的代码，暂时注释掉
-      /*
+      // 设置默认头像
+      this.userAvatar = '/src/assets/pictures/logo.png';
+      
+      // 调用后端API获取更多用户信息
       axios.get(`http://localhost:8080/api/user/${userId}`)
         .then(response => {
           if (response.data.status === 200) {
             const userData = response.data.data;
-            this.username = userData.username || 'User';
-            this.userAvatar = userData.avatarUrl || '/src/assets/pictures/logo.png';
+            if (userData) {
+              this.username = userData.username || this.username;
+              this.userAvatar = userData.avatarUrl || this.userAvatar;
+            }
           }
         })
         .catch(error => {
           console.error('获取用户数据失败:', error);
-          // 如果API调用失败，设置默认值
-          this.username = '测试用户';
-          this.userAvatar = '/src/assets/pictures/logo.png';
         });
-      */
     },
     navigateTo(path) {
       this.$router.push(path);
+    },
+    // 获取cookie的方法
+    getCookie(name) {
+      const cookieArr = document.cookie.split(';');
+      for (let i = 0; i < cookieArr.length; i++) {
+        const cookiePair = cookieArr[i].split('=');
+        const cookieName = cookiePair[0].trim();
+        if (cookieName === name) {
+          return decodeURIComponent(cookiePair[1]);
+        }
+      }
+      return null;
+    },
+    logout() {
+      // 清除本地存储的用户信息
+      localStorage.removeItem('token');
+      localStorage.removeItem('userInfo');
+      sessionStorage.clear();
+      
+      // 清除cookie
+      document.cookie = "satoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "userid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      
+      // 显示退出成功提示
+      alert('已成功退出登录');
+      
+      // 跳转到登录页面或首页
+      this.$router.push('/login');
     }
   }
 };
@@ -705,4 +781,106 @@ export default {
     padding: 15px;
   }
 }
+
+/* 顶部导航栏 */
+.site-header {
+  background-color: #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+}
+
+.logo h1 {
+  margin: 0;
+  color: #F98C53;
+  font-size: 24px;
+}
+
+.main-nav ul {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.main-nav li {
+  margin: 0 15px;
+}
+
+.main-nav a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  padding: 5px 0;
+  position: relative;
+}
+
+.main-nav li.active a {
+  color: #F98C53;
+}
+
+.main-nav li.active a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #F98C53;
+}
+
+.user-actions {
+  display: flex;
+  align-items: center;
+}
+
+.btn-download {
+  background-color: #F98C53;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 20px;
+  margin-right: 15px;
+  cursor: pointer;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 15px;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.btn-logout {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-logout:hover {
+  background: #c82333;
+}
 </style>
+

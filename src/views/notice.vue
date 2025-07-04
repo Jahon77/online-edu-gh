@@ -62,6 +62,10 @@
               <p @click="handleClick(news)">
                 {{ (index + 1 + pageSize_notice * (currentPage_notice - 1) + '. ' + news.userTitle) }}</p>
             </div>
+            <div v-if="paginatedNoticeWithLimit.length === 0" class="empty-notice">
+              <p>暂无通知信息</p>
+              <p>请稍后查看</p>
+            </div>
             <div class="content-pagination">
 
               <el-pagination class="pagination"
@@ -87,6 +91,10 @@
 
               <p @click="handleClick(news)">
                 {{ (index + 1 + pageSize_announcement * (currentPage_announcement - 1) + '. ' + news.userTitle) }}</p>
+            </div>
+            <div v-if="paginatedAnnouncementWithLimit.length === 0" class="empty-notice">
+              <p>暂无公告信息</p>
+              <p>请稍后查看</p>
             </div>
             <div class="content-pagination">
 
@@ -139,6 +147,10 @@
               <p @click="handleClick(news)">
                 {{ (index + 1 + pageSize_news * (currentPage_news - 1)) + '. ' + news.userTitle }}</p>
             </div>
+            <div v-if="paginatedNewsWithLimit.length === 0" class="empty-notice">
+              <p>暂无新闻信息</p>
+              <p>请稍后查看</p>
+            </div>
             <div class="content-pagination">
 
               <el-pagination class="pagination"
@@ -164,7 +176,37 @@
 </template>
 
 <style>
+.empty-notice {
+  padding: 20px 0;
+  text-align: center;
+  color: #999;
+}
 
+.empty-notice p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.news-item {
+  padding: 8px 0;
+  border-bottom: 1px dashed #eee;
+}
+
+.news-item p {
+  cursor: pointer;
+  transition: color 0.3s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.news-item p:hover {
+  color: #409EFF;
+}
+
+.notice-line {
+  margin-bottom: 15px;
+}
 </style>
 <script>
 import Layout from "../components/commen/layout.vue"
@@ -185,9 +227,42 @@ export default {
         {name: 'About', desc: 'All about us', icon: 'am-icon-hourglass-end'},
       ],
       tabIndex: 0,
-      newsList: [],
-      announcementList: [],
-      noticeList: [],
+      newsList: [
+        { newsUrl: '#', userTitle: '中央网信办等部门部署开展2024年暑期未成年人网络环境专项整治' },
+        { newsUrl: '#', userTitle: '关于举办2024年校园开放日活动的通知' },
+        { newsUrl: '#', userTitle: '我校在全国大学生计算机设计大赛中获得特等奖' },
+        { newsUrl: '#', userTitle: '2024年秋季学期教学工作安排通知' },
+        { newsUrl: '#', userTitle: '关于开展2024年度科研项目申报工作的通知' },
+        { newsUrl: '#', userTitle: '我校与多家企业签署产学研合作协议' },
+        { newsUrl: '#', userTitle: '关于组织参加全国大学生创新创业大赛的通知' },
+        // { newsUrl: '#', userTitle: '校园网络升级维护通知' },
+        // { newsUrl: '#', userTitle: '我校学子在全国英语竞赛中荣获佳绩' },
+        // { newsUrl: '#', userTitle: '关于举办第十届校园文化艺术节的通知' }
+      ],
+      announcementList: [
+        { newsUrl: '#', userTitle: '关于2024-2025学年第一学期学生注册的通知' },
+        { newsUrl: '#', userTitle: '关于调整2024年暑假放假时间的通知' },
+        { newsUrl: '#', userTitle: '2024年秋季学期奖学金评定工作安排' },
+        { newsUrl: '#', userTitle: '关于开展2024年度学生社团招新活动的通知' },
+        { newsUrl: '#', userTitle: '校园安全隐患排查整治工作通知' },
+        { newsUrl: '#', userTitle: '关于开展节能减排宣传周活动的通知' },
+        { newsUrl: '#', userTitle: '2024年度学生公寓入住安排' },
+        // { newsUrl: '#', userTitle: '关于举办校园招聘会的通知' },
+        // { newsUrl: '#', userTitle: '图书馆暑期开放时间调整通知' },
+        // { newsUrl: '#', userTitle: '关于评选2024年度优秀学生干部的通知' }
+      ],
+      noticeList: [
+        { newsUrl: '#', userTitle: '关于做好2024年毕业生离校工作的通知' },
+        { newsUrl: '#', userTitle: '关于开展2024年暑期社会实践活动的通知' },
+        { newsUrl: '#', userTitle: '2024-2025学年第一学期选课通知' },
+        { newsUrl: '#', userTitle: '关于组织开展防诈骗宣传教育活动的通知' },
+        { newsUrl: '#', userTitle: '关于开展校园文明建设月活动的通知' },
+        { newsUrl: '#', userTitle: '2024年度学生体检工作安排' },
+        { newsUrl: '#', userTitle: '关于开展心理健康教育系列讲座的通知' },
+        // { newsUrl: '#', userTitle: '校园网络安全教育周活动通知' },
+        // { newsUrl: '#', userTitle: '关于组织参加暑期社区志愿服务的通知' },
+        // { newsUrl: '#', userTitle: '2024年度学生证补办工作通知' }
+      ],
       imgList: [
         {imgUrl: "src/assets/images/10001.jpg"},
         {imgUrl: "src/assets/images/10002.png"},
@@ -379,13 +454,16 @@ export default {
 
       })
           .then(response => {
-            this.newsList = response.data.data;
+            if (response.data.data && response.data.data.length > 0) {
+              this.newsList = response.data.data;
+            }
             this.totalItems_news = this.newsList.length;
             this.message = response.data.message;
             console.log(this.newsList);
           })
           .catch(() => {
             console.log(this.message);
+            this.totalItems_news = this.newsList.length;
           });
       axios.get('http://106.53.100.120:8090/api/newsByCategory', {
         params: {
@@ -394,13 +472,16 @@ export default {
 
       })
           .then(response => {
-            this.announcementList = response.data.data;
+            if (response.data.data && response.data.data.length > 0) {
+              this.announcementList = response.data.data;
+            }
             this.totalItems_announcement = this.announcementList.length;
             this.message = response.data.message;
             // console.log(this.announcementList);
           })
           .catch(() => {
             console.log(this.message);
+            this.totalItems_announcement = this.announcementList.length;
           });
       axios.get('http://106.53.100.120:8090/api/newsByCategory', {
         params: {
@@ -409,13 +490,16 @@ export default {
 
       })
           .then(response => {
-            this.noticeList = response.data.data;
+            if (response.data.data && response.data.data.length > 0) {
+              this.noticeList = response.data.data;
+            }
             this.totalItems_notice = this.noticeList.length;
             this.message = response.data.message;
             console.log(response.data.data);
           })
           .catch(() => {
             console.log(this.message);
+            this.totalItems_notice = this.noticeList.length;
           });
     },
     handleClick(news) {

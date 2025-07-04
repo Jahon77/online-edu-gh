@@ -8,7 +8,7 @@
       <!-- 目录栏 -->
       <div class="menu-bar">
         <ul class="menu-list">
-          <li class="menu-item" @click="goTo('index')">首页</li>
+          <li class="menu-item" @click="goTo('teacherProfile')">个人中心</li>
           <li class="menu-item dropdown" @mouseenter="showCourseDropdown = true" @mouseleave="showCourseDropdown = false">
              课程管理
              <ul class="dropdown-menu" v-show="showCourseDropdown">
@@ -17,7 +17,10 @@
                 <li class="dropdown-item" @click="goTo('courseDraftBox')">草稿箱</li>
              </ul>
          </li>
-         <li class="menu-item dropdown" @mouseenter="showStudentDropdown = true" @mouseleave="showStudentDropdown = false">
+         <li class="menu-item" @click="goTo('studentManagement')">学生管理</li>
+         <li class="menu-item" @click="goTo('commentManagement')">互动管理</li>
+
+         <!-- <li class="menu-item dropdown" @mouseenter="showStudentDropdown = true" @mouseleave="showStudentDropdown = false">
             学生管理与互动
              <ul class="dropdown-menu" v-show="showStudentDropdown">
                 <li class="dropdown-item" @click="goTo('studentManagement')">学生管理</li>
@@ -30,10 +33,9 @@
                 <li class="dropdown-item" @click="goTo('create')">我要直播</li>
                 <li class="dropdown-item" @click="goTo('teacherCourseList')">直播回放</li>
              </ul>
-         </li>
-          <li class="menu-item" @click="goTo('teacherProfile')">个人中心</li>
-          <li class="menu-item">帮助中心</li>
-          <li class="menu-item">智能客服</li>
+         </li> -->
+          <!-- <li class="menu-item">帮助中心</li> -->
+          <li class="menu-item" @click="goTo('chat')">智能客服</li>
         </ul>
       </div>  
   
@@ -61,7 +63,7 @@
       showCourseDropdown: false,
       showStudentDropdown: false, 
       showLiveDropdown: false, 
-      currentPath: '首页'
+      currentPath: '个人中心'
     };
   },
     methods: {
@@ -79,15 +81,15 @@
         document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         document.cookie = "userid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         // 返回登录页
-        this.$router.push({ name: 'login' });
+        this.$router.push({ name: 'index' });
       },
       goTo(type) {
         if (type === 'create') {
           this.$router.push({ name: 'create' });
         } else if (type === 'teacherCourseList') {
           this.$router.push({ name: 'teacherCourseList' });
-        } else if (type === 'index') {
-          this.$router.push({ name: 'index' });
+        // } else if (type === 'index') {
+        //   this.$router.push({ name: 'index' });
         } else if (type === 'studentManagement') {
           this.$router.push({ name: 'studentManagement' });
         } else if (type === 'commentManagement') {
@@ -103,9 +105,9 @@
       updateCurrentPath() {
         const routeName = this.$route.name;
         switch (routeName) {
-          case 'index':
-            this.currentPath = '首页';
-            break;
+          // case 'index':
+          //   this.currentPath = '首页';
+          //   break;
           case 'create':
             this.currentPath = '课程管理 > 创建课程';
             break;
@@ -116,10 +118,10 @@
             this.currentPath = '课程管理 > 草稿箱';
             break;
           case 'studentManagement':
-            this.currentPath = '学生管理与互动 > 学生管理';
+            this.currentPath = '学生管理';
             break;
           case 'commentManagement':
-            this.currentPath = '学生管理与互动 > 互动管理';
+            this.currentPath = '互动管理';
             break;
           case 'teacherProfile':
             this.currentPath = '个人中心';

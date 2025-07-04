@@ -8,11 +8,12 @@ import About from '../views/about.vue'
 import Use from '../views/use.vue'
 import Notice from '../views/notice.vue'
 import Chat from '../views/chat.vue'
-
+<<<<<<< HEAD
 
 import FaceTest from '../views/FaceTest.vue'
-
+=======
 //import FaceTest from '../views/FaceTest.vue'
+>>>>>>> 172193e (学生课程与学生个人中心)
 import CourseList from '../views/Course/CourseList.vue'
 import CourseDetail from '../views/Course/CourseDetail.vue'
 import StudentCenterCourseList from '@/views/Course/StudentCenterCourseList.vue'
@@ -21,7 +22,7 @@ const routes = [
     {
         path: '/',
         name: 'root',
-        redirect: '/index'
+        redirect: '/login'
     },
     {
         path: '/login',
@@ -34,10 +35,7 @@ const routes = [
     {
         path: '/index',
         name: 'index',
-        component: Index,
-        meta: {
-            requiresAuth: false
-        }
+        component: Index
     },
     { 
         path: '/courses', 
@@ -111,33 +109,19 @@ const routes = [
         component: ()=> import('../views/CourseDraftBox.vue')
     },
     {
-        path: '/teacher/profile',
-        name: 'teacherProfile',
-        component: ()=> import('../views/TeacherProfile.vue')
-    },
-    {
         path: '/notice',
         name: 'notice',
-        component: Notice,
-        meta: {
-            requiresAuth: false
-        }
+        component: Notice
     },
     {
         path: '/use',
         name: 'use',
-        component: Use,
-        meta: {
-            requiresAuth: false
-        }
+        component: Use
     },
     {
         path: '/about',
         name: 'about',
-        component: About,
-        meta: {
-            requiresAuth: false
-        }
+        component: About
     },
     {
         path: '/aichat',
@@ -153,6 +137,7 @@ const routes = [
     //     component: FaceTest
     // },
     {
+<<<<<<< HEAD
         path: '/face-test',
         name: 'face-test',
         component: FaceTest
@@ -214,24 +199,13 @@ const routes = [
             {
                 path: 'notice',
                 component: () => import('@/views/admin/notice.vue')
-            },
-            {
-                path: 'teacherDetail/:id',
-                component: () => import('@/views/admin/teacher_detail.vue')
-            },
-            {
-                path: 'studentDetail/:id',
-                component: () => import('@/views/admin/student_detail.vue')
-            },
-            {
-                path: 'courseDetail/:id',
-                component: () => import('@/views/admin/course_detail.vue')
             }
         ]
-    },
-    {  path: '/course/list',
+=======
+        path: '/course/list',
         name: 'StudentCenterCourseList',
         component: StudentCenterCourseList
+>>>>>>> 172193e (学生课程与学生个人中心)
     }
     // {
     //     path: '/face-test',

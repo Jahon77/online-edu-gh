@@ -49,13 +49,14 @@
       </div>
       
       <!-- 1. 订阅且未完成观看所有课时的课程 -->
+      <!-- 1. 订阅且未完成观看所有课时的课程 -->
       <div class="course-section">
         <div class="section-header">
           <h2>进行中的课程</h2>
           <div class="view-all" @click="showAllUncompletedCourses">查看全部</div>
         </div>
         
-        <div class="courses-grid">
+        <div class="courses-horizontal-grid">
           <div v-for="course in uncompletedCourses" :key="course.id" class="today-course-card">
             <div class="course-header">
               <div class="course-icon">
@@ -96,7 +97,7 @@
             </div>
             
             <div class="course-actions">
-              <button class="info-btn">Info</button>
+              <button class="info-btn" @click="viewCourseInfo(course.id)">Info</button>
               <button class="continue-btn" @click="continueCourse(course.id)">Continue</button>
             </div>
           </div>
@@ -382,8 +383,30 @@ export default {
       this.showAllCompleted = !this.showAllCompleted;
     },
     
-    continueCourse(courseId) {
-      this.$router.push(`/course/player/${courseId}`);
+    viewCourseInfo(courseId) {
+      this.$router.push(`/course/detail/${courseId}`);
+    },
+    
+    // 继续学习课程（跳转到最后一个课时）
+    async continueCourse(courseId) {
+      try {
+        // 获取课程的最后一个课时
+        const response = await axios.get(`http://localhost:8080/api/course/${courseId}/last-lesson`, {
+          params: { studentId: this.userId }
+        });
+        
+        if (response.data.status === 0 && response.data.data) {
+          const lessonId = response.data.data.id;
+          this.$router.push(`/course/player/${courseId}?lessonId=${lessonId}`);
+        } else {
+          // 如果没有找到最后一个课时，则跳转到课程播放页
+          this.$router.push(`/course/player/${courseId}`);
+        }
+      } catch (error) {
+        console.error('获取最后一个课时失败:', error);
+        // 出错时直接跳转到课程播放页
+        this.$router.push(`/course/player/${courseId}`);
+      }
     },
     
     navigateTo(path) {
@@ -562,16 +585,45 @@ export default {
   gap: 20px;
 }
 
+/* 横向展示的课程卡片样式 */
+.courses-horizontal-grid {
+  display: flex;
+  overflow-x: auto;
+  gap: 20px;
+  padding: 10px 0;
+  scrollbar-width: thin;
+  scrollbar-color: #F98C53 #f0f0f0;
+}
+
+.courses-horizontal-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.courses-horizontal-grid::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+.courses-horizontal-grid::-webkit-scrollbar-thumb {
+  background-color: #F98C53;
+  border-radius: 4px;
+}
+
 .today-course-card {
-  flex: 1;
-  min-width: 280px;
-  max-width: calc(25% - 15px);
+  flex: 0 0 auto;
+  width: 280px;
   background-color: white;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   padding: 20px;
   display: flex;
   flex-direction: column;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.today-course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
 }
 
 .course-header {
@@ -641,18 +693,19 @@ export default {
   stroke-width: 3.8;
 }
 
+/* 动态进度环动画 */
+@keyframes progress {
+  0% {
+    stroke-dasharray: 0 100;
+  }
+}
+
 .circle {
   fill: none;
   stroke-width: 3.8;
   stroke-linecap: round;
   stroke: #F98C53; /* 使用橙色 */
-  animation: progress 1s ease-out forwards;
-}
-
-@keyframes progress {
-  0% {
-    stroke-dasharray: 0 100;
-  }
+  animation: progress 1.5s ease-out forwards;
 }
 
 .percentage {
@@ -991,4 +1044,60 @@ export default {
   font-size: 14px;
   color: #666;
 }
-</style> 
+</style>
+
+/* 横向展示的课程卡片样式 */
+.courses-horizontal-grid {
+  display: flex;
+  overflow-x: auto;
+  gap: 20px;
+  padding: 10px 0;
+  scrollbar-width: thin;
+  scrollbar-color: #F98C53 #f0f0f0;
+}
+
+.courses-horizontal-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.courses-horizontal-grid::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+.courses-horizontal-grid::-webkit-scrollbar-thumb {
+  background-color: #F98C53;
+  border-radius: 4px;
+}
+
+.today-course-card {
+  flex: 0 0 auto;
+  width: 280px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.today-course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+/* 动态进度环动画 */
+@keyframes progress {
+  0% {
+    stroke-dasharray: 0 100;
+  }
+}
+
+.circle {
+  fill: none;
+  stroke-width: 3.8;
+  stroke-linecap: round;
+  stroke: #F98C53;
+  animation: progress 1.5s ease-out forwards;
+}
