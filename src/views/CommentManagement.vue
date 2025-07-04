@@ -58,7 +58,7 @@
                 </svg>
               </div>
               <div class="stat-content">
-                <div class="stat-value">{{ courseStats.averageRating.toFixed(1) }}</div>
+                <div class="stat-value">{{ isNaN(courseStats.averageRating) ? 0 : courseStats.averageRating.toFixed(1) }}</div>
                 <div class="stat-label">平均评分</div>
               </div>
             </div>
@@ -133,12 +133,12 @@
                         v-for="star in 5" 
                         :key="star" 
                         class="star"
-                        :class="{ 'filled': star <= comment.rating, 'empty': star > comment.rating }"
+                        :class="{ 'filled': star <= Number(comment.stars), 'empty': star > Number(comment.stars) }"
                       >
                         ★
                       </span>
                     </div>
-                    <span class="rating-value">{{ comment.rating }}/5</span>
+                    <span class="rating-value">{{ Number(comment.stars) || 0 }}/5</span>
                   </div>
                 </div>
                 
@@ -154,8 +154,8 @@
 
                 <div class="comment-footer">
                   <div class="comment-tags">
-                    <span v-if="comment.rating >= 4" class="tag positive">好评</span>
-                    <span v-else-if="comment.rating >= 3" class="tag neutral">一般</span>
+                    <span v-if="Number(comment.stars) >= 4" class="tag positive">好评</span>
+                    <span v-else-if="Number(comment.stars) >= 3" class="tag neutral">一般</span>
                     <span v-else class="tag negative">差评</span>
                   </div>
                 </div>
@@ -248,9 +248,9 @@ const selectedStudentForChat = ref(null)
 
 const filteredComments = computed(() => {
   if (filterType.value === 'all') return comments.value
-  if (filterType.value === 'good') return comments.value.filter(c => c.rating >= 4)
-  if (filterType.value === 'normal') return comments.value.filter(c => c.rating === 3)
-  if (filterType.value === 'bad') return comments.value.filter(c => c.rating <= 2)
+  if (filterType.value === 'good') return comments.value.filter(c => c.stars >= 4)
+  if (filterType.value === 'normal') return comments.value.filter(c => c.stars === 3)
+  if (filterType.value === 'bad') return comments.value.filter(c => c.stars <= 2)
   return comments.value
 })
 const blockComment = async (commentId) => {
@@ -287,13 +287,22 @@ const loadComments = async () => {
     const commentsRes = await axios.get(`http://localhost:8080/api/teacher/course/${selectedCourseId.value}/comments`, {
       params: { teacherId }
     })
-    comments.value = commentsRes.data || []
+    console.log('后端原始返回数据:', commentsRes.data)
+    const arr = Array.isArray(commentsRes.data) ? commentsRes.data : commentsRes.data.data
+    arr.forEach((c, i) => {
+      console.log(`第${i+1}条: rating=`, c.stars, '类型:', typeof c.stars)
+    })
+    comments.value = (commentsRes.data || []).map(c => ({
+      ...c,
+      stars: Number(c.stars) || 0
+    }))
     
     // 计算统计信息
     if (comments.value.length > 0) {
       const totalComments = comments.value.length
-      const averageRating = comments.value.reduce((sum, comment) => sum + comment.rating, 0) / totalComments
-      const satisfiedComments = comments.value.filter(comment => comment.rating >= 4).length
+      const sumRating = comments.value.reduce((sum, comment) => sum + (Number(comment.stars) || 0), 0)
+      const averageRating = totalComments > 0 ? (sumRating / totalComments) : 0
+      const satisfiedComments = comments.value.filter(comment => Number(comment.stars) >= 4).length
       const satisfactionRate = Math.round((satisfiedComments / totalComments) * 100)
       
       courseStats.value = {
