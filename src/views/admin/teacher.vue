@@ -3,7 +3,14 @@
     <div class="teacher-header">
       <h2>教师</h2>
       <div class="teacher-actions">
-        <button class="btn export">导出</button>
+        <div class="dropdown">
+          <button class="btn export">{{ selectedIds.length > 0 ? '批量导出' : '导出全部' }}</button>
+          <div class="dropdown-content">
+            <a @click="handleExportXlsx">导出为 xlsx</a>
+            <a @click="handleExportCsv">导出为 csv</a>
+          </div>
+        </div>
+        <button class="btn import" @click="handleBatchImport">批量导入</button>
       </div>
     </div>
     <div class="teacher-table-wrapper">
@@ -15,6 +22,7 @@
             <th>开设课程</th>
             <th>入职日期</th>
             <th>收益</th>
+            <th style="width: 60px;">批量导出</th>
           </tr>
         </thead>
         <tbody>
@@ -29,6 +37,18 @@
             <td>{{ item.courseCount }}</td>
             <td>{{ formatDate(item.createdAt) }}</td>
             <td>￥{{ item.totalIncome || 0 }}</td>
+            <td @click.stop>
+              <label class="checkbox-wrapper">
+                <input
+                  type="checkbox"
+                  v-model="selectedIds"
+                  :value="item.id"
+                  class="custom-checkbox"
+                />
+                <span class="checkmark"></span>
+              </label>
+            </td>
+
           </tr>
         </tbody>
       </table>
@@ -63,6 +83,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import http from '@/utils/http.js'
+import * as XLSX from 'xlsx'
+import { saveAs } from 'file-saver'
 
 import { useRouter } from 'vue-router'
 const router = useRouter()
@@ -77,6 +99,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const totalPages = ref(0)
+const selectedIds = ref([])
 
 // 获取教师列表
 const fetchTeacherList = async (page = 1) => {
@@ -113,9 +136,109 @@ const formatDate = (dateString) => {
 onMounted(() => {
   fetchTeacherList()
 })
+
+function handleExport(type = 'xlsx') {
+  let exportList = []
+  if (selectedIds.value.length > 0) {
+    exportList = teacherList.value.filter(item => selectedIds.value.includes(item.id))
+  } else {
+    exportList = teacherList.value
+  }
+  if (exportList.length === 0) return
+  // 组装导出数据
+  const data = exportList.map(item => ({
+    姓名: item.name,
+    教工号: item.teacherId,
+    开设课程: item.courseCount,
+    入职日期: formatDate(item.createdAt),
+    收益: item.totalIncome || 0
+  }))
+  const ws = XLSX.utils.json_to_sheet(data)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, '教师')
+  const fileType = type === 'csv' ? 'csv' : 'xlsx'
+  const fileName = `教师导出_${new Date().toISOString().slice(0,10)}.${fileType}`
+  if (type === 'csv') {
+    const csv = XLSX.utils.sheet_to_csv(ws)
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    saveAs(blob, fileName)
+  } else {
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+    saveAs(new Blob([wbout], { type: 'application/octet-stream' }), fileName)
+  }
+}
+
+function handleExportXlsx() { handleExport('xlsx') }
+function handleExportCsv() { handleExport('csv') }
+
+function handleBatchImport() {
+  // 批量导入逻辑
+}
+
+function toggleSelect(id) {
+  const idx = selectedIds.value.indexOf(id)
+  if (idx === -1) {
+    selectedIds.value.push(id)
+  } else {
+    selectedIds.value.splice(idx, 1)
+  }
+}
 </script>
 
 <style scoped>
+.checkbox-wrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.custom-checkbox {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 3px;
+  left: 7px;
+  height: 30px;
+  width: 30px;
+  background-color: #fff;
+  border: 2px solid #ff8c00;
+  border-radius: 50%; /* 变成圆形 */
+  transition: all 0.2s ease;
+}
+
+
+.checkbox-wrapper input:checked ~ .checkmark {
+  background-color: #409EFF;
+  border-color: #409EFF;
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox-wrapper input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.checkmark:after {
+  left: 5px;
+  top: 1px;
+  width: 4px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+
 .hover-row td {
   transition: background-color 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
   background-color: #f9fafb;  /* 默认背景 */
@@ -146,12 +269,12 @@ onMounted(() => {
   margin: 0;
 }
 .teacher-actions .btn {
-  background: var(--main-blue);
+  background: var(--main-orange);
   color: #fff;
   border: none;
   border-radius: 8px;
   padding: 8px 18px;
-  margin-left: 12px;
+  margin-left: 24px;
   font-size: 1em;
   cursor: pointer;
   transition: background 0.2s;
@@ -186,7 +309,7 @@ onMounted(() => {
 }
 .teacher-table td {
   background: var(--main-light);
-  border-radius: 10px;
+  border-radius: 40px;
   padding: 10px 8px;
   vertical-align: middle;
   font-size: 1.2em;
@@ -287,5 +410,35 @@ onMounted(() => {
   min-width: 60px;
   text-align: center;
   font-size: 1.1em;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background: #fff;
+  min-width: 120px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 99;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+.dropdown-content a {
+  color: #333;
+  padding: 10px 16px;
+  text-decoration: none;
+  display: block;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.dropdown-content a:hover {
+  background: var(--main-orange);
+  color: #fff;
 }
 </style>

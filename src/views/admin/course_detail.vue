@@ -4,40 +4,29 @@
     <!-- 左侧课程信息 -->
     <div class="course-main">
       <div class="video-box">
-        <img class="video-cover" src="https://img.freepik.com/free-photo/teacher-online-lesson_23-2148723452.jpg" />
+        <video v-if="videoUrl" class="video-cover" :src="videoUrl" controls :poster="courseCover" />
+        <img v-else class="video-cover" :src="courseCover" />
         <div class="video-controls">
-          <span class="play-btn">▶</span>
-          <span class="time">05:14/10:00</span>
         </div>
       </div>
-      <div class="course-title">掌握 Excel：从基础知识到高级公式</div>
+      <div class="course-title">{{ courseTitle }}</div>
       <div class="course-meta">
-        <span class="teacher-avatar"><img src="https://randomuser.me/api/portraits/women/4.jpg" /></span>
-        <span class="teacher-name">姓名示例</span>
+        <span class="teacher-avatar"><img :src="teacherInfo.avatarUrl" /></span>
+        <span class="teacher-name">{{ teacherInfo.name }}</span>
         <span class="meta-dot">·</span>
+        <span class="meta-info">总时长：{{ Math.floor(totalDuration) }}秒</span>
       </div>
       <div class="course-tabs">
         <span class="tab" :class="{active: activeTab==='desc'}" @click="activeTab='desc'">概述</span>
         <span class="tab" :class="{active: activeTab==='review'}" @click="activeTab='review'">评价</span>
       </div>
       <div v-if="activeTab==='desc'" class="course-desc">
-        欢迎来到《掌握Excel：从基础知识到高级公式》！无论你是刚入门的学员还是日常在报表技能的经验丰富的用户，本课程都能帮助你系统掌握 Microsoft Excel 全部高阶功能。
-        <br /><br />
-        你将学到什么：<br />
-        Excel Essentials：操作界面、调整基本功能并高效整理数据。<br />
-        中级技能：创建数据透视表和条件格式并进行数据分析。<br />
-        高级技巧：玩转 VLOOKUP、INDEX-MATCH、SUMIFS 等高级工具，以及最常用高级公式<br />
-        实战项目：通过真实案例，带你从零搭建工作任务并提升效率。<br />
-        <br />
-        为什么选择本课程：<br />
-        讲师资质：来自于行业的实际经验。<br />
-        内容全面：涵盖基础到高级 Excel 技能的全流程。<br />
-        学习支持：你可以在学习群和同学们一起学习。
+        {{ courseIntro }}
       </div>
       <div v-if="activeTab==='review'" class="course-review">
         <div class="review-header">
           <div class="review-score">
-            <div class="score-main">4.7</div>
+            <div class="score-main">{{ averageScore }}</div>
             <div class="score-label">评分</div>
           </div>
           <div class="review-detail">
@@ -53,89 +42,21 @@
           </div>
         </div>
         <div class="review-list">
-          <div class="review-item">
+          <div class="review-item" v-for="(comment, idx) in comments" :key="idx">
             <div class="review-user">
-              <img class="review-avatar" src="https://randomuser.me/api/portraits/men/1.jpg" />
-              <span class="review-username">姓名示例</span>
+              <img class="review-avatar" :src="comment.userAvatar" />
+              <span class="review-username">{{ comment.username }}</span>
               <span class="review-user-star">
-                <span class="star filled">★</span>
-                <span class="star filled">★</span>
-                <span class="star filled">★</span>
-                <span class="star filled">★</span>
-                <span class="star">★</span>
+                <span class="star" :class="{filled: comment.stars >= 1}">★</span>
+                <span class="star" :class="{filled: comment.stars >= 2}">★</span>
+                <span class="star" :class="{filled: comment.stars >= 3}">★</span>
+                <span class="star" :class="{filled: comment.stars >= 4}">★</span>
+                <span class="star" :class="{filled: comment.stars >= 5}">★</span>
               </span>
-              <span class="review-time">2024-05-01 14:23</span>
+              <span class="review-time">{{ comment.createdAt ? comment.createdAt.replace('T',' ').slice(0,16) : '' }}</span>
             </div>
             <div class="review-content">
-              我没有太多的时间和机会去外面学习这门课。
-            </div>
-          </div>
-          <div class="review-item">
-            <div class="review-user">
-              <img class="review-avatar" src="https://randomuser.me/api/portraits/women/2.jpg" />
-              <span class="review-username">李老师</span>
-              <span class="review-user-star">
-                <span class="star filled">★</span>
-                <span class="star filled">★</span>
-                <span class="star filled">★</span>
-                <span class="star filled">★</span>
-                <span class="star filled">★</span>
-              </span>
-              <span class="review-time">2024-05-02 09:10</span>
-            </div>
-            <div class="review-content">
-              课程内容非常详细，讲解也很清晰，受益匪浅！
-            </div>
-          </div>
-          <div class="review-item">
-            <div class="review-user">
-              <img class="review-avatar" src="https://randomuser.me/api/portraits/men/3.jpg" />
-              <span class="review-username">王同学</span>
-              <span class="review-user-star">
-                <span class="star filled">★</span>
-                <span class="star filled">★</span>
-                <span class="star filled">★</span>
-                <span class="star">★</span>
-                <span class="star">★</span>
-              </span>
-              <span class="review-time">2024-05-03 18:45</span>
-            </div>
-            <div class="review-content">
-              有些地方讲得有点快，不过整体还是很不错的。
-            </div>
-          </div>
-          <div class="review-item">
-            <div class="review-user">
-              <img class="review-avatar" src="https://randomuser.me/api/portraits/women/4.jpg" />
-              <span class="review-username">小张</span>
-              <span class="review-user-star">
-                <span class="star filled">★</span>
-                <span class="star filled">★</span>
-                <span class="star filled">★</span>
-                <span class="star filled">★</span>
-                <span class="star">★</span>
-              </span>
-              <span class="review-time">2024-05-04 11:30</span>
-            </div>
-            <div class="review-content">
-              老师讲得很耐心，适合新手入门。
-            </div>
-          </div>
-          <div class="review-item">
-            <div class="review-user">
-              <img class="review-avatar" src="https://randomuser.me/api/portraits/men/5.jpg" />
-              <span class="review-username">匿名用户</span>
-              <span class="review-user-star">
-                <span class="star filled">★</span>
-                <span class="star filled">★</span>
-                <span class="star filled">★</span>
-                <span class="star">★</span>
-                <span class="star">★</span>
-              </span>
-              <span class="review-time">2024-05-05 16:12</span>
-            </div>
-            <div class="review-content">
-              希望能多一些实战案例。
+              {{ comment.content }}
             </div>
           </div>
         </div>
@@ -144,16 +65,16 @@
     <!-- 右侧章节目录 -->
     <div class="course-outline">
       <div class="outline-title">课程内容</div>
-      <div class="outline-summary">讲座({{ sections.length }}) 总计(5:20 小时)</div>
+      <div class="outline-summary">总章节：{{ sections.length }}&nbsp;&nbsp;&nbsp;&nbsp;共{{ Math.floor(totalDuration) }}秒</div>
       <div class="outline-section" v-for="(section, idx) in sections" :key="idx">
         <div class="section-title clickable" @click="toggleSection(idx)">
           {{ section.title }}
           <span class="arrow" :class="{open: section.expanded}">▼</span>
         </div>
-        <div class="section-item clickable" @click="toggleSection(idx)">{{ section.summary }}</div>
+        <div class="section-item clickable" @click="toggleSection(idx)" v-html="section.summary"></div>
         <div class="lesson-list" v-show="section.expanded">
           <transition-group name="slide-fade" tag="div">
-            <div class="lesson-item" :class="{active: lesson.active}" v-for="(lesson, lidx) in section.lessons.slice(0, section.visibleCount)" :key="lesson.name">
+            <div class="lesson-item" :class="{active: lesson.active}" v-for="(lesson, lidx) in section.lessons.slice(0, section.visibleCount)" :key="lesson.name" @click="playLesson(idx, lidx)">
               {{ lesson.name }} <span>{{ lesson.info }}</span>
             </div>
           </transition-group>
@@ -164,97 +85,133 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import axios from 'axios'
 const router = useRouter()
+const route = useRoute()
 function goBack() {
   router.push('/admin/course')
 }
 const activeTab = ref('desc')
-const reviewStats = [
-  { star: 5, percent: 57 },
-  { star: 4, percent: 26 },
-  { star: 3, percent: 12 },
-  { star: 2, percent: 3 },
-  { star: 1, percent: 2 }
-]
 
-const sections = ref([
-  {
-    title: '第 1 节 简介',
-    summary: '1 个视频 | 20分钟',
-    expanded: false,
-    visibleCount: 0,
-    lessons: [
-      { name: '入门课程', info: '1 视频 20分钟', active: true },
-      { name: 'Excel界面介绍', info: '1 视频 15分钟' },
-      { name: 'Excel常用操作', info: '1 视频 18分钟' }
-    ]
-  },
-  {
-    title: '第 2 节 数据整理',
-    summary: '3 个视频 | 60分钟',
-    expanded: false,
-    visibleCount: 0,
-    lessons: [
-      { name: '数据录入技巧', info: '1 视频 20分钟' },
-      { name: '数据格式化', info: '1 视频 20分钟' },
-      { name: '数据查找与替换', info: '1 视频 20分钟' }
-    ]
-  },
-  {
-    title: '第 3 节 公式与函数',
-    summary: '4 个视频 | 80分钟',
-    expanded: false,
-    visibleCount: 0,
-    lessons: [
-      { name: '常用函数讲解', info: '1 视频 20分钟' },
-      { name: 'VLOOKUP实战', info: '1 视频 20分钟' },
-      { name: 'SUMIFS用法', info: '1 视频 20分钟' },
-      { name: '综合案例', info: '1 视频 20分钟' }
-    ]
-  },
-  {
-    title: '第 4 节 数据分析',
-    summary: '2 个视频 | 40分钟',
-    expanded: false,
-    visibleCount: 0,
-    lessons: [
-      { name: '数据透视表', info: '1 视频 20分钟' },
-      { name: '条件格式', info: '1 视频 20分钟' }
-    ]
-  },
-  {
-    title: '第 5 节 高级技巧',
-    summary: '2 个视频 | 40分钟',
-    expanded: false,
-    visibleCount: 0,
-    lessons: [
-      { name: '宏与自动化', info: '1 视频 20分钟' },
-      { name: '自定义模板', info: '1 视频 20分钟' }
-    ]
+// 课程相关
+const id = route.params.id
+const courseDetail = ref(null)
+const videoUrl = ref('')
+const courseTitle = ref('')
+const courseIntro = ref('')
+const courseCover = ref('')
+const teacherInfo = ref({})
+const totalDuration = ref(0)
+
+// 章节目录（动态）
+const sections = ref([])
+
+async function fetchCourseDetail() {
+  try {
+    const res = await axios.get(`/api/courses/admin/${id}`)
+    const data = res.data.data
+    courseDetail.value = data
+    courseTitle.value = data.title
+    courseIntro.value = data.introMd
+    courseCover.value = data.coverUrl
+    teacherInfo.value = data.teacher
+    totalDuration.value = data.totalDuration
+    // 目录结构
+    sections.value = (data.chapters || []).map(chap => ({
+      title: chap.title,
+      summary: `${chap.lessons.length} 个视频 &nbsp;&nbsp;|&nbsp; &nbsp;${Math.floor(chap.duration)}秒`,
+      expanded: false,
+      visibleCount: 0,
+      lessons: chap.lessons.map((lesson, idx) => ({
+        name: lesson.title,
+        info: `1 视频 ${Math.floor(lesson.duration)}秒`,
+        videoUrl: lesson.videoUrl,
+        active: false
+      }))
+    }))
+    // 默认第一个视频
+    if (data.chapters && data.chapters.length > 0 && data.chapters[0].lessons && data.chapters[0].lessons.length > 0) {
+      videoUrl.value = data.chapters[0].lessons[0].videoUrl
+      // 默认激活第一个
+      if (sections.value[0] && sections.value[0].lessons[0]) {
+        sections.value[0].lessons[0].active = true
+      }
+    }
+  } catch (e) {
+    // 失败处理
+    courseTitle.value = '课程加载失败'
+    courseIntro.value = ''
+    courseCover.value = ''
+    teacherInfo.value = {}
+    totalDuration.value = 0
+    sections.value = []
   }
-])
+}
 
+// 目录点击切换
 async function toggleSection(idx) {
   const section = sections.value[idx];
   if (!section.expanded) {
-    // 展开：依次滑入
     section.expanded = true;
     section.visibleCount = 0;
     for (let i = 1; i <= section.lessons.length; i++) {
-      await new Promise(res => setTimeout(res, 100));
+      await new Promise(res => setTimeout(res, 120));
       section.visibleCount = i;
     }
   } else {
-    // 收起：依次滑出
     for (let i = section.lessons.length - 1; i >= 0; i--) {
-      await new Promise(res => setTimeout(res, 130 + i * 10));
+      await new Promise(res => setTimeout(res, 120));
       section.visibleCount = i;
     }
     section.expanded = false;
   }
 }
+
+// 切换视频播放
+function playLesson(sectionIdx, lessonIdx) {
+  // 取消所有active
+  sections.value.forEach((sec, sidx) => sec.lessons.forEach((l, lidx) => l.active = false))
+  const lesson = sections.value[sectionIdx].lessons[lessonIdx]
+  lesson.active = true
+  videoUrl.value = lesson.videoUrl
+}
+
+// 评论相关
+const comments = ref([])
+async function fetchComments() {
+  try {
+    const res = await axios.get(`/api/teacher/course/${id}/comments`)
+    comments.value = res.data
+  } catch (e) {
+    comments.value = []
+  }
+}
+
+const reviewStats = computed(() => {
+  const stats = [0, 0, 0, 0, 0]
+  const total = comments.value.length
+  comments.value.forEach(item => {
+    const star = item.stars
+    if (star >= 1 && star <= 5) stats[star - 1]++
+  })
+  return stats.map((count, index) => ({
+    star: index + 1,
+    percent: total > 0 ? Math.round((count / total) * 100) : 0
+  })).reverse()
+})
+
+const averageScore = computed(() => {
+  if (comments.value.length === 0) return '0.0'
+  const sum = comments.value.reduce((acc, r) => acc + (r.stars || 0), 0)
+  return (sum / comments.value.length).toFixed(1)
+})
+
+onMounted(() => {
+  fetchCourseDetail()
+  fetchComments()
+})
 </script>
 
 <style scoped>
@@ -292,15 +249,14 @@ async function toggleSection(idx) {
   border-radius: 24px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   padding: 36px 28px;
-  margin-right: 32px;
   min-width: 0;
-  height: 1000px;
-  max-height: 1000px;
+  height: 965px;
+  max-height: 965px;
 }
 .video-box {
   position: relative;
   width: 100%;
-  height: 260px;
+  height: 425px;
   border-radius: 16px;
   overflow: hidden;
   margin-bottom: 18px;
@@ -357,6 +313,10 @@ async function toggleSection(idx) {
   color: #aaa;
   margin: 0 4px;
 }
+.meta-info {
+  color: #888;
+  font-size: 1rem;
+}
 
 .course-tabs {
   display: flex;
@@ -382,15 +342,15 @@ async function toggleSection(idx) {
   margin-top: 10px;
 }
 .course-outline {
-  width: 340px;
+  width: 500px;
   background: #fff;
   border-radius: 24px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   padding: 36px 28px;
   min-width: 340px;
   height: fit-content;
-  height: 1000px;
-  max-height: 1000px;
+  height: 965px;
+  max-height: 965px;
 }
 .outline-title {
   font-size: 1.2rem;
@@ -422,12 +382,12 @@ async function toggleSection(idx) {
   margin-top: 4px;
 }
 .lesson-item {
-  color: #4a90e2;
   font-size: 0.98rem;
   margin-bottom: 2px;
-  padding: 2px 0 2px 8px;
+  padding: 2px 20px 2px 20px !important;
   border-left: 3px solid #e0e7ef;
   position: relative;
+
 }
 .lesson-item.active {
   color: var(--main-orange);

@@ -17,6 +17,7 @@
     "chart.js": "^4.5.0",
     "echarts": "^5.6.0",
     "element-plus": "^2.7.6",
+    "file-saver": "^2.0.5",
     "html2canvas": "^1.4.1",
     "icons-vue": "^1.0.9",
     "jsqr": "^1.4.0",
@@ -31,7 +32,8 @@
     "vue-router": "^4.4.0",
     "vue3-apexcharts": "^1.5.2",
     "vuedraggable": "^2.24.3",
-    "vuex": "^4.0.2"
+    "vuex": "^4.0.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
