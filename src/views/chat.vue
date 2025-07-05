@@ -1,4 +1,5 @@
 <template>
+  <SiteHeader />
   <div class="new-chat-container">
     <!-- Login Required Message -->
     <div v-if="loginRequired" class="login-required">
@@ -19,6 +20,7 @@
 
     <!-- Main Chat UI -->
     <template v-else>
+      
       <div class="sidebar">
         <div class="sidebar-header">
           <div class="user-profile">
@@ -755,7 +757,7 @@ export default {
 
         this.socket.onopen = () => {
             console.log('WebSocket connected');
-            this.$message.success('聊天服务连接成功');
+            //this.$message.success('聊天服务连接成功');
             this.reconnectCount = 0;
         };
 
@@ -1810,7 +1812,7 @@ export default {
 
 .new-chat-container {
   display: flex;
-  height: 100vh;
+  height: calc(100vh - 66px);
   background-color: var(--bg-color-light);
   color: var(--text-primary);
   font-family: 'Helvetica Neue', Arial, sans-serif;
@@ -1909,7 +1911,7 @@ export default {
 /* 列表样式 */
 .conversation-list, .friend-list, .friend-request-list {
   overflow-y: auto;
-  height: calc(100vh - 170px);
+  height: calc(100vh - 236px);
   padding: 10px 0;
 }
 
@@ -2426,7 +2428,7 @@ export default {
 /* 通知列表样式 */
 .notification-list {
   overflow-y: auto;
-  height: calc(100vh - 170px);
+  height: calc(100vh - 236px);
   padding: 10px 0;
 }
 

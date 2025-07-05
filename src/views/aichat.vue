@@ -1,4 +1,5 @@
 <template>
+    <SiteHeader />
     <div class="chat-page">
       <div class="chat-container">
         <div class="chat-header">

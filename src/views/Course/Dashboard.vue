@@ -1,28 +1,7 @@
 <template>
   <div>
     <!-- 添加统一的顶部导航栏 -->
-    <header class="site-header">
-      <div class="header-container">
-        <div class="logo">
-          <h1>智学通</h1>
-        </div>
-        <nav class="main-nav">
-          <ul>
-            <li><router-link to="/courses">课程中心</router-link></li>
-            <li class="active"><router-link to="/dashboard">我的学习</router-link></li>
-            <li><a href="#" @click.prevent>论坛</a></li>
-            <li><a href="#" @click.prevent>学习助手</a></li>
-          </ul>
-        </nav>
-        <div class="user-actions">
-          <button class="btn-download">APP下载</button>
-          <div class="user-avatar">
-            <img :src="userAvatar" :alt="username">
-          </div>
-          <button class="btn-logout" @click="logout">退出登录</button>
-        </div>
-      </div>
-    </header>
+    <SiteHeader />
     
     <div class="dashboard-page">
       <!-- 左侧导航栏 -->
@@ -158,13 +137,13 @@
 <script>
 import axios from 'axios';
 import StudentDashboard from '@/components/studentCenter/StudentDashboard.vue';
-import Header from '@/components/commen/header/header.vue';
+import SiteHeader from '@/components/commen/header/SiteHeader.vue';
 
 export default {
   name: 'Dashboard',
   components: {
     StudentDashboard,
-    Header
+    SiteHeader
   },
   data() {
     return {
@@ -334,23 +313,6 @@ export default {
       }
       return null;
     },
-    logout() {
-      // 清除本地存储的用户信息
-      localStorage.removeItem('token');
-      localStorage.removeItem('userInfo');
-      sessionStorage.clear();
-      
-      // 清除cookie
-      document.cookie = "satoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "userid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      
-      // 显示退出成功提示
-      alert('已成功退出登录');
-      
-      // 跳转到登录页面或首页
-      this.$router.push('/login');
-    }
   }
 };
 </script>
@@ -780,107 +742,6 @@ export default {
   .main-content {
     padding: 15px;
   }
-}
-
-/* 顶部导航栏 */
-.site-header {
-  background-color: #fff;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.header-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 15px 20px;
-}
-
-.logo h1 {
-  margin: 0;
-  color: #F98C53;
-  font-size: 24px;
-}
-
-.main-nav ul {
-  display: flex;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.main-nav li {
-  margin: 0 15px;
-}
-
-.main-nav a {
-  text-decoration: none;
-  color: #333;
-  font-weight: 500;
-  padding: 5px 0;
-  position: relative;
-}
-
-.main-nav li.active a {
-  color: #F98C53;
-}
-
-.main-nav li.active a::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 2px;
-  background-color: #F98C53;
-}
-
-.user-actions {
-  display: flex;
-  align-items: center;
-}
-
-.btn-download {
-  background-color: #F98C53;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 20px;
-  margin-right: 15px;
-  cursor: pointer;
-}
-
-.user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  overflow: hidden;
-  margin-right: 15px;
-}
-
-.user-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.btn-logout {
-  background: #dc3545;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
-}
-
-.btn-logout:hover {
-  background: #c82333;
 }
 </style>
 
