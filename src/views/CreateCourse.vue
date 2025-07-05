@@ -63,9 +63,12 @@
               <label>状态</label>
               <select v-model="course.status" required>
                 <option :value="0">草稿</option>
-                <option :value="1">上架</option>
+                <option :value="3">提交审核</option>
                 <option :value="2">下架</option>
               </select>
+              <div v-if="course.status === 3" class="status-tip">
+                <span>💡 选择"提交审核"后，课程将进入审核流程，管理员审核通过后才能上架</span>
+              </div>
             </div>
           </div>
   
@@ -76,7 +79,11 @@
               <div class="form-row">
                 <label class="wide-label">章节标题</label>
                 <input v-model="chapter.title" required />
+                <button @click="deleteChapter(index)" class="delete-btn" type="button" :disabled="chapters.length === 1">删除章节</button>
               </div>
+            </div>
+            <div class="add-chapter-section">
+              <button @click="addChapterAndNext" class="add-chapter-btn" type="button">➕ 添加新章节</button>
             </div>
           </div>
 
@@ -89,6 +96,7 @@
               <div class="form-row">
                 <label class="wide-label">课时标题</label>
                 <input v-model="lesson.title" required />
+                <button @click="deleteLesson(cIndex, lIndex)" class="delete-btn" type="button" :disabled="lessonsMap[cIndex].length === 1">删除课时</button>
               </div>
               <div class="form-row">
                 <label>视频地址</label>
@@ -104,10 +112,14 @@
                 <input type="number" v-model="lesson.duration" />
               </div>
               <div class="form-row">
-                <label>
-                  <input type="checkbox" v-model="lesson.isPreview" /> 可试看
+                <label class="checkbox-label">
+                  <input type="checkbox" v-model="lesson.isPreview" />
+                  <span>可试看</span>
                 </label>
               </div>
+            </div>
+            <div class="add-lesson-section">
+              <button @click="addLesson(cIndex)" class="add-lesson-btn" type="button">➕ 为本章节添加课时</button>
             </div>
           </div>
         </div>
@@ -121,8 +133,8 @@
               </div>
             </div>
             <button v-if="step > 1" @click="prevStep" class="nav-btn" :disabled="isSubmitting">⬅ 上一步</button>
-            <button v-if="step === 1" @click="addChapterAndNext" class="nav-btn" :disabled="isSubmitting">➕ 添加章节</button>
-            <button v-if="step === 2" @click="addLessonAndNext" class="nav-btn" :disabled="isSubmitting">➕ 添加课时</button>
+            <button v-if="step === 1" @click="addChapterAndNext" class="nav-btn" :disabled="isSubmitting">下一步：章节信息</button>
+            <button v-if="step === 2" @click="addLessonAndNext" class="nav-btn" :disabled="isSubmitting">下一步：课时信息</button>
             <button v-if="step === 3" @click="submitCourse" class="submit-btn" :disabled="isSubmitting">
               {{ isSubmitting ? '正在上传文件...' : '提交课程' }}
             </button>
@@ -206,26 +218,29 @@
 
   // 处理视频上传成功
   const handleVideoUploadSuccess = (data) => {
-    // 只用后端返回的 fileUrl
-  if (data.fileUrl) {
-    // 找到当前正在编辑的课时并更新URL
-    const currentLesson = Object.values(lessonsMap).flat().find(lesson => lesson.videoUrl === data.url || lesson.videoUrl === '');
+    console.log('视频上传成功，数据:', data);
+    
+    // 找到当前正在编辑的课时并更新URL和时长
+    const currentLesson = Object.values(lessonsMap).flat().find(lesson => 
+      lesson.videoUrl === data.fileUrl || 
+      lesson.videoUrl === data.url || 
+      lesson.videoUrl === ''
+    );
+    
     if (currentLesson) {
-      currentLesson.videoUrl = data.fileUrl;
+      // 更新视频URL
+      if (data.fileUrl) {
+        currentLesson.videoUrl = data.fileUrl;
+      } else if (data.url) {
+        currentLesson.videoUrl = data.url;
+      }
+      
+      // 更新视频时长
       if (data.info && data.info.duration) {
         currentLesson.duration = Math.round(data.info.duration);
+        console.log('已设置视频时长:', currentLesson.duration, '秒');
       }
     }
-  } else if (data.url) {
-    // 兼容后端只返回 url 字段
-    const currentLesson = Object.values(lessonsMap).flat().find(lesson => lesson.videoUrl === data.url || lesson.videoUrl === '');
-    if (currentLesson) {
-      currentLesson.videoUrl = data.url;
-      if (data.info && data.info.duration) {
-        currentLesson.duration = Math.round(data.info.duration);
-      }
-    }
-  }
   }
 
   // 处理视频上传错误
@@ -273,21 +288,60 @@
   }
   
   function addChapterAndNext() {
-    chapters.push({ title: '' })
-    lessonsMap[chapters.length - 1] = []
+    // 只有在没有章节时才添加一个默认章节
+    if (chapters.length === 0) {
+      chapters.push({ title: '' })
+      lessonsMap[chapters.length - 1] = []
+    }
     step.value = 2
   }
+  
+  function addChapter() {
+    chapters.push({ title: '' })
+    lessonsMap[chapters.length - 1] = []
+  }
   function addLessonAndNext() {
+    // 为每个章节添加默认课时（如果还没有课时的话）
     chapters.forEach((_, index) => {
       if (!lessonsMap[index]) lessonsMap[index] = []
-      lessonsMap[index].push({
-        title: '',
-        videoUrl: '',
-        duration: 0,
-        isPreview: false
-      })
+      if (lessonsMap[index].length === 0) {
+        lessonsMap[index].push({
+          title: '',
+          videoUrl: '',
+          duration: 0,
+          isPreview: false
+        })
+      }
     })
     step.value = 3
+  }
+  
+  function addLesson(chapterIndex) {
+    if (!lessonsMap[chapterIndex]) lessonsMap[chapterIndex] = []
+    lessonsMap[chapterIndex].push({
+      title: '',
+      videoUrl: '',
+      duration: 0,
+      isPreview: false
+    })
+  }
+  
+  function deleteChapter(chapterIndex) {
+    if (chapters.length > 1) {
+      chapters.splice(chapterIndex, 1)
+      // 重新整理 lessonsMap
+      const newLessonsMap = {}
+      chapters.forEach((_, index) => {
+        newLessonsMap[index] = lessonsMap[chapterIndex + index] || []
+      })
+      Object.assign(lessonsMap, newLessonsMap)
+    }
+  }
+  
+  function deleteLesson(chapterIndex, lessonIndex) {
+    if (lessonsMap[chapterIndex] && lessonsMap[chapterIndex].length > 1) {
+      lessonsMap[chapterIndex].splice(lessonIndex, 1)
+    }
   }
   function prevStep() { step.value > 1 && step.value-- }
   async function submitCourse() {
@@ -361,28 +415,28 @@
         for (let j = 0; j < lessonsMap[i].length; j++) {
           const lesson = lessonsMap[i][j]
           const videoRefKey = `${i}-${j}`
-          console.log(`检查第${i + 1}章第${j + 1}课时，refKey:`, videoRefKey)
-          console.log('videoUploadRefs.value[videoRefKey]:', videoUploadRefs.value[videoRefKey])
-          console.log('lesson.videoUrl:', lesson.videoUrl)
+          // console.log(`检查第${i + 1}章第${j + 1}课时，refKey:`, videoRefKey)
+          // console.log('videoUploadRefs.value[videoRefKey]:', videoUploadRefs.value[videoRefKey])
+          // console.log('lesson.videoUrl:', lesson.videoUrl)
           
           if (videoUploadRefs.value[videoRefKey] && videoUploadRefs.value[videoRefKey].getFile()) {
             const videoFile = videoUploadRefs.value[videoRefKey].getFile()
-            console.log(`检测到第${i + 1}章第${j + 1}课时视频文件:`, videoFile.name)
+            // console.log(`检测到第${i + 1}章第${j + 1}课时视频文件:`, videoFile.name)
             try {
               console.log(`开始上传第${i + 1}章第${j + 1}课时视频:`, videoFile.name)
               const videoFileRecord = await uploadFileToServer(videoFile, currentUserId)
               if (videoFileRecord.fileUrl) {
                 lesson.videoUrl = videoFileRecord.fileUrl
-                console.log(`第${i + 1}章第${j + 1}课时视频上传成功，URL:`, lesson.videoUrl)
+                // console.log(`第${i + 1}章第${j + 1}课时视频上传成功，URL:`, lesson.videoUrl)
               }
             } catch (error) {
-              console.error(`第${i + 1}章第${j + 1}课时视频上传失败:`, error.message)
+              // console.error(`第${i + 1}章第${j + 1}课时视频上传失败:`, error.message)
               alert(`第${i + 1}章第${j + 1}课时视频上传失败: ${error.message}`)
               isSubmitting.value = false
               return
             }
           } else if (!lesson.videoUrl) {
-            console.log(`第${i + 1}章第${j + 1}课时没有视频文件`)
+            // console.log(`第${i + 1}章第${j + 1}课时没有视频文件`)
             alert(`请为第${i + 1}章第${j + 1}课时上传视频`)
             isSubmitting.value = false
             return
@@ -413,24 +467,22 @@
 
       console.log('课程创建响应:', response.data)
       
-      // const courseId = response.data.data?.courseId
-      // 根据后端 ResponseCode 枚举处理响应
-      if (response.data && response.data.code === 0 || response.data && typeof response.data.courseId === 'number') {
-        // 成功状态码为 0
+      if (response.data && (response.data.code === 0 || typeof response.data.courseId === 'number')) {
         if (response.data.data && response.data.data.courseId) {
-          router.push('/teacher/courseList')
+          alert('课程创建成功！')
+          // console.log('即将跳转')
+          router.push('/teacher/profile')
         }
-    } else {
-        // 失败状态码为 1 或其他
+      } else {
         const errorMessage = response.data?.description || response.data?.message || '课程创建失败'
         alert('课程创建失败: ' + errorMessage)
-    }
-  } catch (error) {
+      }
+    } catch (error) {
       console.error('请求错误:', error)
       alert('课程创建失败: ' + (error.response?.data?.message || error.message || '网络错误'))
     } finally {
       isSubmitting.value = false
-  }
+    }
   }
   </script>
   
@@ -664,5 +716,109 @@
 
 .wide-label {
   width: 120px;
+}
+
+.status-tip {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  color: #d97706;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.status-tip span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.add-chapter-section {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.add-chapter-btn {
+  background-color: #67c23a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.add-chapter-btn:hover {
+  background-color: #5daf34;
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.add-lesson-section {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.add-lesson-btn {
+  background-color: #409eff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.add-lesson-btn:hover {
+  background-color: #1976d2;
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.delete-btn {
+  background-color: #f56c6c;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 0.5rem;
+}
+
+.delete-btn:hover:not(:disabled) {
+  background-color: #e74c3c;
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.delete-btn:disabled {
+  background-color: #c0c4cc;
+  color: #909399;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1rem;
+  font-weight: 400;
+  color: #4a4a4a;
+  cursor: pointer;
+  user-select: none;
+}
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #409eff; /* 现代浏览器可用，设置勾选色 */
+  margin: 0;
 }
   </style>
