@@ -89,25 +89,25 @@
 
       <!-- 筛选区 -->
       <div class="filter-section">
-          <div class="tabs">
-            <button :class="{active: sort==='recommend'}" @click="changeSort('recommend')">推荐</button>
-            <button :class="{active: sort==='new'}" @click="changeSort('new')">最新</button>
-            <button :class="{active: sort==='hot'}" @click="changeSort('hot')">热门</button>
-          </div>
-          <div class="filters">
-            <select v-model="level">
-              <option value="">全部层级</option>
-              <option value="基础">基础</option>
-              <option value="目标">目标</option>
-              <option value="菁英">菁英</option>
-            </select>
-            <select v-model="subject">
-            <option value="">全部分类</option>
-              <option v-for="s in subjects" :key="s" :value="s">{{ s }}</option>
-            </select>
-          <button @click="applyFilters" class="filter-btn">筛选</button>
-          </div>
+        <div class="tabs">
+          <button :class="{active: sort==='recommend'}" @click="changeSort('recommend')">推荐</button>
+          <button :class="{active: sort==='new'}" @click="changeSort('new')">最新</button>
+          <button :class="{active: sort==='hot'}" @click="changeSort('hot')">热门</button>
         </div>
+        <div class="filters">
+          <select v-model="level">
+            <option value="">全部层级</option>
+            <option value="基础">基础</option>
+            <option value="目标">目标</option>
+            <option value="菁英">菁英</option>
+          </select>
+          <select v-model="subject">
+          <option value="">全部分类</option>
+            <option v-for="s in subjects" :key="s" :value="s">{{ s }}</option>
+          </select>
+        <button @click="applyFilters" class="filter-btn">筛选</button>
+        </div>
+      </div>
 
       <!-- 课程列表 -->
       <div class="course-layout">
@@ -1272,36 +1272,42 @@
 }
 
 .slider-item {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
   height: 100%;
-  display: none;
-  transition: opacity 0.5s ease;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  will-change: opacity;
+  overflow: hidden;
 }
 
 .slider-item.active {
-  display: block;
-  animation: fadeIn 0.8s;
+  opacity: 1;
+  z-index: 2;
+  animation: fadeScale 0.8s ease-in-out;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0.7; }
-  to { opacity: 1; }
+@keyframes fadeScale {
+  from { opacity: 0.7; transform: scale(1.03); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .slider-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.8s ease;
+  transition: transform 8s ease-out;
 }
 
 .slider-item.active img {
-  animation: zoomIn 10s ease forwards;
+  animation: panZoom 15s ease-out forwards;
 }
 
-@keyframes zoomIn {
+@keyframes panZoom {
   from { transform: scale(1); }
-  to { transform: scale(1.05); }
+  to { transform: scale(1.08); }
 }
 
 .slider-item::after {
@@ -1311,51 +1317,155 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to right, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0) 100%);
+  background: linear-gradient(to right, 
+    rgba(0,0,0,0.4) 0%, 
+    rgba(0,0,0,0.3) 20%, 
+    rgba(0,0,0,0.1) 50%, 
+    rgba(0,0,0,0) 80%);
+  backdrop-filter: none;
   pointer-events: none;
+  z-index: 2;
+}
+
+/* Custom styling for first slide */
+.slider-item:first-child::after {
+  background: linear-gradient(to left, 
+    rgba(0,0,0,0.4) 0%, 
+    rgba(0,0,0,0.3) 20%, 
+    rgba(0,0,0,0.1) 50%, 
+    rgba(0,0,0,0) 80%);
+  backdrop-filter: none;
 }
 
 .slider-content {
   position: absolute;
-  left: 10%;
   top: 50%;
   transform: translateY(-50%);
   color: white;
   text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-  max-width: 60%;
+  max-width: 50%;
+  padding: 25px;
+  z-index: 5;
+  left: 10%; /* Default left positioning for most slides */
+  text-align: left; /* Default alignment */
+  transition: all 0.4s ease;
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 15px;
+  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(2px);
+}
+
+/* First slide styling - right side */
+.slider-item:first-child .slider-content {
+  right: 10%;
+  left: auto; /* Override the default left positioning */
+  text-align: right;
+}
+
+.slider-item:hover .slider-content {
+  transform: translateY(-52%);
+  background-color: rgba(0,0,0,0.25);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .slider-content h2 {
-  font-size: 40px;
-  margin-bottom: 16px;
-  font-weight: 600;
-  letter-spacing: 1px;
+  font-size: 46px;
+  margin-bottom: 20px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #fff;
+  text-transform: none;
+  position: relative;
+  display: inline-block;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+  line-height: 1.2;
+}
+
+.slider-content h2::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  width: 70%;
+  height: 4px;
+  background: linear-gradient(to right, #F98C53, #ffa978);
+  border-radius: 2px;
+  transition: width 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 8px rgba(249, 140, 83, 0.6);
+}
+
+.slider-item:hover .slider-content h2::after {
+  width: 90%;
+  box-shadow: 0 2px 12px rgba(249, 140, 83, 0.8);
+}
+
+/* Adjust the underline position based on slide */
+.slider-item:first-child .slider-content h2::after {
+  right: 0;
+  background: linear-gradient(to left, #F98C53, #ffa978);
+}
+
+.slider-item:not(:first-child) .slider-content h2::after {
+  left: 0;
+  background: linear-gradient(to right, #F98C53, #ffa978);
 }
 
 .slider-content p {
   font-size: 20px;
-  margin-bottom: 24px;
-  line-height: 1.5;
-  opacity: 0.9;
+  margin: 25px 0 35px;
+  line-height: 1.6;
+  opacity: 0.95;
+  font-weight: 400;
+  text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.7);
+  max-width: 90%;
 }
 
 .btn-explore {
-  background-color: #F98C53;
+  background: linear-gradient(135deg, #F98C53 0%, #e67641 100%);
   color: white;
   border: none;
-  padding: 12px 32px;
+  padding: 16px 45px;
   border-radius: 30px;
-  font-size: 18px;
-  font-weight: 500;
+  font-size: 20px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 4px 12px rgba(249, 140, 83, 0.4);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(249, 140, 83, 0.5);
+  display: inline-block;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.btn-explore::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+  transition: left 0.6s ease;
+  z-index: -1;
 }
 
 .btn-explore:hover {
-  background-color: #e67641;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(249, 140, 83, 0.6);
+  background: linear-gradient(135deg, #e67641 0%, #d56435 100%);
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), 0 0 0 3px rgba(249, 140, 83, 0.7);
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.btn-explore:hover::before {
+  left: 100%;
+}
+
+.btn-explore:active {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(249, 140, 83, 0.6);
 }
 
 /* 轮播控制按钮 */
@@ -1363,7 +1473,7 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.15);
   color: white;
   border: none;
   width: 50px;
@@ -1374,50 +1484,64 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s;
-  z-index: 5;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.4s;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  opacity: 0.7;
 }
 
 .slider-control:hover {
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.25);
   transform: translateY(-50%) scale(1.1);
+  opacity: 1;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.slider-control:active {
+  transform: translateY(-50%) scale(0.95);
 }
 
 .slider-control.prev {
-  left: 15px;
+  left: 20px;
 }
 
 .slider-control.next {
-  right: 15px;
+  right: 20px;
 }
 
 .slider-dots {
   position: absolute;
-  bottom: 25px;
+  bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
+  gap: 12px;
   z-index: 10;
+  padding: 8px 15px;
+  border-radius: 30px;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .dot {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background-color: rgba(255,255,255,0.5);
-  margin: 0 8px;
+  background-color: rgba(255,255,255,0.4);
+  margin: 0;
   cursor: pointer;
-  transition: all 0.3s;
-  border: 2px solid rgba(255,255,255,0.8);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 2px solid rgba(255,255,255,0.5);
   position: relative;
   overflow: hidden;
 }
 
 .dot:hover {
   background-color: rgba(255,255,255,0.7);
-  transform: scale(1.1);
+  transform: scale(1.2);
 }
 
 .dot::after {
@@ -1438,9 +1562,10 @@
 }
 
 .dot.active {
-  background-color: white;
-  transform: scale(1.2);
-  box-shadow: 0 0 8px rgba(255,255,255,0.9);
+  background-color: #F98C53;
+  transform: scale(1.3);
+  box-shadow: 0 0 10px rgba(249, 140, 83, 0.7);
+  border-color: rgba(255, 255, 255, 0.8);
 }
 
 /* 进度条相关样式已移除 */
@@ -1455,10 +1580,13 @@
 /* 分类导航 */
 .section-title {
   font-size: 24px;
-      margin-bottom: 20px;
-  color: #333;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #D4AF37; /* 金色 */
   position: relative;
   padding-left: 15px;
+  transition: all 0.3s ease;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
 
 .section-title::before {
@@ -1469,14 +1597,14 @@
   transform: translateY(-50%);
   width: 5px;
   height: 20px;
-  background-color: #F98C53;
+  background: linear-gradient(to bottom, #D4AF37, #F9F2B0); /* 金色渐变 */
   border-radius: 3px;
+  transition: all 0.3s ease;
 }
 
 .category-nav {
   margin-bottom: 30px;
-  transition: all 0.5s ease;
-  border-radius: 16px;
+  transition: all 0.3s ease;
   position: relative;
 }
 
@@ -1497,29 +1625,164 @@
   padding-bottom: 10px;
 }
 
+/* 分类标签样式改进 */
 .category-tab {
-  background: none;
-      border: none;
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.1);
   padding: 10px 25px;
   font-size: 16px;
-  color: #666;
+  color: #333; /* 默认深色文字 */
   cursor: pointer;
   margin-right: 10px;
-      border-radius: 20px;
-  transition: all 0.3s;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  z-index: 1;
+}
+
+/* 简化闪光效果 */
+.category-tab::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+  transition: left 0.5s ease;
+  z-index: -1;
+}
+
+/* 悬停时显示颜色和白色文字 */
+.category-tab:hover {
+  color: white; /* 悬停时文字变白色 */
+}
+
+.category-tab:hover::before {
+  left: 100%;
+}
+
+/* 使用指定的色卡颜色，但只在悬停时显示 */
+.category-tab:nth-child(1):hover {
+  background-color: #F98C53; /* 橙色 */
+  border-color: #F98C53;
+}
+
+.category-tab:nth-child(2):hover {
+  background-color: #D2E0AA; /* 浅绿色 */
+  border-color: #D2E0AA;
+  color: white; /* 白色文字 */
+}
+
+.category-tab:nth-child(3):hover {
+  background-color: #ABD7FB; /* 浅蓝色 */
+  border-color: #ABD7FB;
+  color: white; /* 白色文字 */
+}
+
+.category-tab:nth-child(4):hover {
+  background-color: #F9F2EF; /* 浅粉色 */
+  border-color: #F9F2EF;
+  color: white; /* 白色文字 */
+}
+
+.category-tab:nth-child(5):hover {
+  background-color: #FCCEB4; /* 浅橙色 */
+  border-color: #FCCEB4;
+  color: white; /* 白色文字 */
+}
+
+.category-tab:nth-child(6):hover {
+  background-color: #F98C53; /* 橙色 */
+  border-color: #F98C53;
+  color: white; /* 白色文字 */
 }
 
 .category-tab.active {
-  background-color: #ABD7FB;
-  color: white;
+  font-weight: 600;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  color: white; /* 激活状态文字为白色 */
 }
 
 .category-tab:hover:not(.active) {
-  background-color: #F9F2EF;
-  color: #333;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-/* 筛选区 */
+.category-tab:active {
+  transform: scale(0.98);
+}
+
+/* 更新激活状态的样式 */
+.category-tab.active:nth-child(1) {
+  background-color: #F98C53;
+  border-color: #F98C53;
+  box-shadow: 0 4px 8px rgba(249, 140, 83, 0.3);
+  color: white;
+}
+
+.category-tab.active:nth-child(2) {
+  background-color: #D2E0AA;
+  border-color: #D2E0AA;
+  box-shadow: 0 4px 8px rgba(210, 224, 170, 0.3);
+  color: white; /* 白色文字 */
+}
+
+.category-tab.active:nth-child(3) {
+  background-color: #ABD7FB;
+  border-color: #ABD7FB;
+  box-shadow: 0 4px 8px rgba(171, 215, 251, 0.3);
+  color: white; /* 白色文字 */
+}
+
+.category-tab.active:nth-child(4) {
+  background-color: #F9F2EF;
+  border-color: #F9F2EF;
+  box-shadow: 0 4px 8px rgba(249, 242, 239, 0.3);
+  color: white; /* 白色文字 */
+}
+
+.category-tab.active:nth-child(5) {
+  background-color: #FCCEB4;
+  border-color: #FCCEB4;
+  box-shadow: 0 4px 8px rgba(252, 206, 180, 0.3);
+  color: white; /* 白色文字 */
+}
+
+.category-tab.active:nth-child(6) {
+  background-color: #F98C53;
+  border-color: #F98C53;
+  box-shadow: 0 4px 8px rgba(249, 140, 83, 0.3);
+  color: white; /* 白色文字 */
+}
+
+
+
+/* 修改精选推荐标题为金色 */
+.featured-section h2 {
+  color: #D4AF37; /* 金色 */
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+  font-weight: 600;
+  position: relative;
+  padding-left: 15px;
+}
+
+.featured-section h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 20px;
+  background: linear-gradient(to bottom, #D4AF37, #F9F2B0); /* 金色渐变 */
+  border-radius: 3px;
+}
+
+/* 根据图片设计的筛选区域样式 */
 .filter-section {
   background-color: white;
   padding: 25px;
@@ -1538,13 +1801,13 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: 4px;
-  background: linear-gradient(90deg, #ABD7FB, #D2E0AA, #F9F2EF, #FCCEB4);
-  opacity: 0.8;
+  height: 3px;
+  background: linear-gradient(90deg, #ABD7FB, #D2E0AA, #F9F2EF, #FCCEB4, #F98C53);
+  opacity: 0.7;
 }
 
 .filter-section:hover {
-  box-shadow: 0 15px 40px rgba(0,0,0,0.08), 0 1px 3px rgba(171,215,251,0.1);
+  box-shadow: 0 12px 35px rgba(0,0,0,0.07), 0 1px 3px rgba(171,215,251,0.1);
   transform: translateY(-2px);
 }
 
@@ -1563,7 +1826,7 @@
   font-size: 16px;
   font-weight: 500;
   color: #777;
-      cursor: pointer;
+  cursor: pointer;
   position: relative;
   transition: all 0.3s ease;
   border-radius: 30px;
@@ -1575,10 +1838,9 @@
 }
 
 .tabs button.active {
-      color: #fff;
+  color: #F98C53;
   font-weight: 600;
-  background: linear-gradient(135deg, #ABD7FB 0%, #8bc4f8 100%);
-  box-shadow: 0 4px 12px rgba(171,215,251,0.3);
+  background-color: rgba(249, 140, 83, 0.08);
 }
 
 .tabs button.active::after {
@@ -1589,110 +1851,63 @@
   transform: translateX(-50%);
   width: 8px;
   height: 8px;
-  background-color: #ABD7FB;
+  background-color: #F98C53;
   border-radius: 50%;
   transition: all 0.3s ease;
 }
 
-    .filters {
+.filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 15px;
-  align-items: center;
-}
-
-.filters {
-      display: flex;
-      flex-wrap: wrap;
   gap: 15px;
   align-items: center;
   position: relative;
 }
 
-/* 美化下拉列表 - 全面改进版 */
+/* 美化下拉列表 */
 .filters select {
   padding: 12px 20px;
-  border-radius: 50px;
-  border: 2px solid rgba(171,215,251,0.3);
-  min-width: 170px;
+  border-radius: 8px;
+  border: 1px solid rgba(171,215,251,0.3);
+  min-width: 150px;
   font-size: 15px;
-  font-weight: 500;
   color: #444;
-      cursor: pointer;
+  cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
   background-color: #fff;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  text-align: center;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ABD7FB' stroke='%23ABD7FB' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
-  background-position: right 18px center;
+  background-position: right 15px center;
   background-size: 14px;
-  padding-right: 45px;
+  padding-right: 40px;
 }
 
-/* 下拉列表选项容器样式 - 模拟自定义下拉菜单 */
+/* 下拉列表选项容器样式 */
 .filters select:focus {
   border-color: #ABD7FB;
-  box-shadow: 0 4px 15px rgba(171,215,251,0.5);
+  box-shadow: 0 0 0 3px rgba(171,215,251,0.2);
   outline: none;
-  background-color: #f9fdff;
 }
 
 /* 下拉列表悬停样式 */
 .filters select:hover {
   border-color: #ABD7FB;
-  box-shadow: 0 6px 16px rgba(171,215,251,0.4);
-  transform: translateY(-2px);
-}
-
-/* 下拉选项样式 */
-.filters select option {
-  padding: 12px;
-  background-color: white;
-  color: #444;
-  font-weight: 500;
-}
-
-/* 修改下拉列表展开时的样式 */
-.filters select:focus option:checked {
-  background: linear-gradient(to right, #ABD7FB, rgba(171,215,251,0.7));
-  color: #fff;
-}
-
-/* 伪类实现悬浮效果 */
-.filters::after {
-  content: '';
-  position: absolute;
-  bottom: -6px;
-  left: 10%;
-  width: 80%;
-  height: 6px;
-  background: radial-gradient(ellipse at center, rgba(171,215,251,0.3) 0%, rgba(171,215,251,0) 80%);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.filters select:hover ~ .filters::after {
-  opacity: 1;
 }
 
 .filter-btn {
-  background: linear-gradient(135deg, #ABD7FB 0%, #8bc4f8 100%);
+  background-color: #F98C53;
   color: white;
   border: none;
-  padding: 12px 30px;
-  border-radius: 50px;
+  padding: 12px 25px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  font-size: 15px;
+  font-weight: 500;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(171,215,251,0.5);
   position: relative;
-      overflow: hidden;
+  overflow: hidden;
 }
 
 .filter-btn::before {
@@ -1703,13 +1918,11 @@
   width: 100%;
   height: 100%;
   background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
-  transition: left 0.6s ease;
+  transition: left 0.5s ease;
 }
 
 .filter-btn:hover {
-  background: linear-gradient(135deg, #8bc4f8 0%, #7ab9f5 100%);
-  box-shadow: 0 6px 20px rgba(139,196,248,0.6);
-  transform: translateY(-2px);
+  background-color: #ff9b66;
 }
 
 .filter-btn:hover::before {
@@ -1718,7 +1931,24 @@
 
 .filter-btn:active {
   transform: translateY(1px);
-  box-shadow: 0 2px 8px rgba(171,215,251,0.4);
+}
+
+/* 移除按钮的复杂伪元素 */
+.filter-btn::before {
+  display: none;
+}
+
+.filter-btn:hover {
+  background-color: #4A9FD9;
+}
+
+.filter-btn:active {
+  background-color: #3B8BC4;
+}
+
+/* 移除顶部彩色条 */
+.top-rainbow-bar {
+  display: none;
 }
 
 /* 课程布局 */
@@ -1742,28 +1972,48 @@
 }
 
 .featured-image {
-  flex: 0 0 66%; /* 修改左侧图片占据宽度为33% */
-  border-radius: 12px;
+  flex: 0 0 66%;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-  transition: all 0.3s ease;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+  transition: all 0.4s ease;
   height: 100%;
+  position: relative;
+}
+
+.featured-image::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, rgba(249, 140, 83, 0.1), rgba(171, 215, 251, 0.1));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.featured-image:hover::before {
+  opacity: 1;
 }
 
 .featured-image:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  transform: translateY(-6px);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.18), 0 5px 15px rgba(171, 215, 251, 0.3);
 }
 
 .category-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
+  transition: transform 0.6s ease;
+  filter: brightness(1.05) saturate(1.1);
 }
 
 .featured-image:hover .category-image {
-  transform: scale(1.03);
+  transform: scale(1.05);
+  filter: brightness(1.1) saturate(1.2);
 }
 
 /* 课程卡片 */
@@ -1771,40 +2021,18 @@
   flex: 1;
   min-width: 0; /* 防止内容撑开 */
   height: 100%; /* 与行高一致 */
+  cursor: pointer;
+  transition: all 0.4s ease;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .first-course {
   flex: 0 0 32%; /* 第一行的课程卡片占据66%的宽度，与后面行的三个卡片宽度总和一致 */
 }
 
-.course-card-inner {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  border-radius: 12px;
-}
-
-.card-image {
-  height: 50%;
-  position: relative;
-}
-
-.cover {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 12px 12px 0 0;
-}
-
-.course-card {
-  cursor: pointer;
-  transition: transform 0.3s ease;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-    .course-card:hover {
-  transform: translateY(-5px);
+.course-card:hover {
+  transform: translateY(-8px);
 }
 
 .course-card-inner {
@@ -1815,24 +2043,32 @@
   box-shadow: 0 3px 10px rgba(0,0,0,0.08);
   display: flex;
   flex-direction: column;
-  transition: all 0.3s ease;
+  transition: all 0.4s ease;
   border: 1px solid transparent;
 }
 
 .course-card:hover .course-card-inner {
-  box-shadow: 0 8px 20px rgba(171,215,251,0.25);
-  border-color: #ABD7FB;
+  box-shadow: 0 12px 25px rgba(171,215,251,0.3);
+  border-color: rgba(171,215,251,0.5);
 }
 
 .card-image {
   position: relative;
   height: 50%;
+  overflow: hidden;
 }
 
-    .cover {
-      width: 100%;
+.cover {
+  width: 100%;
   height: 100%;
-      object-fit: cover;
+  object-fit: cover;
+  border-radius: 12px 12px 0 0;
+  transition: transform 0.5s ease, filter 0.5s ease;
+}
+
+.course-card:hover .cover {
+  transform: scale(1.08);
+  filter: brightness(1.05) saturate(1.1);
 }
 
 .card-tag {
@@ -1844,6 +2080,12 @@
   font-size: 12px;
   color: white;
   z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.course-card:hover .card-tag {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 10px rgba(0,0,0,0.1);
 }
 
 .level-basic {
@@ -1885,6 +2127,11 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   min-height: 44px; /* 减少最小高度 */
+  transition: color 0.3s ease;
+}
+
+.course-card:hover .card-title {
+  color: #F98C53;
 }
 
 .card-category {
@@ -3244,4 +3491,10 @@
     grid-template-columns: 1fr;
   }
 }
-    </style>
+
+/* 添加按下效果 */
+.category-tab:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+</style>
