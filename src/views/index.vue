@@ -146,11 +146,11 @@
 
     </div>
 
-    <div class="chat-test-button-container">
+    <!-- <div class="chat-test-button-container">
       <el-button type="primary" @click="goToChatTest" class="chat-test-button">
         聊天测试
       </el-button>
-    </div>
+    </div> -->
     //////////////////////////////////////////////////////////////////////////////////////
     <el-button type="success" @click="goToSurveyText" class="survey-text-button">
         问卷填写

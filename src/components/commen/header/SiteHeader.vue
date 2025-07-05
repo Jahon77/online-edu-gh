@@ -13,6 +13,7 @@
           <li><a href="#" @click.prevent>论坛</a></li>
           <li><router-link to="/chat">消息中心</router-link></li>
           <li><router-link to="/aichat">学习助手</router-link></li>
+          <li><router-link to="/index">系统门户</router-link></li>
         </ul>
       </nav>
       <div class="user-actions">
@@ -115,10 +116,10 @@ export default {
         
         this.$router.push('/login');
       }).catch(() => {
-        this.$message({
-          type: 'info',
-          message: '已取消退出'
-        });
+        // this.$message({
+        //   type: 'info',
+        //   message: '已取消退出'
+        // });
       });
     }
   }

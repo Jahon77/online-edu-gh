@@ -37,6 +37,7 @@
           <!-- <li class="menu-item">帮助中心</li> -->
           <li class="menu-item" @click="goTo('chat')">消息中心</li>
           <li class="menu-item" @click="goTo('aichat')">智能助手</li>
+          <li class="menu-item" @click="goTo('index')">系统门户</li>
         </ul>
       </div>  
   
@@ -47,7 +48,7 @@
             <span>当前位置：{{ currentPath }}</span>
           </div>
           <div class="nav-right">
-            <button @click="logout" class="logout-button">退出登录</button>
+            <button @click="confirmLogout" class="logout-button">退出登录</button>
           </div>
         </div>
       </div>
@@ -56,6 +57,8 @@
   
   <script>
   import AppFunctions from "../../../utils/appFunction.js";
+  import { ElMessageBox } from 'element-plus';
+  import { logout } from '../../../utils/authUtils';
   
   export default {
     name: "TeacherHeader",
@@ -76,13 +79,28 @@
           AppFunctions.removeClass('.header-default', 'sticky');
         }
       },
-      logout() {
-        // 清除登录相关cookie
-        document.cookie = "satoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie = "userid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        // 返回登录页
-        this.$router.push({ name: 'index' });
+      async confirmLogout() {
+        try {
+          await ElMessageBox.confirm(
+            '确定要退出登录吗？',
+            '提示',
+            {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning',
+            }
+          );
+          // 用户确认退出
+          this.handleLogout();
+        } catch {
+          // 用户取消退出
+        }
+      },
+      handleLogout() {
+        // 使用authUtils中的logout函数清除登录信息
+        logout();
+        // 跳转到首页
+        this.$router.push('/');
       },
       goTo(type) {
         if (type === 'create') {
@@ -103,7 +121,9 @@
           this.$router.push({ name: 'Chat' });
         } else if (type === 'aichat') {
           this.$router.push({ name: 'aichat' });
-        } 
+        } else if (type === 'index') {
+          this.$router.push({ name: 'index' });
+        }
       },
       updateCurrentPath() {
         const routeName = this.$route.name;
