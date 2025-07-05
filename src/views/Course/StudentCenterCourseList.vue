@@ -1,26 +1,7 @@
 <template>
   <div>
     <!-- 添加统一的顶部导航栏 -->
-    <header class="site-header">
-      <div class="header-container">
-        <div class="logo">
-          <img src="/src/assets/pictures/logo.png" alt="Logo">
-        </div>
-        <nav class="main-nav">
-          <router-link to="/courses" class="nav-link">课程中心</router-link>
-          <router-link to="/dashboard" class="nav-link">我的学习</router-link>
-          <a href="#" class="nav-link" @click.prevent>论坛</a>
-          <a href="#" class="nav-link" @click.prevent>学习助手</a>
-        </nav>
-        <div class="user-actions">
-          <button class="download-btn">APP下载</button>
-          <button class="btn-logout" @click="logout">退出登录</button>
-          <div class="user-avatar">
-            <img :src="userAvatar" :alt="username">
-          </div>
-        </div>
-      </div>
-    </header>
+    <SiteHeader />
     
     <div class="student-center-course-list">
       <!-- 左侧导航栏 -->
@@ -284,9 +265,13 @@
 <script>
 import axios from 'axios';
 import StudentCenterService from '@/utils/studentCenterService';
+import SiteHeader from '@/components/commen/header/SiteHeader.vue';
 
 export default {
   name: 'StudentCenterCourseList',
+  components: {
+    SiteHeader
+  },
   data() {
     return {
       userId: null, // 用户ID将从登录信息中获取
@@ -515,24 +500,6 @@ export default {
       this.$router.push(path);
     },
     
-    logout() {
-      // 清除本地存储的用户信息
-      localStorage.removeItem('token');
-      localStorage.removeItem('userInfo');
-      sessionStorage.clear();
-      
-      // 清除cookie
-      document.cookie = "satoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "userid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      
-      // 显示退出成功提示
-      alert('已成功退出登录');
-      
-      // 跳转到登录页面或首页
-      this.$router.push('/login');
-    },
-    
     getRandomGradient() {
       const randomGradient = this.gradients[Math.floor(Math.random() * this.gradients.length)];
       return { background: randomGradient };
@@ -552,90 +519,6 @@ export default {
 </script>
 
 <style scoped>
-/* 添加顶部导航栏样式 */
-.site-header {
-  background: #fff;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.header-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 70px;
-}
-
-.logo img {
-  height: 40px;
-}
-
-.main-nav {
-  display: flex;
-  gap: 30px;
-}
-
-.nav-link {
-  color: #333;
-  text-decoration: none;
-  font-weight: 500;
-  padding: 10px 0;
-  transition: color 0.3s ease;
-}
-
-.nav-link:hover,
-.nav-link.router-link-active {
-  color: #F98C53;
-}
-
-.user-actions {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.download-btn {
-  background: #F98C53;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
-}
-
-.download-btn:hover {
-  background: #e67c42;
-}
-
-.btn-logout {
-  background: #dc3545;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
-}
-
-.btn-logout:hover {
-  background: #c82333;
-}
-
-.user-avatar img {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
 .student-center-course-list {
   display: flex;
   min-height: 100vh;

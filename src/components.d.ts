@@ -35,6 +35,7 @@ declare module 'vue' {
     ReplyNode: typeof import('./components/ReplyNode.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SiteHeader: typeof import('./components/commen/header/SiteHeader.vue')['default']
     StudentCenterCourseList: typeof import('./components/studentCenter/StudentCenterCourseList.vue')['default']
     StudentDashboard: typeof import('./components/studentCenter/StudentDashboard.vue')['default']
     TeacherHeader: typeof import('./components/commen/header/TeacherHeader.vue')['default']

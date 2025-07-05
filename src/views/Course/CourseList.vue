@@ -1,7 +1,7 @@
 <template>
       <div class="course-list-page">
     <!-- 顶部导航栏 -->
-    <header class="site-header">
+    <!-- <header class="site-header">
       <div class="header-container">
         <div class="logo">
           <h1>智学通</h1>
@@ -22,7 +22,8 @@
           <button class="btn-logout" @click="logout">退出登录</button>
         </div>
       </div>
-    </header>
+    </header> -->
+    <SiteHeader />
 
     <!-- 轮播Banner区 -->
     <div class="banner-slider">

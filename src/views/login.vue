@@ -697,6 +697,7 @@ form.sign-up-form{
 </style>
 <script>
 import axios from 'axios';
+import { setCookie } from '../utils/authUtils';
 
 export default {
   name: "Login",
@@ -815,6 +816,7 @@ export default {
           this.setCookie('username', loginResp.username, 1);
           this.setCookie('userid', loginResp.userId, 1);
           this.setCookie('name', loginResp.name, 1);
+          this.setCookie('role', loginResp.role, 1);
 
           // 检查是否有重定向路径
           const redirectPath = localStorage.getItem('redirectPath');
@@ -925,6 +927,7 @@ export default {
           this.setCookie('username', loginResp.username, 1);
           this.setCookie('userid', loginResp.userId, 1);
           this.setCookie('name', loginResp.name, 1);
+          this.setCookie('role', loginResp.role, 1);
           
             // 存入 localStorage
           localStorage.setItem('user', JSON.stringify({
@@ -1151,10 +1154,7 @@ export default {
       this.showAuthModal = false;
     },
     setCookie(name, value, days) {
-      const date = new Date();
-      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-      const expires = "expires=" + date.toUTCString();
-      document.cookie = name + "=" + value + ";" + expires + ";path=/";
+      setCookie(name, value, days);
       console.log(`Cookie已设置: ${name}=${value}`);
     },
     refreshCaptcha() {
@@ -1274,6 +1274,7 @@ export default {
           this.setCookie('username', loginResp.userInfo.username, 1);
           this.setCookie('userid', loginResp.userInfo.userId, 1);
           this.setCookie('name', loginResp.userInfo.name, 1);
+          this.setCookie('role', loginResp.role, 1);
           this.loginStatusMessage = '人脸登录成功！欢迎回来, ' + loginResp.userInfo.name;
           this.closeCamera();
           
@@ -1314,10 +1315,7 @@ export default {
       }
     },
     setCookieForLogin(name, value, days) {
-      const d = new Date();
-      d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-      const expires = "expires="+d.toUTCString();
-      document.cookie = name + "=" + value + ";" + expires + ";path=/";
+      setCookie(name, value, days);
       console.log(`Cookie已设置: ${name}=${value}`);
     },
   },
