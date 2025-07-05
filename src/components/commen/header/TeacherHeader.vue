@@ -35,7 +35,8 @@
              </ul>
          </li> -->
           <!-- <li class="menu-item">帮助中心</li> -->
-          <li class="menu-item" @click="goTo('chat')">智能客服</li>
+          <li class="menu-item" @click="goTo('chat')">消息中心</li>
+          <li class="menu-item" @click="goTo('aichat')">智能助手</li>
         </ul>
       </div>  
   
@@ -99,7 +100,9 @@
         } else if (type === 'teacherProfile') {
           this.$router.push({ name: 'teacherProfile' });
         }else if (type === 'chat') {
-          this.$router.push({ name: 'chat' });
+          this.$router.push({ name: 'Chat' });
+        } else if (type === 'aichat') {
+          this.$router.push({ name: 'aichat' });
         } 
       },
       updateCurrentPath() {
@@ -128,6 +131,12 @@
             break;
           case 'login':
             this.currentPath = '登录';
+            break;
+          case 'Chat':
+            this.currentPath = '消息中心';
+            break;
+          case 'aichat':
+            this.currentPath = '智能助手';
             break;
           // Add more cases for other routes as needed
           default:

@@ -925,6 +925,7 @@ export default {
           this.setCookie('username', loginResp.username, 1);
           this.setCookie('userid', loginResp.userId, 1);
           this.setCookie('name', loginResp.name, 1);
+          this.setCookie('role', loginResp.role, 1);
           
             // 存入 localStorage
           localStorage.setItem('user', JSON.stringify({

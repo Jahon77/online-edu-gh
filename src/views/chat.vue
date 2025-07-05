@@ -1,5 +1,6 @@
 <template>
-  <SiteHeader />
+  <TeacherHeader v-if="currentUser && currentUser.role === 2" />
+  <SiteHeader v-else />
   <div class="new-chat-container">
     <!-- Login Required Message -->
     <div v-if="loginRequired" class="login-required">
