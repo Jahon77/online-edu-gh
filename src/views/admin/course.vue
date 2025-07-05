@@ -296,28 +296,85 @@ const switchTab = (tab) => {
 const selectedIds = ref([])
 
 function handleExport(type = 'xlsx') {
-  let exportList = []
-  if (selectedIds.value.length > 0) {
-    exportList = courseList.value.filter(item => selectedIds.value.includes(item.id))
-  } else {
-    exportList = courseList.value
+  // 如果是全部导出，需要获取所有数据
+  if (selectedIds.value.length === 0) {
+    handleExportAll(type)
+    return
   }
-  if (exportList.length === 0) return
-  // 组装导出数据
-  const data = exportList.map(item => ({
-    课程名称: item.title,
-    课程编号: item.courseId,
-    类型: item.level,
-    讲师: item.teacherName,
-    订阅数: item.subscriberCount || 0,
-    价格: item.price || 0,
-    状态: getStatusText(item.status)
-  }))
+  
+  // 批量导出：需要获取所有选中的课程数据
+  handleExportSelected(type)
+}
+
+async function handleExportAll(type = 'xlsx') {
+  try {
+    // 获取所有课程数据（不分页）
+    const response = await http.get('/admin/courses', {
+      params: {
+        page: 1,
+        size: 10000 // 设置一个很大的数字来获取所有数据
+      }
+    })
+    
+    if (response.data.status === 200) {
+      const allCourses = response.data.data.records
+      const data = allCourses.map(item => ({
+        课程名称: item.title,
+        课程编号: item.courseId,
+        类型: item.level,
+        讲师: item.teacherName,
+        订阅数: item.subscriberCount || 0,
+        价格: item.price || 0,
+        状态: getStatusText(item.status)
+      }))
+      
+      exportToFile(data, type, '课程')
+    }
+  } catch (error) {
+    console.error('导出失败:', error)
+  }
+}
+
+async function handleExportSelected(type = 'xlsx') {
+  try {
+    // 获取所有课程数据，然后过滤选中的
+    const response = await http.get('/admin/courses', {
+      params: {
+        page: 1,
+        size: 10000
+      }
+    })
+    
+    if (response.data.status === 200) {
+      const allCourses = response.data.data.records
+      const selectedCourses = allCourses.filter(item => selectedIds.value.includes(item.id))
+      
+      const data = selectedCourses.map(item => ({
+        课程名称: item.title,
+        课程编号: item.courseId,
+        类型: item.level,
+        讲师: item.teacherName,
+        订阅数: item.subscriberCount || 0,
+        价格: item.price || 0,
+        状态: getStatusText(item.status)
+      }))
+      
+      exportToFile(data, type, '课程')
+    }
+  } catch (error) {
+    console.error('导出失败:', error)
+  }
+}
+
+function exportToFile(data, type, sheetName) {
+  if (data.length === 0) return
+  
   const ws = XLSX.utils.json_to_sheet(data)
   const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, '课程')
+  XLSX.utils.book_append_sheet(wb, ws, sheetName)
   const fileType = type === 'csv' ? 'csv' : 'xlsx'
-  const fileName = `课程导出_${new Date().toISOString().slice(0,10)}.${fileType}`
+  const fileName = `${sheetName}导出_${new Date().toISOString().slice(0,10)}.${fileType}`
+  
   if (type === 'csv') {
     const csv = XLSX.utils.sheet_to_csv(ws)
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -703,6 +760,8 @@ onMounted(() => {
   z-index: 99;
   border-radius: 8px;
   margin-top: 4px;
+  left: 14px;
+  top: 80px;
 }
 .dropdown:hover .dropdown-content {
   display: block;

@@ -138,26 +138,81 @@ onMounted(() => {
 })
 
 function handleExport(type = 'xlsx') {
-  let exportList = []
-  if (selectedIds.value.length > 0) {
-    exportList = teacherList.value.filter(item => selectedIds.value.includes(item.id))
-  } else {
-    exportList = teacherList.value
+  // 如果是全部导出，需要获取所有数据
+  if (selectedIds.value.length === 0) {
+    handleExportAll(type)
+    return
   }
-  if (exportList.length === 0) return
-  // 组装导出数据
-  const data = exportList.map(item => ({
-    姓名: item.name,
-    教工号: item.teacherId,
-    开设课程: item.courseCount,
-    入职日期: formatDate(item.createdAt),
-    收益: item.totalIncome || 0
-  }))
+  
+  // 批量导出：需要获取所有选中的教师数据
+  handleExportSelected(type)
+}
+
+async function handleExportAll(type = 'xlsx') {
+  try {
+    // 获取所有教师数据（不分页）
+    const response = await http.get('/admin/teachers', {
+      params: {
+        page: 1,
+        size: 10000 // 设置一个很大的数字来获取所有数据
+      }
+    })
+    
+    if (response.data.status === 200) {
+      const allTeachers = response.data.data.records
+      const data = allTeachers.map(item => ({
+        姓名: item.name,
+        教工号: item.teacherId,
+        开设课程: item.courseCount,
+        入职日期: formatDate(item.createdAt),
+        收益: item.totalIncome || 0
+      }))
+      
+      exportToFile(data, type, '教师')
+    }
+  } catch (error) {
+    console.error('导出失败:', error)
+  }
+}
+
+async function handleExportSelected(type = 'xlsx') {
+  try {
+    // 获取所有教师数据，然后过滤选中的
+    const response = await http.get('/admin/teachers', {
+      params: {
+        page: 1,
+        size: 10000
+      }
+    })
+    
+    if (response.data.status === 200) {
+      const allTeachers = response.data.data.records
+      const selectedTeachers = allTeachers.filter(item => selectedIds.value.includes(item.id))
+      
+      const data = selectedTeachers.map(item => ({
+        姓名: item.name,
+        教工号: item.teacherId,
+        开设课程: item.courseCount,
+        入职日期: formatDate(item.createdAt),
+        收益: item.totalIncome || 0
+      }))
+      
+      exportToFile(data, type, '教师')
+    }
+  } catch (error) {
+    console.error('导出失败:', error)
+  }
+}
+
+function exportToFile(data, type, sheetName) {
+  if (data.length === 0) return
+  
   const ws = XLSX.utils.json_to_sheet(data)
   const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, '教师')
+  XLSX.utils.book_append_sheet(wb, ws, sheetName)
   const fileType = type === 'csv' ? 'csv' : 'xlsx'
-  const fileName = `教师导出_${new Date().toISOString().slice(0,10)}.${fileType}`
+  const fileName = `${sheetName}导出_${new Date().toISOString().slice(0,10)}.${fileType}`
+  
   if (type === 'csv') {
     const csv = XLSX.utils.sheet_to_csv(ws)
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -425,6 +480,8 @@ function toggleSelect(id) {
   z-index: 99;
   border-radius: 8px;
   margin-top: 4px;
+  left: 24px;
+  top: 80px;
 }
 .dropdown:hover .dropdown-content {
   display: block;
