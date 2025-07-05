@@ -1,7 +1,7 @@
 <template>
       <div class="course-list-page">
     <!-- 顶部导航栏 -->
-    <header class="site-header">
+    <!-- <header class="site-header">
       <div class="header-container">
         <div class="logo">
           <h1>智学通</h1>
@@ -9,10 +9,9 @@
         <nav class="main-nav">
           <ul>
             <li class="active"><router-link to="/courses">课程中心</router-link></li>
-            <li><router-link to="/index">首页</router-link></li>
-            <li><router-link to="/notice">通知公告</router-link></li>
-            <li><router-link to="/about">关于我们</router-link></li>
-            <li><router-link to="/use">使用指南</router-link></li>
+            <li><router-link to="/dashboard">我的学习</router-link></li>
+            <li><a href="#" @click.prevent>论坛</a></li>
+            <li><a href="#" @click.prevent>学习助手</a></li>
           </ul>
         </nav>
         <div class="user-actions">
@@ -20,9 +19,11 @@
           <div class="user-avatar">
             <img src="/src/assets/images/course/course-teacher/teacher1.png" alt="用户头像">
           </div>
+          <button class="btn-logout" @click="logout">退出登录</button>
         </div>
       </div>
-    </header>
+    </header> -->
+    <SiteHeader />
 
     <!-- 轮播Banner区 -->
     <div class="banner-slider">
@@ -1087,6 +1088,21 @@
             console.error("API调用失败:", error);
           }
         },
+        
+        // 退出登录
+        logout() {
+          // 清除本地存储的用户信息
+          localStorage.removeItem('userToken');
+          localStorage.removeItem('userInfo');
+          sessionStorage.removeItem('userToken');
+          sessionStorage.removeItem('userInfo');
+          
+          // 显示退出成功提示
+          alert('已成功退出登录');
+          
+          // 跳转到登录页面或首页
+          this.$router.push('/login');
+        },
       }
     }
     </script>
@@ -1182,6 +1198,22 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.btn-logout {
+  background: #ff4757;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-left: 10px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-logout:hover {
+  background: #ff3838;
 }
 
 /* 轮播Banner区 */

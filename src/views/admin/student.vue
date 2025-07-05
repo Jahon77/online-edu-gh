@@ -23,7 +23,14 @@
             <option value="solveProblems">解题数</option>
           </select>
         </div>
-        <button class="btn export">导出</button>
+        <div class="dropdown">
+          <button class="btn export">{{ selectedIds.length > 0 ? '批量导出' : '导出全部' }}</button>
+          <div class="dropdown-content">
+            <a @click="handleExportXlsx">导出为 xlsx</a>
+            <a @click="handleExportCsv">导出为 csv</a>
+          </div>
+        </div>
+        <button class="btn import" @click="handleBatchImport">批量导入</button>
       </div>
     </div>
     
@@ -36,6 +43,7 @@
             <th>学号</th>
             <th>电话</th>
             <th>注册时间</th>
+            <th style="width: 60px;">批量导出</th>
           </tr>
         </thead>
         <tbody>
@@ -49,6 +57,17 @@
             <td>{{ item.studentId }}</td>
             <td>{{ item.phone }}</td>
             <td>{{ formatDate(item.createdAt) }}</td>
+            <td @click.stop>
+              <label class="checkbox-wrapper">
+                <input
+                  type="checkbox"
+                  v-model="selectedIds"
+                  :value="item.id"
+                  class="custom-checkbox"
+                />
+                <span class="checkmark"></span>
+              </label>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -78,23 +97,23 @@
 
     <!-- 学习榜排名 -->
     <div v-if="activeTab === 'ranking'" class="ranking-wrapper">
-      <div class="podium">
+      <div class="podium" v-if="currentPage === 1">
         <!-- 第二名 -->
-        <div class="podium-item second hover-row" v-if="topThree[1]" @click="goToDetail(topThree[1])" style="cursor: pointer;">
+        <div class="podium-item second hover-row" v-if="topThree[1]" :key="`second-${selection}-${topThree[1].id}`" @click="goToDetail(topThree[1])" style="cursor: pointer;">
           <img :src="topThree[1].avatarUrl" class="avatar" />
           <img :src="topImages[1]" class="rank-img" />
           <div class="name">{{ topThree[1].name }}</div>
           <div class="value">{{ getRankingValue(topThree[1]) }}</div>
         </div>
         <!-- 第一名 -->
-        <div class="podium-item first hover-row" v-if="topThree[0]" @click="goToDetail(topThree[0])" style="cursor: pointer;">
+        <div class="podium-item first hover-row" v-if="topThree[0]" :key="`second-${selection}-${topThree[0].id}`" @click="goToDetail(topThree[0])" style="cursor: pointer;">
           <img :src="topThree[0].avatarUrl" class="avatar" />
           <img :src="topImages[0]" class="rank-img" />
           <div class="name">{{ topThree[0].name }}</div>
           <div class="value">{{ getRankingValue(topThree[0]) }}</div>
         </div>
         <!-- 第三名 -->
-        <div class="podium-item third hover-row" v-if="topThree[2]" @click="goToDetail(topThree[2])" style="cursor: pointer;" >
+        <div class="podium-item third hover-row" v-if="topThree[2]" :key="`second-${selection}-${topThree[2].id}`" @click="goToDetail(topThree[2])" style="cursor: pointer;" >
           <img :src="topThree[2].avatarUrl" class="avatar" />
           <img :src="topImages[2]" class="rank-img" />
           <div class="name">{{ topThree[2].name }}</div>
@@ -114,6 +133,7 @@
               <th>学习时长</th>
               <th>完成课程</th>
               <th>解题数</th>
+              <th style="width: 60px;">批量导出</th>
             </tr>
           </thead>
           <tbody>
@@ -132,6 +152,17 @@
               <td>
                 <span>{{ student.solveQuestionNum }}</span>
               </td>
+              <td @click.stop>
+              <label class="checkbox-wrapper">
+                <input
+                  type="checkbox"
+                  v-model="selectedIds"
+                  :value="student.id"
+                  class="custom-checkbox"
+                />
+                <span class="checkmark"></span>
+              </label>
+            </td>
             </tr>
           </tbody>
         </table>
@@ -171,6 +202,9 @@ import top3 from '@/assets/images/top3.png'
 import top4 from '@/assets/images/top4.png'
 import top5 from '@/assets/images/top5.png'
 import { useRouter } from 'vue-router'
+import * as XLSX from 'xlsx'
+import { saveAs } from 'file-saver'
+
 const router = useRouter()
 
 const goToDetail = (student) => {
@@ -183,6 +217,7 @@ const activeTab = ref('all')
 const selection = ref('duration')
 
 // 分页相关数据
+// 所有数据
 const studentList = ref([])
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -196,23 +231,29 @@ const sortKeyMap = {
   solveProblems: 'solveQuestionNum'
 }
 
-// 计算排序后的学生榜
-const sortedStudents = computed(() => {
-  const key = sortKeyMap[selection.value]
-  // 拷贝一份，避免影响原始 studentList
-  return [...studentList.value].sort((a, b) => (b[key] || 0) - (a[key] || 0))
+// 前三名（仅当 page = 1 时才取）
+const topThree = computed(() => {
+  return currentPage.value === 1 ? studentList.value.slice(0, 3) : []
 })
 
-// 榜单前三
-const topThree = computed(() => sortedStudents.value.slice(0, 3))
-// 榜单其余
-const otherStudents = computed(() => sortedStudents.value.slice(3))
+// 其余学生
+const otherStudents = computed(() => {
+  return currentPage.value === 1
+    ? studentList.value.slice(3)
+    : studentList.value
+})
 
 // 获取学生列表
 const fetchStudentList = async (page = 1) => {
   try {
-    const response = await http.get(`/admin/students?page=${page}&size=${pageSize.value}`)
-    // console.log("学生", response)
+    const sortField = sortKeyMap[selection.value] || 'studyTime'
+    const response = await http.get(`/admin/students`, {
+      params: {
+        page,
+        size: pageSize.value,
+        sort: sortField
+      }
+    })
     if (response.data.status === 200) {
       const data = response.data.data
       studentList.value = data.records
@@ -224,6 +265,10 @@ const fetchStudentList = async (page = 1) => {
     console.error('获取学生列表失败:', error)
   }
 }
+
+watch(selection, () => {
+  fetchStudentList(1)
+})
 
 // 切换页码
 const changePage = (page) => {
@@ -248,6 +293,102 @@ function getRankingValue(student) {
 
 const switchTab = (tab) => {
   activeTab.value = tab
+  if (tab === 'ranking') {
+    fetchTopThree()
+  }
+}
+
+const selectedIds = ref([])
+
+function handleExport(type = 'xlsx') {
+  // 如果是全部导出，需要获取所有数据
+  if (selectedIds.value.length === 0) {
+    handleExportAll(type)
+    return
+  }
+  
+  // 批量导出：需要获取所有选中的学生数据
+  handleExportSelected(type)
+}
+
+async function handleExportAll(type = 'xlsx') {
+  try {
+    // 获取所有学生数据（不分页）
+    const response = await http.get('/admin/students', {
+      params: {
+        page: 1,
+        size: 10000 // 设置一个很大的数字来获取所有数据
+      }
+    })
+    
+    if (response.data.status === 200) {
+      const allStudents = response.data.data.records
+      const data = allStudents.map(item => ({
+        姓名: item.name,
+        学号: item.studentId,
+        电话: item.phone,
+        注册时间: formatDate(item.createdAt)
+      }))
+      
+      exportToFile(data, type, '学生')
+    }
+  } catch (error) {
+    console.error('导出失败:', error)
+  }
+}
+
+async function handleExportSelected(type = 'xlsx') {
+  try {
+    // 获取所有学生数据，然后过滤选中的
+    const response = await http.get('/admin/students', {
+      params: {
+        page: 1,
+        size: 10000
+      }
+    })
+    
+    if (response.data.status === 200) {
+      const allStudents = response.data.data.records
+      const selectedStudents = allStudents.filter(item => selectedIds.value.includes(item.id))
+      
+      const data = selectedStudents.map(item => ({
+        姓名: item.name,
+        学号: item.studentId,
+        电话: item.phone,
+        注册时间: formatDate(item.createdAt)
+      }))
+      
+      exportToFile(data, type, '学生')
+    }
+  } catch (error) {
+    console.error('导出失败:', error)
+  }
+}
+
+function exportToFile(data, type, sheetName) {
+  if (data.length === 0) return
+  
+  const ws = XLSX.utils.json_to_sheet(data)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, sheetName)
+  const fileType = type === 'csv' ? 'csv' : 'xlsx'
+  const fileName = `${sheetName}导出_${new Date().toISOString().slice(0,10)}.${fileType}`
+  
+  if (type === 'csv') {
+    const csv = XLSX.utils.sheet_to_csv(ws)
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    saveAs(blob, fileName)
+  } else {
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+    saveAs(new Blob([wbout], { type: 'application/octet-stream' }), fileName)
+  }
+}
+
+function handleExportXlsx() { handleExport('xlsx') }
+function handleExportCsv() { handleExport('csv') }
+
+function handleBatchImport() {
+  // 批量导入逻辑
 }
 
 onMounted(() => {
@@ -256,6 +397,56 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.checkbox-wrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+}
+
+.custom-checkbox {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 3px;
+  left: 7px;
+  height: 30px;
+  width: 30px;
+  background-color: #fff;
+  border: 2px solid #ff8c00;
+  border-radius: 50%; /* 变成圆形 */
+  transition: all 0.2s ease;
+}
+
+.checkbox-wrapper input:checked ~ .checkmark {
+  background-color: #fbff05;
+  border-color: #ff8c00;
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox-wrapper input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.checkmark:after {
+  left: 5px;
+  top: 1px;
+  width: 4px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
 
 .hover-row td {
   transition: background-color 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
@@ -333,7 +524,8 @@ onMounted(() => {
   outline: none;
   cursor: pointer;
   margin-right: 8px;
-  font-size: 1em;
+  font-size: 1.4em;
+  margin-top: 7px;
 }
 
 .month-select:focus {
@@ -341,7 +533,7 @@ onMounted(() => {
 }
 
 .student-actions .btn {
-  background: var(--main-blue);
+  background: var(--main-orange);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -388,7 +580,7 @@ onMounted(() => {
 
 .student-table td {
   background: var(--main-light);
-  border-radius: 10px;
+  border-radius: 40px;
   padding: 10px 8px;
   vertical-align: middle;
   font-size: 1.2em;
@@ -640,7 +832,7 @@ onMounted(() => {
 
 .ranking-table td {
   background: var(--main-light);
-  border-radius: 10px;
+  border-radius: 40px;
   padding: 12px 8px;
   vertical-align: middle;
 }
@@ -693,29 +885,64 @@ onMounted(() => {
 }
 
 .page-btn {
-  background: var(--main-blue);
-  color: #fff;
-  border: none;
+  background: #fff;
+  border: 1px solid #ddd;
   border-radius: 6px;
-  padding: 4px 8px;
+  padding: 8px 16px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  font-size: 1em;
 }
 
-.page-btn:hover {
-  background: var(--main-green);
-}
-
-.page-btn.prev:hover {
+.page-btn:hover:not(:disabled) {
   background: var(--main-orange);
+  color: #fff;
+  border-color: var(--main-orange);
 }
 
-.page-btn.next:hover {
-  background: var(--main-orange);
+.page-btn:disabled {
+  background: #f5f5f5;
+  color: #ccc;
+  cursor: not-allowed;
 }
 
 .page-info {
+  color: #666;
+  font-size: 14px;
+  min-width: 60px;
+  text-align: center;
+  font-size: 1.1em;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background: #fff;
+  min-width: 120px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 99;
+  border-radius: 8px;
+  margin-top: 4px;
+  left: 14px;
+  top: 80px;
+}
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+.dropdown-content a {
   color: #333;
-  font-size: 0.95em;
+  padding: 10px 16px;
+  text-decoration: none;
+  display: block;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.dropdown-content a:hover {
+  background: var(--main-orange);
+  color: #fff;
 }
 </style>

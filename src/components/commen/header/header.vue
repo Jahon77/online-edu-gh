@@ -21,11 +21,11 @@
         </div>
       </div>
       <div class="header-right">
-          <router-link to="/dashboard" class="dashboard-link" v-if="isLoggedIn">
+          <a href="#" @click.prevent="goToDashboard" class="dashboard-link" v-if="isLoggedIn">
             <i class="user-icon am-icon-user"></i> 个人中心
-          </router-link>
+          </a>
           <button type="button" v-if="!isLoggedIn" @click="login">登录</button>
-          <button type="button" v-else @click="logout">退出登录</button>
+          <button type="button" v-else @click="confirmLogout">退出登录</button>
       </div>
     </div>
 
@@ -46,6 +46,9 @@
 
 <script>
 import AppFunctions from "../../../utils/appFunction.js";
+import { getUserRole, logout } from "../../../utils/authUtils";
+import { ElMessageBox } from 'element-plus';
+
 export default {
   name: "Header",
   components: {},
@@ -71,13 +74,40 @@ export default {
     login(){
       this.$router.push({ name: 'login' });
     },
-    logout(){
-      // 清除cookie
-      document.cookie = "satoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "userid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      // 跳转到登录页
+    async confirmLogout() {
+      try {
+        await ElMessageBox.confirm(
+          '确定要退出登录吗？',
+          '提示',
+          {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning',
+          }
+        );
+        this.handleLogout();
+      } catch {
+        // 用户取消退出登录
+      }
+    },
+    handleLogout(){
+      // 使用authUtils中的logout函数
+      logout();
+      // 更新登录状态
+      this.isLoggedIn = false;
+      this.username = '';
+      // 跳转到首页
       this.$router.push({ name: 'index' });
+    },
+    goToDashboard() {
+      const userRole = getUserRole();
+      if (userRole === 3) {
+        this.$router.push('/admin/home');
+      } else if (userRole === 2) {
+        this.$router.push('/teacher/profile');
+      } else {
+        this.$router.push('/courses');
+      }
     },
     checkLoginStatus() {
       // 检查cookie中是否有用户信息
@@ -107,7 +137,6 @@ export default {
   beforeDestroy() {
     window.removeEventListener('scroll', this.toggleStickyHeader);
   },
-
 }
 </script>
 

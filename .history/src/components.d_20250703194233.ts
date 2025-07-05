@@ -11,9 +11,10 @@ declare module 'vue' {
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCalendar: typeof import('element-plus/es')['ElCalendar']
-
+<<<<<<< HEAD
+    ElCheckbox: typeof import('element-plus/es')['ElCheckbox']
+    ElCheckboxGroup: typeof import('element-plus/es')['ElCheckboxGroup']
     ElCol: typeof import('element-plus/es')['ElCol']
-
     ElDialog: typeof import('element-plus/es')['ElDialog']
     ElDropdown: typeof import('element-plus/es')['ElDropdown']
     ElDropdownItem: typeof import('element-plus/es')['ElDropdownItem']
@@ -23,10 +24,14 @@ declare module 'vue' {
     ElIcon: typeof import('element-plus/es')['ElIcon']
     ElInput: typeof import('element-plus/es')['ElInput']
     ElOption: typeof import('element-plus/es')['ElOption']
+=======
+>>>>>>> 172193e (学生课程与学生个人中心)
     ElPagination: typeof import('element-plus/es')['ElPagination']
-
+    ElProgress: typeof import('element-plus/es')['ElProgress']
+    ElRadio: typeof import('element-plus/es')['ElRadio']
+    ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
+    ElRate: typeof import('element-plus/es')['ElRate']
     ElRow: typeof import('element-plus/es')['ElRow']
-
     ElSelect: typeof import('element-plus/es')['ElSelect']
     ElTabPane: typeof import('element-plus/es')['ElTabPane']
     ElTabs: typeof import('element-plus/es')['ElTabs']
@@ -36,10 +41,8 @@ declare module 'vue' {
     HeaderSelect: typeof import('./components/commen/header/header-select.vue')['default']
     ImageUpload: typeof import('./components/ImageUpload.vue')['default']
     Layout: typeof import('./components/commen/layout.vue')['default']
-    ReplyNode: typeof import('./components/ReplyNode.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    SiteHeader: typeof import('./components/commen/header/SiteHeader.vue')['default']
     StudentCenterCourseList: typeof import('./components/studentCenter/StudentCenterCourseList.vue')['default']
     StudentDashboard: typeof import('./components/studentCenter/StudentDashboard.vue')['default']
     TeacherHeader: typeof import('./components/commen/header/TeacherHeader.vue')['default']

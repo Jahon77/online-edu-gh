@@ -1,127 +1,132 @@
 <template>
-  <div class="dashboard-page">
-    <!-- 左侧导航栏 -->
-    <div class="sidebar">
-      <div class="logo">
-        <span class="logo-icon">📚</span>
-        <span class="logo-text">智学通</span>
-      </div>
-      
-      <div class="nav-item active">
-        <div class="nav-icon">📊</div>
-        <div class="nav-text">Dashboard</div>
-      </div>
-      
-      <div class="nav-item" @click="navigateTo('/course/list')">
-        <div class="nav-icon">📝</div>
-        <div class="nav-text">所有课程</div>
-      </div>
-      
-      <div class="nav-item">
-        <div class="nav-icon">📚</div>
-        <div class="nav-text">资源</div>
-      </div>
-      
-      <div class="nav-item" @click="navigateTo('/chat')">
-        <div class="nav-icon">💬</div>
-        <div class="nav-text">聊天</div>
-      </div>
-      
-      <div class="nav-item">
-        <div class="nav-icon">⚙️</div>
-        <div class="nav-text">设置</div>
-      </div>
-      
-      <div class="upgrade-container">
-        <div class="upgrade-lock">🔒</div>
-        <div class="upgrade-text">
-          升级到 <span class="pro-text">Pro</span><br>
-          获取更多资源
-        </div>
-        <button class="upgrade-btn">升级</button>
-      </div>
-    </div>
+  <div>
+    <!-- 添加统一的顶部导航栏 -->
+    <SiteHeader />
     
-    <!-- 主内容区 -->
-    <div class="main-content">
-      <!-- 欢迎区域 -->
-      <div class="welcome-section">
-        <div class="welcome-text">
-          <h1>欢迎回来，{{ name }} 👋</h1>
-          <p>您已完成 <strong>{{ completionRate }}%</strong> 的学习目标！继续努力，提高您的学习进度！</p>
-        </div>
-        <div class="welcome-image">
-          <img src="/src/assets/images/6402d73b1c4a9f72c60a257bac3cd93a.png" alt="Welcome illustration">
-        </div>
-      </div>
-      
-      <!-- 使用StudentDashboard组件 -->
-      <StudentDashboard />
-    </div>
-    
-    <!-- 右侧边栏 -->
-    <div class="right-sidebar">
-      <!-- 个人信息 -->
-      <div class="user-profile">
-        <div class="notification-icon">🔔</div>
-        <div class="user-avatar">
-          <img :src="userAvatar" :alt="username">
-        </div>
-        <div class="user-name">{{ name }} <span class="dropdown-icon">▼</span></div>
-      </div>
-      
-      <!-- 学习进度日历 -->
-      <div class="progress-section">
-        <div class="section-header">
-          <h3>我的进度</h3>
-          <div class="month-selector">{{ currentMonth }}</div>
+    <div class="dashboard-page">
+      <!-- 左侧导航栏 -->
+      <div class="sidebar">
+        <div class="logo">
+          <span class="logo-icon">📚</span>
+          <span class="logo-text">智学通</span>
         </div>
         
-        <div class="calendar">
-          <div class="calendar-header">
-            <div v-for="day in weekDays" :key="day" class="calendar-day-header">{{ day }}</div>
+        <div class="nav-item active">
+          <div class="nav-icon">📊</div>
+          <div class="nav-text">Dashboard</div>
+        </div>
+        
+        <div class="nav-item" @click="navigateTo('/course/list')">
+          <div class="nav-icon">📝</div>
+          <div class="nav-text">所有课程</div>
+        </div>
+        
+        <div class="nav-item">
+          <div class="nav-icon">📚</div>
+          <div class="nav-text">资源</div>
+        </div>
+        
+        <div class="nav-item" @click="navigateTo('/chat')">
+          <div class="nav-icon">💬</div>
+          <div class="nav-text">聊天</div>
+        </div>
+        
+        <div class="nav-item">
+          <div class="nav-icon">⚙️</div>
+          <div class="nav-text">设置</div>
+        </div>
+        
+        <div class="upgrade-container">
+          <div class="upgrade-lock">🔒</div>
+          <div class="upgrade-text">
+            升级到 <span class="pro-text">Pro</span><br>
+            获取更多资源
           </div>
-          <div class="calendar-body">
-            <div v-for="(day, index) in calendarDays" :key="index" 
-                 :class="['calendar-day', { 'has-activity': day.hasActivity, 'current': day.isCurrent, 'other-month': !day.isCurrentMonth }]">
-              {{ day.date }}
+          <button class="upgrade-btn">升级</button>
+        </div>
+      </div>
+      
+      <!-- 主内容区 -->
+      <div class="main-content">
+        <!-- 欢迎区域 -->
+        <div class="welcome-section">
+          <div class="welcome-text">
+            <h1>欢迎回来，{{ name }} 👋</h1>
+            <p>您已完成 <strong>{{ completionRate }}%</strong> 的学习目标！继续努力，提高您的学习进度！</p>
+          </div>
+          <div class="welcome-image">
+            <img src="/src/assets/images/6402d73b1c4a9f72c60a257bac3cd93a.png" alt="Welcome illustration">
+          </div>
+        </div>
+        
+        <!-- 使用StudentDashboard组件 -->
+        <StudentDashboard />
+      </div>
+      
+      <!-- 右侧边栏 -->
+      <div class="right-sidebar">
+        <!-- 个人信息 -->
+        <div class="user-profile">
+          <div class="notification-icon">🔔</div>
+          <div class="user-avatar">
+            <img :src="userAvatar" :alt="username">
+          </div>
+          <div class="user-name">{{ name }} <span class="dropdown-icon">▼</span></div>
+        </div>
+        
+        <!-- 学习进度日历 -->
+        <div class="progress-section">
+          <div class="section-header">
+            <h3>我的进度</h3>
+            <div class="month-selector">{{ currentMonth }}</div>
+          </div>
+          
+          <div class="calendar">
+            <div class="calendar-header">
+              <div v-for="day in weekDays" :key="day" class="calendar-day-header">{{ day }}</div>
+            </div>
+            <div class="calendar-body">
+              <div v-for="(day, index) in calendarDays" :key="index" 
+                   :class="['calendar-day', { 'has-activity': day.hasActivity, 'current': day.isCurrent, 'other-month': !day.isCurrentMonth }]">
+                {{ day.date }}
+              </div>
+            </div>
+          </div>
+          
+          <div class="activity-legend">
+            <div class="legend-item">
+              <div class="legend-color light"></div>
+              <div class="legend-text">轻度</div>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color medium"></div>
+              <div class="legend-text">中度</div>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color heavy"></div>
+              <div class="legend-text">重度</div>
             </div>
           </div>
         </div>
         
-        <div class="activity-legend">
-          <div class="legend-item">
-            <div class="legend-color light"></div>
-            <div class="legend-text">轻度</div>
+        <!-- 待办事项 -->
+        <div class="tasks-section">
+          <div class="section-header">
+            <h3>待办任务</h3>
+            <div class="view-all">查看全部</div>
           </div>
-          <div class="legend-item">
-            <div class="legend-color medium"></div>
-            <div class="legend-text">中度</div>
-          </div>
-          <div class="legend-item">
-            <div class="legend-color heavy"></div>
-            <div class="legend-text">重度</div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- 待办事项 -->
-      <div class="tasks-section">
-        <div class="section-header">
-          <h3>待办任务</h3>
-          <div class="view-all">查看全部</div>
-        </div>
-        
-        <div class="task-list">
-          <div v-for="task in upcomingTasks" :key="task.id" class="task-item">
-            <div class="task-icon" :style="{ backgroundColor: task.iconBg }">
-              <img :src="task.icon" alt="Task icon">
+          
+          <div class="task-list">
+            <div v-for="task in upcomingTasks" :key="task.id" class="task-item">
+              <div class="task-icon" :style="{ backgroundColor: task.iconBg }">
+                <img :src="task.icon" alt="Task icon">
+              </div>
+              <div class="task-content">
+                <div class="task-title">{{ task.title }}</div>
+                <div class="task-time">{{ task.time }}</div>
+              </div>
+              <div class="task-arrow">›</div>
             </div>
-            <div class="task-content">
-              <div class="task-title">{{ task.title }}</div>
-              <div class="task-time">{{ task.time }}</div>
-            </div>
-            <div class="task-arrow">›</div>
           </div>
         </div>
       </div>
@@ -132,15 +137,18 @@
 <script>
 import axios from 'axios';
 import StudentDashboard from '@/components/studentCenter/StudentDashboard.vue';
+import SiteHeader from '@/components/commen/header/SiteHeader.vue';
 
 export default {
   name: 'Dashboard',
   components: {
-    StudentDashboard
+    StudentDashboard,
+    SiteHeader
   },
   data() {
     return {
       username: 'Deena',
+      name: 'Deena',
       userAvatar: '/src/assets/pictures/logo.png',
       completionRate: 80,
       currentMonth: 'October',
@@ -304,7 +312,7 @@ export default {
         }
       }
       return null;
-    }
+    },
   }
 };
 </script>
@@ -736,3 +744,4 @@ export default {
   }
 }
 </style>
+

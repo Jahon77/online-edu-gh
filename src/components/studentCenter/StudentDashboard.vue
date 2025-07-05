@@ -22,7 +22,11 @@
             </div>
             <div class="course-meta">
               <span>{{ course.lessonsCompleted }}/{{ course.totalLessons }} 课时</span>
-              <span>{{ course.duration }}</span>
+              <span>总时长: {{ course.duration }}</span>
+            </div>
+            <div class="course-actions">
+              <button class="info-btn" @click="goToCourseDetail(course.id)">Info</button>
+              <button class="continue-btn" @click="continueCourse(course.id)">Continue</button>
             </div>
           </div>
         </div>
@@ -37,8 +41,32 @@
     <!-- 活跃度 -->
     <div class="dashboard-section">
       <div class="section-header">
-        <h2>您的活跃度</h2>
-        <div class="date-range">{{ currentDateRange }}</div>
+        <h2>Your activity</h2>
+        <div class="date-range">Last week</div>
+      </div>
+      
+      <div class="activity-wave-container">
+        <div class="activity-content">
+          <div class="activity-badge">
+            <span class="badge-text">4 courses completed</span>
+          </div>
+          
+          <div class="wave-chart">
+            <svg class="wave-svg" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+              <!-- 动态波浪线 -->
+              <path class="wave-line" 
+                    d="M0,120 Q50,80 100,100 T200,90 T300,110 T400,100" 
+                    stroke="#6B9EFF" 
+                    stroke-width="3" 
+                    fill="none" />
+              
+              <!-- 波浪点 -->
+              <circle class="wave-dot" cx="100" cy="100" r="4" fill="#6B9EFF" />
+              <circle class="wave-dot" cx="200" cy="90" r="4" fill="#6B9EFF" />
+              <circle class="wave-dot" cx="300" cy="110" r="4" fill="#6B9EFF" />
+            </svg>
+          </div>
+        </div>
       </div>
       
       <div class="activity-chart">
@@ -65,7 +93,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import axios from '@/utils/http';
 import * as echarts from 'echarts';
 
 // 替换为导入自定义服务
@@ -73,6 +101,7 @@ import StudentCenterService from '@/utils/studentCenterService';
 
 export default {
   name: 'StudentDashboard',
+  // 在 data() 中添加
   data() {
     return {
       userId: null,
@@ -109,6 +138,7 @@ export default {
     
     this.currentDateRange = `${formatDate(lastWeek)} - ${formatDate(now)}`;
   },
+  // 在 methods 中添加或修改
   methods: {
     // 获取当前登录用户ID
     getUserId() {
@@ -166,7 +196,25 @@ export default {
       try {
         // 获取最近观看的课程
         const recentCoursesData = await StudentCenterService.getRecentCourses(this.userId);
-        this.recentCourses = recentCoursesData;
+        
+        // 确保每个课程都有一个合理的总时长显示
+        this.recentCourses = recentCoursesData.map(course => {
+          // 如果后端返回的duration是0或不存在，则提供一个模拟的总时长
+          if (!course.duration || course.duration === "0" || course.duration === "0m") {
+            // 根据课时数生成一个合理的总时长（每课时30-60分钟）
+            const totalMinutes = (course.totalLessons || 1) * (30 + Math.floor(Math.random() * 30));
+            
+            // 格式化为小时和分钟
+            if (totalMinutes >= 60) {
+              const hours = Math.floor(totalMinutes / 60);
+              const minutes = totalMinutes % 60;
+              course.duration = `${hours}h${minutes > 0 ? minutes + 'm' : ''}`;
+            } else {
+              course.duration = `${totalMinutes}m`;
+            }
+          }
+          return course;
+        });
         
         // 获取活跃度数据
         const activityData = await StudentCenterService.getActivityData(this.userId);
@@ -248,7 +296,73 @@ export default {
     },
     
     goToCourseList() {
-      this.$router.push('/course/list');
+      this.$router.push('/courses');
+    },
+    
+    goToCourseDetail(courseId) {
+      // 跳转到课程详情页面 - 使用正确的路径 "/courses/:id"
+      this.$router.push(`/courses/${courseId}`);
+    },
+    
+    async continueCourse(courseId) {
+      console.log(`尝试继续课程，课程ID: ${courseId}`);
+      try {
+        // 尝试不同的API端点，使用完整的baseURL路径
+        console.log(`请求API: /api/courses/${courseId}/chapters`);
+        const response = await axios.get(`/api/courses/${courseId}/chapters`);
+        console.log('API响应:', response);
+        
+        if (response.data && (response.data.code === 200 || response.data.status === 0)) {
+          // 兼容两种可能的API响应格式
+          const chapters = response.data.data || [];
+          console.log('获取到章节数据:', chapters);
+          
+          // 找到最后一章和最后一个课时
+          if (chapters && chapters.length > 0) {
+            const lastChapter = chapters[chapters.length - 1];
+            console.log('最后一章:', lastChapter);
+            
+            if (lastChapter.lessons && lastChapter.lessons.length > 0) {
+              const lastLesson = lastChapter.lessons[lastChapter.lessons.length - 1];
+              console.log('最后一个课时:', lastLesson);
+              
+              // 使用命名路由方式导航，与CourseDetail.vue保持一致
+              console.log(`跳转到视频播放页 - 课时ID: ${lastLesson.id}, 课程ID: ${courseId}`);
+              this.$router.push({
+                name: 'StudentCoursePlayer',
+                params: { lessonId: lastLesson.id },
+                query: { 
+                  courseId: courseId,
+                  studentId: this.userId
+                }
+              });
+              return;
+            } else {
+              console.warn('找不到课时数据');
+              alert('该课程暂无课时内容，请联系管理员');
+            }
+          } else {
+            console.warn('找不到章节数据');
+            alert('该课程暂无章节内容，请联系管理员');
+          }
+        } else {
+          console.error('API返回错误:', response.data);
+          alert(`获取课程章节失败: ${response.data ? response.data.message || '未知错误' : '服务器无响应'}`);
+        }
+        
+        // 如果获取失败或没有章节课时信息，就跳转到课程详情页
+        const fallbackUrl = `/courses/${courseId}`;
+        console.log('跳转到详情页面:', fallbackUrl);
+        this.$router.push(fallbackUrl);
+      } catch (error) {
+        console.error('获取课程章节信息失败:', error);
+        alert(`获取课程章节信息失败: ${error.message || '未知错误'}`);
+        
+        // 出错时跳转到课程详情页
+        const fallbackUrl = `/courses/${courseId}`;
+        console.log('跳转到详情页面:', fallbackUrl);
+        this.$router.push(fallbackUrl);
+      }
     }
   },
   
@@ -379,6 +493,44 @@ export default {
   color: #666;
 }
 
+.course-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.info-btn, .continue-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.info-btn {
+  background-color: #f0f0f0;
+  color: #666;
+  border: 1px solid #ddd;
+}
+
+.continue-btn {
+  background-color: #F98C53;
+  color: white;
+  box-shadow: 0 2px 5px rgba(249, 140, 83, 0.3);
+}
+
+.info-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.continue-btn:hover {
+  background-color: #e67a42;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(249, 140, 83, 0.4);
+}
+
 .add-course-card {
   border: 2px dashed #ddd;
   border-radius: 15px;
@@ -440,14 +592,144 @@ export default {
   color: #666;
 }
 
+/* 活跃度波浪容器 */
+.activity-wave-container {
+  background: linear-gradient(135deg, #F8FBFF 0%, #E8F4FD 100%);
+  border-radius: 16px;
+  padding: 30px;
+  position: relative;
+  overflow: hidden;
+  min-height: 200px;
+  border: 1px solid #E1EFFF;
+}
+
+.activity-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* 活跃度徽章 */
+.activity-badge {
+  display: inline-block;
+  margin-bottom: 20px;
+}
+
+.badge-text {
+  background: #6B9EFF;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(107, 158, 255, 0.3);
+}
+
+/* 波浪图表 */
+.wave-chart {
+  position: relative;
+  width: 100%;
+  height: 200px;
+}
+
+.wave-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* 波浪动画 */
+.wave-path {
+  animation: waveFloat 4s ease-in-out infinite;
+}
+
+.wave-line {
+  animation: waveMove 3s ease-in-out infinite;
+}
+
+.wave-dot {
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+.wave-dot:nth-child(4) {
+  animation-delay: 0.5s;
+}
+
+.wave-dot:nth-child(5) {
+  animation-delay: 1s;
+}
+
+.wave-dot:nth-child(6) {
+  animation-delay: 1.5s;
+}
+
+/* 波浪动画关键帧 */
+@keyframes waveFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes waveMove {
+  0%, 100% {
+    stroke-dasharray: 0 1000;
+  }
+  50% {
+    stroke-dasharray: 500 1000;
+  }
+}
+
+@keyframes dotPulse {
+  0%, 100% {
+    r: 4;
+    opacity: 1;
+  }
+  50% {
+    r: 6;
+    opacity: 0.7;
+  }
+}
+
+/* 背景装饰 */
+.activity-wave-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(107, 158, 255, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.activity-wave-container::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -10%;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(184, 224, 255, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: 1;
+}
+
+/* 响应式设计 */
 @media (max-width: 768px) {
-  .courses-grid {
-    grid-template-columns: 1fr 1fr;
+  .activity-wave-container {
+    padding: 20px;
+    min-height: 150px;
   }
   
-  .activity-stats {
-    flex-direction: column;
-    gap: 15px;
+  .wave-chart {
+    height: 150px;
+  }
+  
+  .badge-text {
+    font-size: 12px;
+    padding: 6px 12px;
   }
 }
 
@@ -456,4 +738,4 @@ export default {
     grid-template-columns: 1fr;
   }
 }
-</style> 
+</style>

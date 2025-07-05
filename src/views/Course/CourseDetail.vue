@@ -9,10 +9,9 @@
         <nav class="main-nav">
           <ul>
             <li class="active"><router-link to="/courses">课程中心</router-link></li>
-            <li><router-link to="/index">首页</router-link></li>
-            <li><router-link to="/notice">通知公告</router-link></li>
-            <li><router-link to="/about">关于我们</router-link></li>
-            <li><router-link to="/use">使用指南</router-link></li>
+            <li><router-link to="/dashboard">我的学习</router-link></li>
+            <li><a href="#" @click.prevent>论坛</a></li>
+            <li><a href="#" @click.prevent>学习助手</a></li>
           </ul>
         </nav>
         <div class="user-actions">
@@ -20,6 +19,7 @@
           <div class="user-avatar">
             <img src="https://via.placeholder.com/36" alt="用户头像">
           </div>
+          <button class="btn-logout" @click="logout">退出登录</button>
         </div>
       </div>
     </header>
@@ -598,11 +598,11 @@ export default {
               comment.userAvatar = comment.userAvatar.replace(/^"|"$/g, "").replace(/\\\\/g, "\\");
             }
             // 确保前端显示正确
-            console.log(`评论ID ${comment.id} 的星级:`, comment.stars);
-            
-            // 如果后端返回的是rating而不是stars，进行转换
+            // 如果后端返回的是rating而不是stars，进行转换，并确保为数字类型
             if (comment.rating !== undefined && comment.stars === undefined) {
-              comment.stars = comment.rating;
+              comment.stars = Number(comment.rating);
+            } else if (comment.stars !== undefined) {
+              comment.stars = Number(comment.stars);
             }
           });
           
@@ -629,8 +629,8 @@ export default {
       console.log('提交评价:', this.newComment);
       
       try {
-        // 后端接口参数名为rating，而不是stars
-        const response = await axios.post(`/api/studentcourse/${this.courseId}/comments`, null, {
+        // 使用正确的后端接口路径
+        const response = await axios.post(`/api/courses/${this.courseId}/comments`, null, {
           params: {
             studentId: this.currentUser.id,
             content: this.newComment.content,
@@ -640,7 +640,7 @@ export default {
         
         console.log('提交评价响应:', response.data);
         
-        if (response.data && response.data.status === 0) {
+        if (response.data && (response.data.status === 0 || response.data.code === 200)) {
           // 重新加载评论
           this.comments = [];
           await this.fetchComments();
@@ -656,11 +656,11 @@ export default {
           
           alert('评价提交成功');
         } else {
-          alert('评价提交失败: ' + (response.data?.msg || '未知错误'));
+          alert('评价提交失败: ' + (response.data?.msg || response.data?.message || '未知错误'));
         }
       } catch (err) {
         console.error('提交评价失败:', err);
-        alert('评价提交失败: ' + (err.response?.data?.msg || '请稍后重试'));
+        alert('评价提交失败: ' + (err.response?.data?.msg || err.response?.data?.message || '请稍后重试'));
       }
     },
     

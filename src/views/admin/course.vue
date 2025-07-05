@@ -24,7 +24,14 @@
             <option value="2024-03">2024年3月</option>
           </select>
         </div>
-        <button class="btn export">导出</button>
+        <div class="dropdown">
+          <button class="btn export">{{ selectedIds.length > 0 ? '批量导出' : '导出全部' }}</button>
+          <div class="dropdown-content">
+            <a @click="handleExportXlsx">导出为 xlsx</a>
+            <a @click="handleExportCsv">导出为 csv</a>
+          </div>
+        </div>
+        <button class="btn import" @click="handleBatchImport">批量导入</button>
       </div>
     </div>
     
@@ -40,6 +47,7 @@
             <th>订阅数</th>
             <th>价格</th>
             <th>状态</th>
+            <th style="width: 60px;">批量导出</th>
           </tr>
         </thead>
         <tbody>
@@ -57,6 +65,17 @@
             <td>￥{{ item.price || 0 }}</td>
             <td>
               <span :class="['status', getStatusClass(item.status)]">{{ getStatusText(item.status) }}</span>
+            </td>
+            <td @click.stop>
+              <label class="checkbox-wrapper">
+                <input
+                  type="checkbox"
+                  v-model="selectedIds"
+                  :value="item.id"
+                  class="custom-checkbox"
+                />
+                <span class="checkmark"></span>
+              </label>
             </td>
           </tr>
         </tbody>
@@ -94,10 +113,12 @@
           <tr>
             <th>排名</th>
             <th>课程名称</th>
+            <th>课程编号</th>
             <th>讲师</th>
             <th>订阅数</th>
             <th>价格</th>
             <th>状态</th>
+            <th style="width: 60px;">批量导出</th>
           </tr>
         </thead>
         <tbody>
@@ -110,14 +131,25 @@
               <img :src="course.coverUrl" class="cover" />
               <div class="info">
                 <div class="name">{{ course.title }}</div>
-                <div class="id">#{{ course.courseId }}</div>
               </div>
             </td>
+            <td>{{ course.courseId }}</td>
             <td>{{ course.teacherName }}</td>
             <td>{{ course.subscriberCount }}</td>
             <td>￥{{ course.price }}</td>
             <td>
               <span :class="['status', getStatusClass(course.status)]">{{ getStatusText(course.status) }}</span>
+            </td>
+            <td @click.stop>
+              <label class="checkbox-wrapper">
+                <input
+                  type="checkbox"
+                  v-model="selectedIds"
+                  :value="course.id"
+                  class="custom-checkbox"
+                />
+                <span class="checkmark"></span>
+              </label>
             </td>
           </tr>
         </tbody>
@@ -153,6 +185,8 @@
 import { ref, onMounted } from 'vue'
 import http from '@/utils/http.js'
 import { useRouter } from 'vue-router'
+import * as XLSX from 'xlsx'
+import { saveAs } from 'file-saver'
 const router = useRouter()
 const route = useRoute()
 
@@ -259,6 +293,114 @@ const switchTab = (tab) => {
   }
 }
 
+const selectedIds = ref([])
+
+function handleExport(type = 'xlsx') {
+  // 如果是全部导出，需要获取所有数据
+  if (selectedIds.value.length === 0) {
+    handleExportAll(type)
+    return
+  }
+  
+  // 批量导出：需要获取所有选中的课程数据
+  handleExportSelected(type)
+}
+
+async function handleExportAll(type = 'xlsx') {
+  try {
+    // 获取所有课程数据（不分页）
+    const response = await http.get('/admin/courses', {
+      params: {
+        page: 1,
+        size: 10000 // 设置一个很大的数字来获取所有数据
+      }
+    })
+    
+    if (response.data.status === 200) {
+      const allCourses = response.data.data.records
+      const data = allCourses.map(item => ({
+        课程名称: item.title,
+        课程编号: item.courseId,
+        类型: item.level,
+        讲师: item.teacherName,
+        订阅数: item.subscriberCount || 0,
+        价格: item.price || 0,
+        状态: getStatusText(item.status)
+      }))
+      
+      exportToFile(data, type, '课程')
+    }
+  } catch (error) {
+    console.error('导出失败:', error)
+  }
+}
+
+async function handleExportSelected(type = 'xlsx') {
+  try {
+    // 获取所有课程数据，然后过滤选中的
+    const response = await http.get('/admin/courses', {
+      params: {
+        page: 1,
+        size: 10000
+      }
+    })
+    
+    if (response.data.status === 200) {
+      const allCourses = response.data.data.records
+      const selectedCourses = allCourses.filter(item => selectedIds.value.includes(item.id))
+      
+      const data = selectedCourses.map(item => ({
+        课程名称: item.title,
+        课程编号: item.courseId,
+        类型: item.level,
+        讲师: item.teacherName,
+        订阅数: item.subscriberCount || 0,
+        价格: item.price || 0,
+        状态: getStatusText(item.status)
+      }))
+      
+      exportToFile(data, type, '课程')
+    }
+  } catch (error) {
+    console.error('导出失败:', error)
+  }
+}
+
+function exportToFile(data, type, sheetName) {
+  if (data.length === 0) return
+  
+  const ws = XLSX.utils.json_to_sheet(data)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, sheetName)
+  const fileType = type === 'csv' ? 'csv' : 'xlsx'
+  const fileName = `${sheetName}导出_${new Date().toISOString().slice(0,10)}.${fileType}`
+  
+  if (type === 'csv') {
+    const csv = XLSX.utils.sheet_to_csv(ws)
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    saveAs(blob, fileName)
+  } else {
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+    saveAs(new Blob([wbout], { type: 'application/octet-stream' }), fileName)
+  }
+}
+
+function handleExportXlsx() { handleExport('xlsx') }
+function handleExportCsv() { handleExport('csv') }
+
+function handleBatchImport() {
+  // 批量导入逻辑
+}
+
+function toggleSelect(id) {
+  const idx = selectedIds.value.indexOf(id)
+  if (idx === -1) {
+    selectedIds.value.push(id)
+  } else {
+    selectedIds.value.splice(idx, 1)
+  }
+}
+
 // 页面加载时获取数据
 onMounted(() => {
   if (route.query.tab === 'ranking') {
@@ -274,6 +416,56 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.checkbox-wrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.custom-checkbox {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 3px;
+  left: 7px;
+  height: 30px;
+  width: 30px;
+  background-color: #fff;
+  border: 2px solid #ff8c00;
+  border-radius: 50%; /* 变成圆形 */
+  transition: all 0.2s ease;
+}
+
+.checkbox-wrapper input:checked ~ .checkmark {
+  background-color: #409EFF;
+  border-color: #409EFF;
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox-wrapper input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.checkmark:after {
+  left: 5px;
+  top: 1px;
+  width: 4px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
 
 .hover-row td {
   transition: background-color 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
@@ -352,7 +544,9 @@ onMounted(() => {
   background: #fff;
   outline: none;
   cursor: pointer;
-  margin-right: 8px;
+  margin-right: 2px;
+    font-size: 1.2em;
+    margin-top: 5px;
 }
 
 .month-select:focus {
@@ -360,7 +554,7 @@ onMounted(() => {
 }
 
 .course-actions .btn {
-  background: var(--main-blue);
+  background: var(--main-orange);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -401,7 +595,7 @@ onMounted(() => {
 
 .course-table td {
   background: var(--main-light);
-  border-radius: 10px;
+  border-radius: 40px;
   padding: 10px 8px;
   vertical-align: middle;
 }
@@ -551,5 +745,37 @@ onMounted(() => {
   min-width: 60px;
   text-align: center;
   font-size: 1.1em;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background: #fff;
+  min-width: 120px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 99;
+  border-radius: 8px;
+  margin-top: 4px;
+  left: 14px;
+  top: 80px;
+}
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+.dropdown-content a {
+  color: #333;
+  padding: 10px 16px;
+  text-decoration: none;
+  display: block;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.dropdown-content a:hover {
+  background: var(--main-orange);
+  color: #fff;
 }
 </style>
