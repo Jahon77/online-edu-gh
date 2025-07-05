@@ -8,6 +8,8 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     ChatModal: typeof import('./components/ChatModal.vue')['default']
+    CustomAlert: typeof import('./components/CustomAlert.vue')['default']
+    CustomConfirm: typeof import('./components/CustomConfirm.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCalendar: typeof import('element-plus/es')['ElCalendar']

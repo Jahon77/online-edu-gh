@@ -6,8 +6,10 @@
       </div>
       <nav class="main-nav">
         <ul>
-          <li><router-link to="/courses">课程中心</router-link></li>
-          <li :class="{ 'my-learning-active': isMyLearningActive }">
+          <li :class="{ 'active': isCourseCenterActive }">
+            <router-link to="/courses">课程中心</router-link>
+          </li>
+          <li :class="{ 'active': isMyLearningActive }">
             <router-link to="/dashboard">我的学习</router-link>
           </li>
           <li><a href="#" @click.prevent>论坛</a></li>
@@ -18,7 +20,11 @@
       </nav>
       <div class="user-actions">
         <div class="user-avatar">
-          <img :src="userAvatar" :alt="username">
+          <img 
+            :src="currentUser?.avatar || defaultAvatarUrl" 
+            :alt="currentUser?.username || '用户'"
+            @error="handleAvatarError"
+          >
         </div>
         <button class="btn-download">APP下载</button>
         <button class="btn-logout" @click="logout">退出登录</button>
@@ -34,54 +40,107 @@ export default {
   name: 'SiteHeader',
   data() {
     return {
-      username: '用户',
-      userAvatar: '/src/assets/pictures/logo.png',
+      username: '',
+      userAvatar: '',
       userId: null,
+      currentUser: this.getStoredUserData() || {
+        avatar: '',
+        name: '',
+        username: '',
+        role: 1,
+        id: null
+      },
+      defaultAvatarUrl: '/src/assets/images/defult_user_avatar.png',
+      userDataInitialized: false
     };
   },
   computed: {
     isMyLearningActive() {
       return ['Dashboard', 'StudentCenterCourseList'].includes(this.$route.name);
+    },
+    isCourseCenterActive() {
+      return ['CourseFilterPage', 'CourseDetail', 'CourseList', 'StudentCoursePlayer'].includes(this.$route.name);
+    }
+  },
+  watch: {
+    // 监听用户数据变化
+    currentUser: {
+      handler(newValue) {
+        if (newValue && newValue.id) {
+          this.storeUserData(newValue);
+        }
+      },
+      deep: true
     }
   },
   mounted() {
-    this.fetchUserData();
+    this.initUserData();
   },
   methods: {
-    fetchUserData() {
-      const userStr = localStorage.getItem('user');
-      let userId;
-      
-      if (userStr) {
-        const userData = JSON.parse(userStr);
-        userId = userData.userId;
-        this.username = userData.username || userData.name || '用户';
-      } else {
-        userId = this.getCookie('userid');
-        this.username = this.getCookie('username') || this.getCookie('name') || '用户';
+    getStoredUserData() {
+      try {
+        const storedData = localStorage.getItem('headerUserData');
+        return storedData ? JSON.parse(storedData) : null;
+      } catch (error) {
+        console.error('Error reading stored user data:', error);
+        return null;
       }
-      
-      if (!userId) {
-        console.warn('未找到用户ID，使用默认值');
-        userId = 1; // Fallback or handle not logged in
-      }
-      this.userId = userId;
-      localStorage.setItem('userId', userId);
-      
-      axios.get(`http://localhost:8080/api/user/${userId}`)
-        .then(response => {
-          if (response.data.status === 200) {
-            const userData = response.data.data;
-            if (userData) {
-              this.username = userData.username || this.username;
-              this.userAvatar = userData.avatarUrl || this.userAvatar;
-            }
-          }
-        })
-        .catch(error => {
-          console.error('获取用户数据失败:', error);
-        });
     },
+
+    storeUserData(userData) {
+      try {
+        localStorage.setItem('headerUserData', JSON.stringify(userData));
+      } catch (error) {
+        console.error('Error storing user data:', error);
+      }
+    },
+
+    async initUserData() {
+      const username = this.getCookie('username');
+      const userId = this.getCookie('userid');
+      console.log(userId, username);
+
+      if (userId && username) {
+        this.loginRequired = false;
+        const role = this.getCookie('role');
+        
+        // 获取存储的用户数据
+        const storedData = this.getStoredUserData();
+        
+        // 如果存储的数据与当前用户ID匹配，优先使用存储的数据
+        if (storedData && storedData.id === parseInt(userId)) {
+          this.currentUser = storedData;
+        } else {
+          // 否则使用cookie中的基本信息
+          this.currentUser = {
+            id: parseInt(userId),
+            name: this.getCookie('name') || username,
+            username: username,
+            role: parseInt(role) || 1,
+            avatar: this.defaultAvatarUrl
+          };
+        }
+        
+        // 无论如何都尝试从服务器获取最新数据
+        try {
+          const response = await axios.get(`/user/user-info?userId=${userId}`);
+          if (response.data.status === 0) {
+            const userData = response.data.data;
+            if (userData.avatar && (!this.currentUser.avatar || this.currentUser.avatar === this.defaultAvatarUrl)) {
+              this.currentUser = {
+                ...this.currentUser,
+                avatar: userData.avatar
+              };
+            }
+            this.userDataInitialized = true;
+          }
+        } catch (error) {
+          console.error('获取用户详细信息失败:', error);
+          // 如果请求失败，保持使用当前数据
+        }
+      }
+    },
+    
     getCookie(name) {
       const cookieArr = document.cookie.split(';');
       for (let i = 0; i < cookieArr.length; i++) {
@@ -93,6 +152,7 @@ export default {
       }
       return null;
     },
+    
     logout() {
       this.$confirm('确定要退出登录吗？', '提示', {
         confirmButtonText: '确定',
@@ -102,12 +162,22 @@ export default {
         localStorage.removeItem('token');
         localStorage.removeItem('userInfo');
         localStorage.removeItem('user');
+        localStorage.removeItem('headerUserData'); // 清除存储的头像数据
         sessionStorage.clear();
         
         document.cookie = "satoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         document.cookie = "userid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         document.cookie = "name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        
+        this.userDataInitialized = false;
+        this.currentUser = {
+          avatar: '',
+          name: '',
+          username: '',
+          role: 1,
+          id: null
+        };
         
         this.$message({
           type: 'success',
@@ -121,6 +191,17 @@ export default {
         //   message: '已取消退出'
         // });
       });
+    },
+    handleAvatarError(e) {
+      if (e.target.src !== this.defaultAvatarUrl) {
+        e.target.src = this.defaultAvatarUrl;
+        this.currentUser = {
+          ...this.currentUser,
+          avatar: this.defaultAvatarUrl
+        };
+        // 更新存储的数据
+        this.storeUserData(this.currentUser);
+      }
     }
   }
 };
@@ -183,11 +264,11 @@ export default {
   background-color: #F98C53;
 }
 
-.main-nav li.my-learning-active a {
+.main-nav li.active a {
   color: #F98C53;
 }
 
-.main-nav li.my-learning-active a::after {
+.main-nav li.active a::after {
   content: '';
   position: absolute;
   left: 0;

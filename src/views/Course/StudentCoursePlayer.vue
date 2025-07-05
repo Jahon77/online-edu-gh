@@ -1,7 +1,8 @@
 <template>
       <div class="video-player-page" :class="{ 'web-fullscreen': isWebFullscreen }">
         <!-- 顶部导航栏 - 非全屏模式下显示 -->
-        <header class="site-header" v-if="!isFullscreen && !isWebFullscreen">
+        <SiteHeader v-if="!isFullscreen && !isWebFullscreen"/>
+        <!-- <header class="site-header" v-if="!isFullscreen && !isWebFullscreen">
           <div class="header-container">
             <div class="logo">
               <h1>智学通</h1>
@@ -22,7 +23,7 @@
               <button class="btn-logout" @click="logout">退出登录</button>
             </div>
           </div>
-        </header>
+        </header> -->
     
         <div class="video-container" ref="videoContainer" :class="{ 'fullscreen': isFullscreen, 'web-fullscreen': isWebFullscreen }">
           <!-- 视频播放器主体 -->
