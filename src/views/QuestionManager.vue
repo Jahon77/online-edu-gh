@@ -426,6 +426,14 @@
       this.fetchFileLibrary();
     },
     methods: {
+      // 获取cookie的辅助函数
+      getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+      },
+      
       fetchCourseInfo() {
         fetch(`http://localhost:8080/api/teacher/course/${this.courseId}`)
           .then((res) => res.json())
@@ -451,8 +459,15 @@
           });
       },
       fetchFileLibrary() {
-        // 假设当前用户ID为1，实际应该从登录状态获取
-        const userId = 1;
+        // 从cookie中获取用户ID
+        const userIdFromCookie = this.getCookie('userid');
+        const userId = userIdFromCookie ? parseInt(userIdFromCookie) : null;
+        
+        if (!userId) {
+          console.warn('未登錄，無法獲取文件庫');
+          return;
+        }
+        
         fetch(`http://localhost:8080/api/file/list/${userId}`)
           .then((res) => res.json())
           .then((data) => {
@@ -562,7 +577,18 @@
         for (let i = 0; i < files.length; i++) {
           formData.append('file', files[i]);
         }
-        formData.append('userId', 1); // 假设当前用户ID为1
+        
+        // 从cookie中获取用户ID
+        const userIdFromCookie = this.getCookie('userid');
+        const userId = userIdFromCookie ? parseInt(userIdFromCookie) : null;
+        
+        if (!userId) {
+          alert('請先登錄再上傳文件');
+          this.showUploadProgress = false;
+          return;
+        }
+        
+        formData.append('userId', userId); // 使用當前用戶ID
 
         // 使用XMLHttpRequest实现进度监控和取消功能
         this.xhr = new XMLHttpRequest();

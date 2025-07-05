@@ -84,6 +84,26 @@ const routes = [
         component: ()=> import('../views/StudentManagement.vue')
     },
     {
+        path: '/forum',
+        name: 'forum',
+        component: ()=> import('../views/Forum.vue')
+    },
+    {
+        path: '/forum/post/:id',
+        name: 'forumPostDetail',
+        component: ()=> import('../views/ForumPostDetail.vue')
+    },
+    {
+        path: '/forum/profile',
+        name: 'forumProfile',
+        component: ()=> import('../views/ForumProfile.vue')
+    },
+    {
+        path: '/forum/notifications',
+        name: 'forumNotifications',
+        component: ()=> import('../views/ForumNotifications.vue')
+    },
+    {
         path: '/notice',
         name: 'notice',
         component: Notice

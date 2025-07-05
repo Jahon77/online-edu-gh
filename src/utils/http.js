@@ -3,7 +3,10 @@ import axios from 'axios'
 // 创建axios实例
 const service = axios.create({
   baseURL: 'http://localhost:8080', // api的base_url
-  timeout: 5000 // 请求超时时间
+  timeout: 5000, // 请求超时时间
+  headers: {
+    'Content-Type': 'application/json'
+  }
 })
 
 // request拦截器
@@ -45,7 +48,20 @@ service.interceptors.response.use(
     //   return res
     // }
   },
-  error => {
+  async error => {
+    const originalRequest = error.config
+
+    // 如果是网络错误且没有超过重试次数
+    if (error.message.includes('Network Error') && (!originalRequest._retry || originalRequest._retry < 3)) {
+      originalRequest._retry = (originalRequest._retry || 0) + 1
+      
+      // 延迟重试
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // 重试请求
+      return service(originalRequest)
+    }
+
     console.log('err' + error);
     // 如果是未登录错误，判断是否需要重定向到登录页
     if (error.response && error.response.status === 500) {

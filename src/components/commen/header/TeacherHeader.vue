@@ -21,7 +21,7 @@
             学生管理与互动
              <ul class="dropdown-menu" v-show="showStudentDropdown">
                 <li class="dropdown-item" @click="goTo('studentManagement')">学生管理</li>
-                <li class="dropdown-item" @click="goTo('chat')">互动管理</li>
+                <li class="dropdown-item" @click="goTo('forum')">互动管理</li>
              </ul>
          </li>
          <li class="menu-item dropdown" @mouseenter="showLiveDropdown = true" @mouseleave="showLiveDropdown = false">
@@ -92,6 +92,8 @@
           this.$router.push({ name: 'studentManagement' });
         } else if (type === 'chat') {
           this.$router.push({ name: 'chat' });
+        } else if (type === 'forum') {
+          this.$router.push({ name: 'forum' });
         }
       },
       updateCurrentPath() {

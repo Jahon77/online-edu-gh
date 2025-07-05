@@ -7,6 +7,7 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    BasePager: typeof import('./components/BasePager.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCalendar: typeof import('element-plus/es')['ElCalendar']
@@ -29,6 +30,7 @@ declare module 'vue' {
     HeaderSelect: typeof import('./components/commen/header/header-select.vue')['default']
     ImageUpload: typeof import('./components/ImageUpload.vue')['default']
     Layout: typeof import('./components/commen/layout.vue')['default']
+    PostCard: typeof import('./components/forum/PostCard.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     TeacherHeader: typeof import('./components/commen/header/TeacherHeader.vue')['default']
