@@ -114,7 +114,7 @@ export default {
           message: '已成功退出登录!'
         });
         
-        this.$router.push('/login');
+        this.$router.push('/index');
       }).catch(() => {
         // this.$message({
         //   type: 'info',

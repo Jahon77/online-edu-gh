@@ -1274,7 +1274,7 @@ export default {
           this.setCookie('username', loginResp.userInfo.username, 1);
           this.setCookie('userid', loginResp.userInfo.userId, 1);
           this.setCookie('name', loginResp.userInfo.name, 1);
-          this.setCookie('role', loginResp.role, 1);
+          this.setCookie('role', loginResp.userInfo.role, 1);
           this.loginStatusMessage = '人脸登录成功！欢迎回来, ' + loginResp.userInfo.name;
           this.closeCamera();
           
