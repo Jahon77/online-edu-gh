@@ -24,7 +24,7 @@
             </li>
             <li :class="{active: $route.path === '/admin/chat'}" @click="goTo('/admin/chat')">
               <img src="@/assets/images/chat.png" alt="聊天" class="icon" />
-              聊天
+              助手
             </li>
             <li :class="{active: $route.path === '/admin/notice'}" @click="goTo('/admin/notice')">
               <img src="@/assets/images/notice2.png" alt="通知" class="icon" />
