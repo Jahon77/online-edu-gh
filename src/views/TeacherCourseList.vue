@@ -27,7 +27,17 @@
             <span class="price">¥{{ course.price }}</span>
           </p>
           <p class="intro">{{ course.introMd }}</p>
-          <button class="edit-btn" @click="editCourse(course.id)">编辑</button>
+          <div class="button-group">
+            <button class="edit-btn" @click="editCourse(course.id)">编辑</button>
+            <button 
+              class="chat-btn" 
+              @click="createCourseGroupChat(course)"
+              :disabled="course.hasChatGroup"
+              :class="{ 'btn-disabled': course.hasChatGroup }"
+            >
+              {{ course.hasChatGroup ? '群聊已创建' : '创建群聊' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -41,25 +51,57 @@
         ↑
       </button>
     </transition>
+    
+    <!-- 创建群聊结果弹窗 -->
+    <el-dialog
+      title="创建群聊结果"
+      v-model="dialogVisible"
+      width="30%"
+    >
+      <div class="dialog-content">
+        <p v-if="createSuccess" class="success-message">
+          <i class="el-icon-success"></i>
+          群聊创建成功！
+        </p>
+        <p v-else class="error-message">
+          <i class="el-icon-error"></i>
+          {{ errorMessage }}
+        </p>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">关闭</el-button>
+          <el-button v-if="createSuccess" type="primary" @click="goToChatPage">
+            前往聊天页面
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import TeacherHeader from 'src/components/commen/header/TeacherHeader.vue'
+import axios from '@/utils/http.js';
+
 export default {
   name: "TeacherCourseList",
   data() {
     return {
       teacherId: null,
       courses: [],
-      showBackToTop: false
+      showBackToTop: false,
+      dialogVisible: false,
+      createSuccess: false,
+      errorMessage: '',
+      createdGroupId: null
     };
   },
   mounted() {
     this.initTeacherId();
     this.$nextTick(() => {
       if (this.teacherId) {
-    this.fetchCourses();
+        this.fetchCourses();
       }
     });
     window.addEventListener('scroll', this.handleScroll);
@@ -96,11 +138,97 @@ export default {
       fetch(`http://localhost:8080/api/teacher/course/list?teacherId=${this.teacherId}`)
         .then(res => res.json())
         .then(data => {
-          this.courses = data;
+          // 为每个课程添加是否已有群聊的标记
+          this.courses = data.map(course => ({
+            ...course,
+            hasChatGroup: false
+          }));
+          
+          // 检查每个课程是否已有群聊
+          this.checkExistingCourseGroups();
         })
         .catch(error => {
           console.error('获取课程列表失败:', error);
         });
+    },
+    checkExistingCourseGroups() {
+      // 获取所有群聊
+      axios.get(`/api/chat/conversations?userId=${this.teacherId}`)
+        .then(res => {
+          if (res.data.status === 10000) {
+            const groupChats = res.data.data.filter(c => 
+              c.conversation.type === 'GROUP' && 
+              c.group && 
+              c.group.id
+            );
+            
+            // 检查每个课程是否有同名群聊
+            this.courses.forEach(course => {
+              const courseGroupName = `${course.title} 【课程群聊】`;
+              const existingGroup = groupChats.find(g => g.title === courseGroupName);
+              if (existingGroup) {
+                course.hasChatGroup = true;
+              }
+            });
+          }
+        })
+        .catch(error => {
+          console.error('获取群聊列表失败:', error);
+        });
+    },
+    createCourseGroupChat(course) {
+      // 获取课程学生列表
+      axios.get(`/api/teacher/course/${course.id}/students`, {
+        params: { teacherId: this.teacherId }
+      })
+        .then(res => {
+          if (res.data && Array.isArray(res.data)) {
+            const students = res.data;
+            const memberIds = students.map(student => student.id);
+            
+            // 创建群聊
+            const groupName = `${course.title} 【课程群聊】`;
+            
+            axios.post(`/api/chat/conversation/group?userId=${this.teacherId}`, {
+              groupName: groupName,
+              memberIds: memberIds,
+            })
+            .then(res => {
+              if (res.data.status === 10000) {
+                this.createSuccess = true;
+                this.dialogVisible = true;
+                this.createdGroupId = res.data.data.group.id;
+                
+                // 更新课程状态
+                course.hasChatGroup = true;
+              } else {
+                this.createSuccess = false;
+                this.errorMessage = res.data.message || '创建群聊失败';
+                this.dialogVisible = true;
+              }
+            })
+            .catch(error => {
+              this.createSuccess = false;
+              this.errorMessage = '创建群聊请求失败，请稍后再试';
+              this.dialogVisible = true;
+              console.error('创建群聊失败:', error);
+            });
+          } else {
+            this.createSuccess = false;
+            this.errorMessage = '获取课程学生列表失败';
+            this.dialogVisible = true;
+          }
+        })
+        .catch(error => {
+          this.createSuccess = false;
+          this.errorMessage = '获取课程学生列表失败，请稍后再试';
+          this.dialogVisible = true;
+          console.error('获取课程学生列表失败:', error);
+        });
+    },
+    goToChatPage() {
+      this.dialogVisible = false;
+      this.$router.push('/chat');
     },
     editCourse(courseId) {
       this.$router.push(`/teacher/edit-course/${courseId}`);
@@ -271,9 +399,14 @@ TeacherHeader {
   flex: 1;
 }
 
-.edit-btn {
-  width: 100%;
-  background-color: #ABD7FB;
+/* 按钮组样式 */
+.button-group {
+  display: flex;
+  gap: 8px;
+}
+
+.edit-btn, .chat-btn {
+  flex: 1;
   border: none;
   color: white;
   padding: 8px 16px;
@@ -283,8 +416,29 @@ TeacherHeader {
   font-size: 14px;
 }
 
+.edit-btn {
+  background-color: #ABD7FB;
+}
+
+.chat-btn {
+  background-color: #F98C53;
+}
+
 .edit-btn:hover {
+  background-color: #9ac7ea;
+}
+
+.chat-btn:hover {
   background-color: #f7a059;
+}
+
+.btn-disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-disabled:hover {
+  background-color: #ccc;
 }
 
 /* 响应式调整 */
@@ -344,5 +498,38 @@ TeacherHeader {
 }
 .fade-enter, .fade-leave-to {
   opacity: 0;
+}
+
+/* 对话框样式 */
+.dialog-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.success-message, .error-message {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+}
+
+.success-message {
+  color: #67C23A;
+}
+
+.error-message {
+  color: #F56C6C;
+}
+
+.success-message i, .error-message i {
+  font-size: 24px;
+  margin-right: 10px;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 </style>
