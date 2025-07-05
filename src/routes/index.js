@@ -351,4 +351,10 @@ router.beforeEach((to, from, next) => {
     next();
 });
 
+// 路由切换后通知 Ptengine
+router.afterEach(() => {
+  if (window._pt_sp_2) {
+    window._pt_sp_2.push(['_trackPageview'])
+  }
+});
 export default router 
