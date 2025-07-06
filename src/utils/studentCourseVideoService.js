@@ -1,4 +1,5 @@
 import axios from './http';
+import { useUserStore } from '../stores/user';
 
 /**
  * 学生课程视频服务
@@ -6,12 +7,23 @@ import axios from './http';
  */
 const studentCourseVideoService = {
   /**
+   * 获取当前登录用户的ID
+   * @returns {Number} 返回当前登录用户的ID
+   */
+  getCurrentUserId() {
+    const userStore = useUserStore();
+    return userStore.user.id;
+  },
+  /**
    * 获取视频播放进度
-   * @param {Number} studentId 学生ID
    * @param {Number} lessonId 课时ID
+   * @param {Number} studentId 可选学生ID，不传则使用当前登录用户ID
    * @returns {Promise} 返回视频播放进度信息
    */
-  getVideoProgress(studentId, lessonId) {
+  getVideoProgress(lessonId, studentId) {
+    if (!studentId) {
+      studentId = this.getCurrentUserId();
+    }
     return axios.get('/api/student/video/progress', {
       params: {
         studentId,
@@ -26,16 +38,22 @@ const studentCourseVideoService = {
    * @returns {Promise} 返回更新结果
    */
   updateVideoProgress(progress) {
+    if (!progress.studentId) {
+      progress.studentId = this.getCurrentUserId();
+    }
     return axios.post('/api/student/video/progress', progress);
   },
   
   /**
    * 标记视频为已完成
-   * @param {Number} studentId 学生ID
    * @param {Number} lessonId 课时ID
+   * @param {Number} studentId 可选学生ID，不传则使用当前登录用户ID
    * @returns {Promise} 返回标记结果
    */
-  markVideoCompleted(studentId, lessonId) {
+  markVideoCompleted(lessonId, studentId) {
+    if (!studentId) {
+      studentId = this.getCurrentUserId();
+    }
     return axios.post('/api/student/video/complete', null, {
       params: {
         studentId,
@@ -46,14 +64,17 @@ const studentCourseVideoService = {
   
   /**
    * 更新视频播放设置
-   * @param {Number} studentId 学生ID
    * @param {Number} lessonId 课时ID
    * @param {Number} playbackRate 播放速度
    * @param {String} qualitySetting 清晰度设置
    * @param {Boolean} subtitleEnabled 是否启用字幕
+   * @param {Number} studentId 可选学生ID，不传则使用当前登录用户ID
    * @returns {Promise} 返回更新结果
    */
-  updateVideoSettings(studentId, lessonId, playbackRate, qualitySetting, subtitleEnabled) {
+  updateVideoSettings(lessonId, playbackRate, qualitySetting, subtitleEnabled, studentId) {
+    if (!studentId) {
+      studentId = this.getCurrentUserId();
+    }
     return axios.post('/api/student/video/settings', null, {
       params: {
         studentId,
@@ -67,14 +88,17 @@ const studentCourseVideoService = {
   
   /**
    * 更新视频高级设置
-   * @param {Number} studentId 学生ID
    * @param {Number} lessonId 课时ID
    * @param {Number} volume 音量
    * @param {Boolean} danmakuEnabled 是否启用弹幕
    * @param {Boolean} pipEnabled 是否启用画中画
+   * @param {Number} studentId 可选学生ID，不传则使用当前登录用户ID
    * @returns {Promise} 返回更新结果
    */
-  updateAdvancedSettings(studentId, lessonId, volume, danmakuEnabled, pipEnabled) {
+  updateAdvancedSettings(lessonId, volume, danmakuEnabled, pipEnabled, studentId) {
+    if (!studentId) {
+      studentId = this.getCurrentUserId();
+    }
     return axios.post('/api/student/video/advanced-settings', null, {
       params: {
         studentId,
@@ -89,10 +113,13 @@ const studentCourseVideoService = {
   /**
    * 获取视频详情
    * @param {Number} lessonId 课时ID
-   * @param {Number} studentId 学生ID
+   * @param {Number} studentId 可选学生ID，不传则使用当前登录用户ID
    * @returns {Promise} 返回视频详情
    */
   getVideoDetail(lessonId, studentId) {
+    if (!studentId) {
+      studentId = this.getCurrentUserId();
+    }
     return axios.get('/api/student/video/detail', {
       params: {
         lessonId,
@@ -146,6 +173,9 @@ const studentCourseVideoService = {
    * @returns {Promise} 返回发送结果
    */
   sendDanmaku(danmaku) {
+    if (!danmaku.studentId) {
+      danmaku.studentId = this.getCurrentUserId();
+    }
     return axios.post('/api/student/video/danmaku', danmaku);
   }
 };

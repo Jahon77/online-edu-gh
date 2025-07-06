@@ -297,6 +297,7 @@ import { getUserInfo } from 'src/utils/authUtils';
 import CustomAlert from 'src/components/CustomAlert.vue';
 import CustomConfirm from 'src/components/CustomConfirm.vue';
 
+import courseService from '../../utils/courseService';
 export default {
   name: 'CourseDetail',
   components: {
@@ -326,6 +327,8 @@ export default {
         rating: 5,
         content: ''
       },
+
+      // 用户信息会从Pinia store中获取
       currentUser: null,
       videoProgress: 0,
       expandedChapters: [], // 存储已展开的章节索引
@@ -360,6 +363,15 @@ export default {
     if (!courseId) {
       this.error = '课程ID不存在，无法获取课程详情';
       this.loading = false;
+      return;
+    }
+    
+    // 检查用户是否已登录
+    if (!this.currentUser || !this.currentUser.id) {
+      this.error = '请先登录再查看课程详情';
+      this.loading = false;
+      // 可以选择跳转到登录页面
+      // this.$router.push('/login');
       return;
     }
     
@@ -425,13 +437,8 @@ export default {
       
       const fetchData = async () => {
         try {
-          // 直接使用标准API
-          const res = await axios.get(`/api/courses/${this.courseId}`, {
-            params: {
-              studentId: this.currentUser.id
-            },
-            timeout: 15000 // 更长的超时时间
-          });
+          // 使用课程服务获取详情
+          const res = await courseService.getCourseDetail(this.courseId);
           
           console.log('获取课程详情成功:', res.data);
           
@@ -498,7 +505,7 @@ export default {
           return;
         }
         
-        console.log('开始获取订阅状态，课程ID:', this.courseId, '学生ID:', this.currentUser.id);
+        console.log('开始获取订阅状态，课程ID:', this.courseId);
         
         // 添加错误计数和重试
         let retries = 0;
@@ -507,11 +514,8 @@ export default {
         
         while (!success && retries < maxRetries) {
           try {
-            // 使用直接针对course_subscribe表的接口
-            const response = await axios.get(`/api/courses/${this.courseId}/subscribe`, {
-              params: { studentId: this.currentUser.id },
-              timeout: 15000 // 增加超时时间
-            });
+            // 使用课程服务获取订阅状态
+            const response = await courseService.isCourseSubscribed(this.courseId);
             
             console.log('订阅状态API响应数据:', JSON.stringify(response.data));
             
@@ -583,10 +587,7 @@ export default {
     async fetchLikeStatus() {
       try {
         console.log('开始获取收藏状态，课程ID:', this.courseId);
-        const likeRes = await axios.get(`/api/courses/${this.courseId}/like`, {
-          params: { studentId: this.currentUser.id },
-          timeout: 10000
-        });
+        const likeRes = await courseService.isCourseLiked(this.courseId);
         
         if (likeRes.data && likeRes.data.status === 0) {
           console.log('获取收藏状态成功:', likeRes.data.data);
@@ -603,7 +604,7 @@ export default {
     
     async fetchChapters() {
       try {
-        const chaptersRes = await axios.get(`/api/teacher/courses/${this.courseId}/chapters`);
+        const chaptersRes = await courseService.getCourseChapters(this.courseId);
         if (chaptersRes.data && Array.isArray(chaptersRes.data)) {
           console.log('获取章节和课时成功:', chaptersRes.data);
           // 打印第一个章节的数据结构，以便查看
@@ -641,7 +642,7 @@ export default {
       console.log('开始获取课程评论，课程ID:', this.courseId);
       
       try {
-        const response = await axios.get(`/api/courses/${this.courseId}/comments`);
+        const response = await courseService.getCourseComments(this.courseId);
         console.log('获取评论成功:', response.data);
         
         if (response.data.status === 0 && response.data.data) {
@@ -719,13 +720,11 @@ export default {
     
     async toggleLike() {
       try {
-        console.log('开始收藏操作，课程ID:', this.courseId, '学生ID:', this.currentUser.id);
+        console.log('开始收藏操作，课程ID:', this.courseId);
         
         if (this.course.isLiked) {
           console.log('执行取消收藏');
-          const response = await axios.delete(`/api/courses/${this.courseId}/like`, {
-            params: { studentId: this.currentUser.id }
-          });
+          const response = await courseService.removeCourseLike(this.courseId);
           
           console.log('取消收藏响应:', response.data);
           if (response.data && response.data.status === 0) {
@@ -736,9 +735,7 @@ export default {
           }
         } else {
           console.log('执行添加收藏');
-          const response = await axios.post(`/api/courses/${this.courseId}/like`, null, {
-            params: { studentId: this.currentUser.id }
-          });
+          const response = await courseService.addCourseLike(this.courseId);
           
           console.log('添加收藏响应:', response.data);
           if (response.data && response.data.status === 0) {
@@ -765,7 +762,7 @@ export default {
         return;
       }
       
-      console.log('开始订阅课程，课程ID:', this.courseId, '学生ID:', this.currentUser.id);
+      console.log('开始订阅课程，课程ID:', this.courseId);
       
       try {
         const url = `/api/studentcourse/${this.courseId}/subscribe?studentId=${this.currentUser.id}`;
@@ -773,50 +770,39 @@ export default {
         
         this.showCustomAlert('正在订阅课程，请稍候...', '处理中');
         
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        });
+        const response = await courseService.subscribeCourse(this.courseId);
         
-        console.log('订阅课程API响应状态:', response.status);
+        console.log('订阅课程API响应数据:', response.data);
         
-        if (response.ok) {
-          const data = await response.json();
-          console.log('订阅课程API响应数据:', data);
+        if (response.data && response.data.status === 0) {
+          console.log('订阅课程成功');
+          // 更新课程状态
+          this.course.isPurchased = true;
+          this.course.isBookmarked = true;
           
-          if (data && data.status === 0) {
-            console.log('订阅课程成功');
-            this.course.isPurchased = true;
-            this.course.isBookmarked = true;
-            
-            if (typeof this.course.subscriberCount === 'number') {
-              this.course.subscriberCount += 1;
-              console.log('更新订阅人数为:', this.course.subscriberCount);
-            } else {
-              this.course.subscriberCount = 1;
-            }
-            
-            this.checkAndJoinCourseGroup();
-            
-            if (this.showPlayer && this.isPreviewMode) {
-              this.playChapter(this.currentChapterIndex);
-            }
+          // 更新订阅人数
+          if (typeof this.course.subscriberCount === 'number') {
+            this.course.subscriberCount += 1;
+            console.log('更新订阅人数为:', this.course.subscriberCount);
           } else {
-            this.showCustomAlert('订阅失败: ' + (data?.message || '请稍后重试'), '订阅失败');
+            this.course.subscriberCount = 1;
+          }
+          
+          this.checkAndJoinCourseGroup();
+          
+          if (this.showPlayer && this.isPreviewMode) {
+            this.playChapter(this.currentChapterIndex);
           }
         } else {
           let errorText = '';
           try {
-            const errorData = await response.text();
-            console.error('错误响应内容:', errorData);
-            errorText = errorData;
+            errorText = JSON.stringify(response.data);
+            console.error('错误响应内容:', errorText);
           } catch (e) {
             errorText = '无法读取错误详情';
           }
           
-          this.showCustomAlert(`订阅失败: HTTP状态码 ${response.status}; ${errorText}`, '错误');
+          this.showCustomAlert(`订阅失败: ${errorText}`, '错误');
         }
       } catch (err) {
         console.error('订阅课程请求异常:', err);
@@ -1045,8 +1031,8 @@ export default {
           name: 'StudentCoursePlayer',
           params: { lessonId: lessonId },
           query: { 
-            courseId: courseId,
-            studentId: this.currentUser.id
+            courseId: courseId
+            // studentId不再需要传递，由PlayerCoursePlayer组件从Pinia store获取
           }
         });
       } else {

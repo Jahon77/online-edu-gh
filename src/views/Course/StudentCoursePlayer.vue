@@ -2,30 +2,23 @@
       <div class="video-player-page" :class="{ 'web-fullscreen': isWebFullscreen }">
         <!-- 顶部导航栏 - 非全屏模式下显示 -->
         <SiteHeader v-if="!isFullscreen && !isWebFullscreen"/>
-        <!-- <header class="site-header" v-if="!isFullscreen && !isWebFullscreen">
-          <div class="header-container">
-            <div class="logo">
-              <h1>智学通</h1>
-            </div>
-            <nav class="main-nav">
-              <ul>
-                <li class="active"><router-link to="/courses">课程中心</router-link></li>
-                <li><router-link to="/dashboard">我的学习</router-link></li>
-                <li><a href="#" @click.prevent>论坛</a></li>
-                <li><a href="#" @click.prevent>学习助手</a></li>
-              </ul>
-            </nav>
-            <div class="user-actions">
-              <button class="btn-download">APP下载</button>
-              <div class="user-avatar">
-                <img src="https://via.placeholder.com/36" alt="用户头像">
-              </div>
-              <button class="btn-logout" @click="logout">退出登录</button>
-            </div>
-          </div>
-        </header> -->
     
-        <div class="video-container" ref="videoContainer" :class="{ 'fullscreen': isFullscreen, 'web-fullscreen': isWebFullscreen }">
+        <!-- 加载状态显示 -->
+        <div v-if="loading" class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>视频加载中，请稍候...</p>
+        </div>
+        
+        <!-- 错误状态显示 -->
+        <div v-else-if="error" class="error-container">
+          <div class="error-icon">!</div>
+          <h3>加载失败</h3>
+          <p>{{ error }}</p>
+          <button @click="initPlayerWithParams" class="retry-button">重试</button>
+        </div>
+        
+        <!-- 视频播放器内容 -->
+        <div v-else class="video-container" ref="videoContainer" :class="{ 'fullscreen': isFullscreen, 'web-fullscreen': isWebFullscreen }">
           <!-- 视频播放器主体 -->
           <div class="player-wrapper">
             <video
@@ -332,21 +325,19 @@
     
     <script>
     import studentCourseVideoService from '../../utils/studentCourseVideoService';
+import { useUserStore } from '../../stores/user';
+import { getUserInfo } from '../../utils/authUtils';
     
     export default {
       name: 'StudentCoursePlayer',
       props: {
         lessonId: {
-          type: Number,
+          type: [Number, String],
           required: true
         },
         courseId: {
-          type: Number,
-          required: true
-        },
-        studentId: {
-          type: Number,
-          default: 7
+          type: [Number, String],
+          required: false
         }
       },
       data() {
@@ -355,6 +346,10 @@
           videoUrl: '',
           lessonTitle: '',
           lessonInfo: null,
+          
+          // 课程ID
+          courseIdValue: null,
+          lessonIdValue: null,
           
           // 播放状态
           isPlaying: false,
@@ -417,30 +412,20 @@
           // 新增的 dropdown 相关
           activeDropdown: null,
           
-          // 模拟用户信息
-          currentUser: {
-            id: this.studentId,
-            name: '测试用户'
-          }
+          // 用户信息
+          currentUser: null,
+          
+          // 错误状态
+          error: null,
+          loading: true
         };
       },
       mounted() {
-        this.initPlayer();
-        this.fetchVideoDetail();
-        this.fetchCourseChapters();
-        this.fetchDanmakus(); // 获取课时弹幕
+        console.log('StudentCoursePlayer组件挂载，路由参数lessonId:', this.lessonId);
+        console.log('路由参数完整信息:', this.$route.params, this.$route.query);
         
-        // 添加事件监听
-        document.addEventListener('keydown', this.handleKeydown);
-        document.addEventListener('fullscreenchange', this.handleFullscreenChange);
-        document.addEventListener('click', this.closeDropdowns);
-        document.addEventListener('visibilitychange', this.handleVisibilityChange);
-        
-        // 鼠标移动显示控制栏
-        document.addEventListener('mousemove', this.showControls);
-        
-        // 定时保存播放进度
-        this.saveProgressInterval = setInterval(this.saveProgress, 10000); // 每10秒保存一次进度
+        // 初始化用户信息
+        this.initCurrentUser();
       },
       beforeUnmount() {
         // 移除事件监听
@@ -467,6 +452,100 @@
         next();
       },
       methods: {
+        initCurrentUser() {
+          // 从Pinia store获取用户信息
+          const userStore = useUserStore();
+          
+          if (userStore.user && userStore.user.id) {
+            // 如果store中已有用户信息，直接使用
+            this.currentUser = {
+              id: userStore.user.id,
+              name: userStore.user.name || userStore.user.username
+            };
+            console.log('从用户store获取到用户信息:', this.currentUser);
+            this.initPlayerWithParams();
+          } else {
+            // 如果store中没有，则从cookie获取
+            const userInfo = getUserInfo();
+            if (userInfo && userInfo.userId) {
+              this.currentUser = {
+                id: parseInt(userInfo.userId),
+                name: userInfo.name || userInfo.username
+              };
+              console.log('从cookie获取到用户信息:', this.currentUser);
+              
+              // 更新store
+              userStore.setUser({
+                id: parseInt(userInfo.userId),
+                username: userInfo.username,
+                name: userInfo.name,
+                role: userInfo.role
+              });
+              
+              this.initPlayerWithParams();
+            } else {
+              // 如果没有登录信息，可以重定向到登录页或显示提示
+              console.warn('未获取到用户登录信息');
+              this.error = '请先登录后再观看视频';
+              this.loading = false;
+              this.$router.push('/login');
+            }
+          }
+        },
+        
+        initPlayerWithParams() {
+          // 从props或路由参数获取lessonId和courseId
+          this.lessonIdValue = parseInt(this.lessonId || this.$route.params.lessonId);
+          
+          // 从props、路由参数或查询参数获取courseId
+          this.courseIdValue = parseInt(this.courseId || this.$route.params.courseId || this.$route.query.courseId);
+          
+          console.log('初始化播放器，课时ID:', this.lessonIdValue, '课程ID:', this.courseIdValue);
+          
+          if (!this.lessonIdValue) {
+            this.error = '课时ID不存在，无法获取视频';
+            this.loading = false;
+            return;
+          }
+          
+          if (!this.courseIdValue) {
+            this.error = '课程ID不存在，无法获取课程信息';
+            this.loading = false;
+            return;
+          }
+          
+          // 检查用户是否已登录
+          if (!this.currentUser || !this.currentUser.id) {
+            this.error = '请先登录再观看视频';
+            this.loading = false;
+            return;
+          }
+          
+          // 初始化播放器
+          this.initPlayer();
+          
+          // 获取视频详情
+          this.fetchVideoDetail();
+          
+          // 获取课程章节
+          this.fetchCourseChapters();
+          
+          // 获取弹幕
+          this.fetchDanmakus();
+          
+          // 添加事件监听
+          document.addEventListener('keydown', this.handleKeydown);
+          document.addEventListener('fullscreenchange', this.handleFullscreenChange);
+          document.addEventListener('click', this.closeDropdowns);
+          document.addEventListener('visibilitychange', this.handleVisibilityChange);
+          
+          // 鼠标移动显示控制栏
+          document.addEventListener('mousemove', this.showControls);
+          
+          // 定时保存播放进度
+          this.saveProgressInterval = setInterval(this.saveProgress, 10000); // 每10秒保存一次进度
+        },
+        
         logout() {
           // 清除本地存储的用户信息
           localStorage.removeItem('userToken');
@@ -483,7 +562,7 @@
         
         async initPlayer() {
           // 初始化视频播放器
-          console.log('初始化视频播放器，课时ID:', this.lessonId);
+          console.log('初始化视频播放器，课时ID:', this.lessonIdValue);
           
           // 添加额外的事件监听，确保音量控制正确初始化
           document.addEventListener('click', (event) => {
@@ -504,7 +583,8 @@
         
         async fetchVideoDetail() {
           try {
-            const response = await studentCourseVideoService.getVideoDetail(this.lessonId, this.studentId);
+            this.loading = true;
+            const response = await studentCourseVideoService.getVideoDetail(this.lessonIdValue);
             console.log('获取视频详情成功:', response.data);
             
             if (response.data && response.data.status === 0) {
@@ -521,7 +601,7 @@
                   videoElement.src = this.videoUrl;
                   
                   // 检查本地存储中是否有更新的进度
-                  const localStorageKey = `video_progress_${this.studentId}_${this.lessonId}`;
+                  const localStorageKey = `video_progress_${this.currentUser.id}_${this.lessonIdValue}`;
                   const savedProgress = localStorage.getItem(localStorageKey);
                   let useLocalProgress = false;
                   let localCurrentTime = 0;
@@ -546,7 +626,7 @@
                       
                       // 如果本地标记为已完成，更新完成状态
                       if (localProgress.isCompleted) {
-                        this.completedLessons[this.lessonId] = true;
+                        this.completedLessons[this.lessonIdValue] = true;
                       }
                     } catch (e) {
                       console.error('解析本地进度数据失败', e);
@@ -580,7 +660,7 @@
                   
                   // 标记为已完成
                   if (progress && progress.isCompleted) {
-                    this.completedLessons[this.lessonId] = true;
+                    this.completedLessons[this.lessonIdValue] = true;
                   }
                   
                   // 设置音量 - 修复这部分代码
@@ -612,9 +692,17 @@
                   console.log('静音状态:', this.isMuted);
                 }
               });
+              
+              this.loading = false;
+            } else {
+              console.error('获取视频详情失败:', response.data.message);
+              this.error = response.data.message || '获取视频详情失败';
+              this.loading = false;
             }
           } catch (error) {
             console.error('获取视频详情失败:', error);
+            this.error = '获取视频详情失败，请稍后重试';
+            this.loading = false;
             
             // 如果后端请求失败，尝试从本地存储恢复
             this.$nextTick(() => {
@@ -623,7 +711,7 @@
                 videoElement.src = this.videoUrl;
                 
                 // 尝试从本地存储恢复进度
-                const localStorageKey = `video_progress_${this.studentId}_${this.lessonId}`;
+                const localStorageKey = `video_progress_${this.currentUser.id}_${this.lessonIdValue}`;
                 const savedProgress = localStorage.getItem(localStorageKey);
                 if (savedProgress) {
                   try {
@@ -632,7 +720,7 @@
                     console.log('从本地存储恢复播放进度:', localProgress.currentTime);
                     
                     if (localProgress.isCompleted) {
-                      this.completedLessons[this.lessonId] = true;
+                      this.completedLessons[this.lessonIdValue] = true;
                     }
                   } catch (e) {
                     console.error('解析本地进度数据失败', e);
@@ -644,6 +732,35 @@
               }
             });
           }
+        },
+        
+        async fetchCourseChapters() {
+          try {
+            const response = await studentCourseVideoService.getCourseChaptersAndLessons(this.courseIdValue);
+            console.log('获取课程章节成功:', response.data);
+            
+            if (response.data && response.data.status === 0) {
+              this.chapters = response.data.data || [];
+            } else {
+              console.error('获取课程章节失败:', response.data.message);
+            }
+          } catch (error) {
+            console.error('获取课程章节失败:', error);
+          }
+        },
+        
+        switchLesson(lessonId) {
+          // 保存当前进度
+          this.saveProgress();
+          
+          // 跳转到新课时
+          this.$router.push({
+            name: 'StudentCoursePlayer',
+            params: { lessonId },
+            query: { 
+              courseId: this.courseIdValue
+            }
+          });
         },
         
         // 检查是否支持画中画模式
@@ -673,19 +790,6 @@
           playerWrapper.appendChild(errorElement);
         },
         
-        async fetchCourseChapters() {
-          try {
-            const response = await studentCourseVideoService.getCourseChaptersAndLessons(this.courseId);
-            console.log('获取课程章节成功:', response.data);
-            
-            if (response.data && response.data.status === 0) {
-              this.chapters = response.data.data || [];
-            }
-          } catch (error) {
-            console.error('获取课程章节失败:', error);
-          }
-        },
-        
         onVideoLoaded() {
           const video = this.$refs.videoPlayer;
           if (video) {
@@ -709,7 +813,7 @@
           }
           
           // 如果播放到90%以上，标记为已完成
-          if (this.progressPercent > 90 && !this.completedLessons[this.lessonId]) {
+          if (this.progressPercent > 90 && !this.completedLessons[this.lessonIdValue]) {
             this.markAsCompleted();
           }
           
@@ -731,12 +835,12 @@
         },
         
         async markAsCompleted() {
-          if (this.completedLessons[this.lessonId]) return;
+          if (this.completedLessons[this.lessonIdValue]) return;
           
           try {
-            await studentCourseVideoService.markVideoCompleted(this.studentId, this.lessonId);
+            await studentCourseVideoService.markVideoCompleted(this.lessonIdValue);
             console.log('标记视频为已完成');
-            this.completedLessons[this.lessonId] = true;
+            this.completedLessons[this.lessonIdValue] = true;
           } catch (error) {
             console.error('标记视频为已完成失败:', error);
           }
@@ -756,10 +860,10 @@
           
           // 创建进度对象
           const progress = {
-            studentId: this.studentId,
-            lessonId: this.lessonId,
+            studentId: this.currentUser.id,
+            lessonId: this.lessonIdValue,
             currentTime: Math.floor(this.currentTime),
-            isCompleted: this.completedLessons[this.lessonId] || false,
+            isCompleted: this.completedLessons[this.lessonIdValue] || false,
             playbackRate: this.playbackRate,
             qualitySetting: this.qualitySetting,
             subtitleEnabled: this.subtitleEnabled,
@@ -770,7 +874,7 @@
           };
           
           // 保存到本地存储，确保即使后端失败也能恢复进度
-          const localStorageKey = `video_progress_${this.studentId}_${this.lessonId}`;
+          const localStorageKey = `video_progress_${this.currentUser.id}_${this.lessonIdValue}`;
           localStorage.setItem(localStorageKey, JSON.stringify({
             currentTime: progress.currentTime,
             progressPercent: this.progressPercent, // 保存百分比进度
@@ -791,8 +895,7 @@
         async updateVideoSettings() {
           try {
             await studentCourseVideoService.updateVideoSettings(
-              this.studentId,
-              this.lessonId,
+              this.lessonIdValue,
               this.playbackRate,
               this.qualitySetting,
               this.subtitleEnabled
@@ -928,8 +1031,7 @@
         updateAdvancedSettings() {
           try {
             studentCourseVideoService.updateAdvancedSettings(
-              this.studentId,
-              this.lessonId,
+              this.lessonIdValue,
               this.volume,
               this.danmakuEnabled,
               this.pipEnabled
@@ -943,7 +1045,7 @@
         // 获取课时弹幕
         async fetchDanmakus() {
           try {
-            const response = await studentCourseVideoService.getDanmakus(this.lessonId);
+            const response = await studentCourseVideoService.getDanmakus(this.lessonIdValue);
             console.log('获取弹幕成功:', response.data);
             
             if (response.data && response.data.status === 0) {
@@ -978,8 +1080,8 @@
           try {
             // 创建弹幕对象
             const danmakuData = {
-              studentId: this.studentId,
-              lessonId: this.lessonId,
+              studentId: this.currentUser.id,
+              lessonId: this.lessonIdValue,
               content: this.danmakuText,
               timePoint: Math.floor(this.currentTime),
               color: color,
@@ -1162,21 +1264,6 @@
           }
         },
         
-        switchLesson(lessonId) {
-          // 保存当前进度
-          this.saveProgress();
-          
-          // 跳转到新课时
-          this.$router.push({
-            name: 'StudentCoursePlayer',
-            params: { lessonId },
-            query: { 
-              courseId: this.courseId,
-              studentId: this.studentId
-            }
-          });
-        },
-        
         playNextLesson() {
           // 查找当前课时的下一课时
           let foundCurrent = false;
@@ -1188,7 +1275,7 @@
                 nextLessonId = lesson.id;
                 break;
               }
-              if (lesson.id === Number(this.lessonId)) {
+              if (lesson.id === Number(this.lessonIdValue)) {
                 foundCurrent = true;
               }
             }
@@ -2446,5 +2533,146 @@
       .danmaku-input-container {
         width: 200px;
       }
+    }
+    
+    /* 响应式设计 */
+    @media (max-width: 1200px) {
+      .course-header {
+        flex-direction: column;
+        height: auto;
+      }
+      
+      .course-info {
+        width: 100%;
+        border-left: none;
+        padding: 25px;
+      }
+      
+      .course-cover {
+        height: 400px;
+      }
+      
+      .course-actions {
+        margin-top: 20px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .course-detail {
+        padding: 15px;
+      }
+      
+      .course-content {
+        padding: 20px;
+      }
+      
+      .course-info {
+        padding: 20px;
+      }
+      
+      .course-title {
+        font-size: 1.8em;
+      }
+      
+      .course-meta span {
+        padding: 6px 10px;
+        font-size: 13px;
+      }
+      
+      .btn {
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+    }
+    
+    /* 加载状态样式 */
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 70vh;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      margin: 30px auto;
+      max-width: 1200px;
+    }
+    
+    .loading-spinner {
+      width: 60px;
+      height: 60px;
+      border: 5px solid #ABD7FB;
+      border-radius: 50%;
+      border-top-color: #F98C53;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    .loading-container p {
+      font-size: 18px;
+      color: #555;
+      font-weight: 500;
+    }
+    
+    /* 错误状态样式 */
+    .error-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 70vh;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      margin: 30px auto;
+      max-width: 1200px;
+      padding: 30px;
+      text-align: center;
+    }
+    
+    .error-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background-color: #ff6b6b;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    
+    .error-container h3 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .error-container p {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 25px;
+      max-width: 80%;
+    }
+    
+    .retry-button {
+      background-color: #F98C53;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 25px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .retry-button:hover {
+      background-color: #e67e45;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
     </style>

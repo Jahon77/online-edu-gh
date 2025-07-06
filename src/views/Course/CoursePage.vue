@@ -46,7 +46,7 @@
           <router-link 
             v-for="lessonId in [1, 2, 3, 4, 5]" 
             :key="`video-${lessonId}`" 
-            :to="`/student/video/${lessonId}?courseId=1&studentId=7`"
+            :to="`/student/video/${lessonId}?courseId=1`"
             class="video-link"
           >
             视频 #{{ lessonId }}
@@ -65,10 +65,15 @@
 
 <script>
 import Layout from "src/components/commen/layout.vue";
+import { useUserStore } from "../../stores/user";
 
 export default {
   name: "CoursePage",
-  components: { Layout }
+  components: { Layout },
+  setup() {
+    const userStore = useUserStore();
+    return { userStore };
+  }
 }
 </script>
 
