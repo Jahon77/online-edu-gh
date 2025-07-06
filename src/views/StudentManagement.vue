@@ -8,6 +8,15 @@
         <div class="page-header">
           <h2>学生管理与互动</h2>
           <p>查看选修您课程的学生列表和观看进度</p>
+          <!-- 論壇入口按鈕 -->
+          <div class="forum-entry">
+            <button @click="goToForum" class="forum-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              進入論壇
+            </button>
+          </div>
         </div>
 
         <!-- 课程选择器 -->
@@ -129,6 +138,7 @@
 import TeacherHeader from '@/components/commen/header/TeacherHeader.vue'
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import { useRouter } from 'vue-router'
 
 function getCurrentUserId() {
   const value = `; ${document.cookie}`;
@@ -141,6 +151,8 @@ function getCurrentUserId() {
 }
 
 const teacherId = getCurrentUserId()
+const router = useRouter()
+//const teacherId = 3
 const selectedCourseId = ref('')
 const teacherCourses = ref([])
 const students = ref([])
@@ -197,6 +209,10 @@ const groupByChapter = (lessonList) => {
     acc[key].push(item)
     return acc
   }, {})
+}
+
+const goToForum = () => {
+  router.push('/forum')
 }
 
 onMounted(() => loadTeacherCourses())
@@ -345,6 +361,35 @@ onMounted(() => loadTeacherCourses())
   margin: 0;
   color: #6b7280;
   font-size: 1rem;
+}
+
+.forum-entry {
+  margin-top: 1rem;
+}
+
+.forum-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.forum-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.forum-btn:active {
+  transform: translateY(0);
 }
 
 .course-selector {

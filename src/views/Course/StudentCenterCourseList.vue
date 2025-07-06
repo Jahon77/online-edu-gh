@@ -83,6 +83,13 @@
               <div class="progress-container">
                 <div class="progress-circle">
                   <svg viewBox="0 0 36 36" class="circular-chart">
+                    <defs>
+                      <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#F98C53;stop-opacity:1" />
+                        <stop offset="50%" style="stop-color:#ABD7FB;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#D2E0AA;stop-opacity:1" />
+                      </linearGradient>
+                    </defs>
                     <path class="circle-bg"
                       d="M18 2.0845
                         a 15.9155 15.9155 0 0 1 0 31.831
@@ -169,6 +176,12 @@
           
           <div class="courses-grid">
             <div v-for="course in likedCourses" :key="course.id" class="liked-course-card" :style="getRandomGradient()">
+              <!-- 添加装饰性元素 -->
+              <div class="card-decoration">
+                <div class="decoration-circle circle-1"></div>
+                <div class="decoration-circle circle-2"></div>
+              </div>
+              
               <div class="card-header">
                 <div class="card-number">{{ course.id.toString().padStart(4, '0') }}</div>
                 <div class="card-date">{{ formatCardDate(course.createdAt) }}</div>
@@ -180,10 +193,12 @@
               </div>
               
               <div class="card-footer">
-                <div class="like-icon">❤️</div>
+                <div class="like-icon">
+                  <span class="heart-icon">❤️</span>
+                </div>
                 <div class="course-actions">
-                  <button class="info-btn" @click="goToCourseDetail(course.id)">Info</button>
-                  <button class="continue-btn" @click="continueCourse(course.id)">Continue</button>
+                  <button class="card-info-btn" @click="goToCourseDetail(course.id)">详情</button>
+                  <button class="card-continue-btn" @click="continueCourse(course.id)">学习</button>
                 </div>
               </div>
             </div>
@@ -529,23 +544,54 @@ export default {
 /* 左侧导航栏样式 */
 .sidebar {
   width: 220px;
-  background-color: #fff;
+  background: linear-gradient(135deg, #fff 0%, #F9F2EF 100%);
   padding: 20px;
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+  box-shadow: 2px 0 15px rgba(249, 140, 83, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, rgba(249, 140, 83, 0.05) 0%, rgba(210, 224, 170, 0.05) 50%, rgba(171, 215, 251, 0.05) 100%);
+  pointer-events: none;
 }
 
 .logo {
   display: flex;
   align-items: center;
   margin-bottom: 40px;
-  padding: 0 10px;
+  padding: 15px;
+  background: linear-gradient(135deg, #F98C53, #FCCEB4);
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 4px 15px rgba(249, 140, 83, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.logo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(249, 140, 83, 0.4);
 }
 
 .logo-icon {
   font-size: 24px;
   margin-right: 10px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
 }
 
 .logo-text {
@@ -556,38 +602,77 @@ export default {
 .nav-item {
   display: flex;
   align-items: center;
-  padding: 12px 15px;
-  border-radius: 10px;
+  padding: 15px;
+  border-radius: 12px;
   margin-bottom: 8px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
 }
 
 .nav-item:hover {
-  background-color: #f0f0f0;
+  background: linear-gradient(135deg, #ABD7FB, #D2E0AA);
+  color: white;
+  transform: translateX(5px);
+  box-shadow: 0 4px 15px rgba(171, 215, 251, 0.3);
 }
 
 .nav-item.active {
-  background-color: #F98C53;
+  background: linear-gradient(135deg, #F98C53, #FCCEB4);
   color: white;
+  box-shadow: 0 4px 15px rgba(249, 140, 83, 0.4);
 }
 
 .nav-icon {
   font-size: 18px;
   margin-right: 12px;
+  transition: transform 0.3s ease;
+}
+
+.nav-item:hover .nav-icon {
+  transform: scale(1.2) rotate(5deg);
 }
 
 .upgrade-container {
   margin-top: auto;
-  background-color: #f9f0ff;
-  border-radius: 10px;
-  padding: 15px;
+  background: linear-gradient(135deg, #F9F2EF, #FCCEB4);
+  border-radius: 15px;
+  padding: 20px;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(249, 242, 239, 0.3);
+}
+
+.upgrade-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+  100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
 }
 
 .upgrade-lock {
-  font-size: 24px;
+  font-size: 28px;
   margin-bottom: 10px;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(-5px); }
 }
 
 .upgrade-text {
@@ -601,18 +686,21 @@ export default {
 }
 
 .upgrade-btn {
-  background-color: #6200ea;
+  background: linear-gradient(135deg, #F98C53, #FCCEB4);
   color: white;
   border: none;
-  padding: 8px 20px;
-  border-radius: 20px;
+  padding: 10px 25px;
+  border-radius: 25px;
   cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(249, 140, 83, 0.3);
 }
 
 .upgrade-btn:hover {
-  background-color: #5000d6;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(249, 140, 83, 0.4);
+  background: linear-gradient(135deg, #FCCEB4, #F98C53);
 }
 
 /* 主内容区样式 */
@@ -620,6 +708,7 @@ export default {
   flex: 1;
   padding: 30px;
   overflow-y: auto;
+  background: linear-gradient(135deg, #f5f5f7 0%, #F9F2EF 100%);
 }
 
 .page-header {
@@ -627,17 +716,29 @@ export default {
 }
 
 .page-header h1 {
-  font-size: 28px;
-  font-weight: 600;
-  color: #333;
+  font-size: 32px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #F98C53, #D2E0AA);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
 }
 
 .course-section {
-  background-color: #fff;
-  border-radius: 15px;
-  padding: 25px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 30px;
   margin-bottom: 30px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.course-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(0,0,0,0.12);
 }
 
 .section-header {
@@ -648,15 +749,28 @@ export default {
 }
 
 .section-header h2 {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 600;
-  color: #333;
+  background: linear-gradient(135deg, #F98C53, #ABD7FB);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .view-all {
-  color: #F98C53;
+  background: linear-gradient(135deg, #F98C53, #FCCEB4);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
   font-weight: 500;
   cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(249, 140, 83, 0.3);
+}
+
+.view-all:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(249, 140, 83, 0.4);
 }
 
 /* 1. 未完成课程卡片样式 */
@@ -667,20 +781,42 @@ export default {
 }
 
 .today-course-card {
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
-  padding: 24px 24px 18px 24px;
-  margin-bottom: 24px;
+  background: linear-gradient(135deg, #fff 0%, #F9F2EF 100%);
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  padding: 25px;
+  margin-bottom: 25px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: box-shadow 0.2s;
+  width: calc(25% - 15px);
+  min-width: 280px;
   position: relative;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  border: 1px solid rgba(249, 140, 83, 0.1);
+}
+
+.today-course-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #F98C53, #ABD7FB, #D2E0AA, #FCCEB4);
+  background-size: 300% 100%;
+  animation: gradientMove 3s ease infinite;
+}
+
+@keyframes gradientMove {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 .today-course-card:hover {
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 15px 40px rgba(249, 140, 83, 0.15);
 }
 
 .course-header {
@@ -733,32 +869,93 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+}
+
+.progress-container::before {
+  content: '';
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #F98C53 0deg,
+    #FCCEB4 72deg,
+    #ABD7FB 144deg,
+    #D2E0AA 216deg,
+    #F9F2EF 288deg,
+    #F98C53 360deg
+  );
+  opacity: 0.1;
+  animation: rotate 4s linear infinite;
+  z-index: -1;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .progress-circle {
   width: 72px;
   height: 72px;
   position: relative;
+  z-index: 1;
+  background: radial-gradient(
+    circle,
+    rgba(249, 242, 239, 0.8) 0%,
+    rgba(252, 206, 180, 0.6) 30%,
+    rgba(171, 215, 251, 0.4) 60%,
+    rgba(210, 224, 170, 0.2) 100%
+  );
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .circular-chart {
   width: 72px;
   height: 72px;
   display: block;
+  transition: all 0.3s ease;
+}
+
+.circular-chart:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 4px 15px rgba(249, 140, 83, 0.4));
 }
 
 .circle-bg {
   fill: none;
-  stroke: #eee;
+  stroke: linear-gradient(135deg, #F9F2EF, #FCCEB4);
   stroke-width: 3.8;
+  opacity: 0.3;
 }
 
 .circle {
   fill: none;
-  stroke: #4BC0C0;
-  stroke-width: 3.8;
+  stroke: url(#progressGradient);
+  stroke-width: 4;
   stroke-linecap: round;
-  transition: stroke-dasharray 0.6s ease;
+  transition: all 0.6s ease;
+  animation: progressPulse 2s ease-in-out infinite;
+}
+
+@keyframes progressPulse {
+  0%, 100% {
+    stroke-width: 4;
+    filter: drop-shadow(0 0 5px rgba(249, 140, 83, 0.3));
+  }
+  50% {
+    stroke-width: 4.5;
+    filter: drop-shadow(0 0 10px rgba(171, 215, 251, 0.5));
+  }
 }
 
 .percentage {
@@ -767,6 +964,23 @@ export default {
   font-weight: bold;
   text-anchor: middle;
   dominant-baseline: middle;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  animation: textGlow 3s ease-in-out infinite;
+}
+
+@keyframes textGlow {
+  0%, 100% {
+    fill: #333;
+  }
+  25% {
+    fill: #F98C53;
+  }
+  50% {
+    fill: #ABD7FB;
+  }
+  75% {
+    fill: #D2E0AA;
+  }
 }
 
 .course-actions {
@@ -776,35 +990,35 @@ export default {
 }
 
 .info-btn, .continue-btn {
-  padding: 6px 18px;
-  border-radius: 20px;
+  padding: 10px 20px;
+  border-radius: 25px;
   border: none;
-  font-weight: 500;
-  font-size: 15px;
+  font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .info-btn {
-  background: #fff;
-  color: #4BC0C0;
-  border: 1.5px solid #4BC0C0;
+  background: linear-gradient(135deg, #ABD7FB, #D2E0AA);
+  color: white;
 }
 
 .info-btn:hover {
-  background: #4BC0C0;
-  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(171, 215, 251, 0.4);
 }
 
 .continue-btn {
-  background: #4BC0C0;
-  color: #fff;
-  border: 1.5px solid #4BC0C0;
+  background: linear-gradient(135deg, #F98C53, #FCCEB4);
+  color: white;
 }
 
 .continue-btn:hover {
-  background: #388e8e;
-  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(249, 140, 83, 0.4);
 }
 
 .add-more-btn {
@@ -840,37 +1054,38 @@ export default {
 /* 2. 已完成课程样式 */
 .completed-course-card {
   background: linear-gradient(135deg, #D2E0AA, #F9F2EF);
-  border-radius: 18px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-  padding: 20px;
-  margin-bottom: 15px;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(210, 224, 170, 0.15);
+  padding: 25px;
+  margin-bottom: 20px;
   display: flex;
   flex-direction: column;
   width: calc(33.33% - 14px);
   min-width: 280px;
   position: relative;
-  transition: all 0.3s ease;
+  transition: all 0.4s ease;
   overflow: hidden;
 }
 
 .completed-course-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  box-shadow: 0 12px 30px rgba(210, 224, 170, 0.25);
 }
 
 .completion-badge {
   position: absolute;
   top: 15px;
   right: 15px;
-  background-color: rgba(210, 224, 170, 0.9);
-  border-radius: 20px;
-  padding: 5px 12px;
+  background: linear-gradient(135deg, #D2E0AA, #ABD7FB);
+  border-radius: 25px;
+  padding: 8px 15px;
   display: flex;
   align-items: center;
   gap: 5px;
   font-weight: 600;
-  color: #4a6741;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  color: white;
+  box-shadow: 0 4px 15px rgba(210, 224, 170, 0.3);
+  animation: pulse 2s infinite;
 }
 
 .check-icon {
@@ -886,65 +1101,108 @@ export default {
 }
 
 .review-btn {
-  padding: 8px 16px;
+  background: linear-gradient(135deg, #D2E0AA, #ABD7FB);
+  color: white;
+  padding: 10px 20px;
   border: none;
-  border-radius: 5px;
+  border-radius: 25px;
   cursor: pointer;
-  transition: all 0.3s;
-  font-weight: 500;
+  transition: all 0.3s ease;
+  font-weight: 600;
   font-size: 14px;
-  background-color: #D2E0AA;
-  color: #4a6741;
-  border: 1px solid #4a6741;
 }
 
 .review-btn:hover {
-  background-color: #4a6741;
-  color: #D2E0AA;
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(74, 103, 65, 0.3);
+  box-shadow: 0 6px 20px rgba(210, 224, 170, 0.4);
 }
 
-/* 3. 收藏的课程卡片样式 */
+/* 3. 收藏的课程卡片样式 - 美化版本 */
 .liked-course-card {
-  border-radius: 18px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-  padding: 20px;
-  margin-bottom: 15px;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+  padding: 24px;
+  margin-bottom: 20px;
   display: flex;
   flex-direction: column;
   width: calc(33.33% - 14px);
   min-width: 280px;
   position: relative;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  height: 200px;
+  height: 220px;
   justify-content: space-between;
+  /* 添加更柔和的渐变覆盖层 */
+  background-image: linear-gradient(135deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.05) 100%);
+  background-blend-mode: overlay;
 }
 
 .liked-course-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.18);
+}
+
+/* 装饰性元素 */
+.card-decoration {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.decoration-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.circle-1 {
+  width: 80px;
+  height: 80px;
+  top: -20px;
+  right: -20px;
+}
+
+.circle-2 {
+  width: 40px;
+  height: 40px;
+  bottom: 20px;
+  left: -10px;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  z-index: 2;
+  position: relative;
 }
 
 .card-number {
-  font-family: 'Roboto Mono', monospace;
-  font-weight: 600;
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.9);
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.15);
+  padding: 6px 12px;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .card-date {
-  font-family: 'Roboto Mono', monospace;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-weight: 500;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 10px;
+  border-radius: 8px;
+  backdrop-filter: blur(5px);
 }
 
 .card-body {
@@ -952,45 +1210,114 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  z-index: 2;
+  position: relative;
 }
 
 .card-title {
-  font-size: 18px;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 20px;
   font-weight: 600;
-  color: white;
-  margin-bottom: 10px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  color: #ffffff;
+  margin-bottom: 12px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.4;
+  /* 添加文字描边效果增强可读性 */
+  -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.1);
 }
 
 .card-amount {
-  font-size: 22px;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 24px;
   font-weight: 700;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(45deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+  padding: 8px 16px;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: inline-block;
+  width: fit-content;
 }
 
 .card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 15px;
+  margin-top: 20px;
+  z-index: 2;
+  position: relative;
 }
 
 .like-icon {
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(45deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
   border-radius: 50%;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.like-icon:hover {
+  transform: scale(1.1);
+  background: linear-gradient(45deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.25));
+}
+
+.heart-icon {
   font-size: 16px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.course-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.card-info-btn, .card-continue-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.card-info-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.card-info-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card-continue-btn {
+  background: linear-gradient(45deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8));
+  color: #333;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.card-continue-btn:hover {
+  background: linear-gradient(45deg, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.9));
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
 
 /* 右侧边栏样式 */

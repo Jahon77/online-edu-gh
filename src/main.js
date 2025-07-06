@@ -35,6 +35,26 @@ const app = createApp(App)
 const pinia = createPinia()
 app.use(pinia)
 
+// 初始化用户状态
+import { useUserStore } from './stores/user'
+const userStore = useUserStore(pinia)
+// 从本地存储加载用户信息
+const userInfo = localStorage.getItem('user')
+if (userInfo) {
+  try {
+    const user = JSON.parse(userInfo)
+    userStore.setUser({
+      username: user.username,
+      name: user.name,
+      id: user.userId,
+      role: user.role
+    })
+    console.log('已从本地存储恢复用户状态')
+  } catch (e) {
+    console.error('解析用户信息失败', e)
+  }
+}
+
 const metaManager = createMetaManager()
 app.use(metaManager)
 

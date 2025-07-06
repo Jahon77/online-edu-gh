@@ -698,6 +698,8 @@ form.sign-up-form{
 <script>
 import axios from 'axios';
 import { setCookie } from '../utils/authUtils';
+import { useUserStore } from '../stores/user';
+
 
 export default {
   name: "Login",
@@ -818,6 +820,24 @@ export default {
           this.setCookie('name', loginResp.name, 1);
           this.setCookie('role', loginResp.role, 1);
 
+          // 存入 localStorage
+          localStorage.setItem('user', JSON.stringify({
+            token: loginResp.saTokenInfo.tokenValue,
+            username: loginResp.username,
+            userId: loginResp.userId,
+            name: loginResp.name,
+            role: loginResp.role
+          }));
+          
+          // 存入 Pinia store
+          const userStore = useUserStore();
+          userStore.setUser({
+            username: loginResp.username,
+            name: loginResp.name,
+            id: loginResp.userId,
+            role: loginResp.role
+          });
+          
           // 检查是否有重定向路径
           const redirectPath = localStorage.getItem('redirectPath');
           if (redirectPath) {
@@ -929,7 +949,7 @@ export default {
           this.setCookie('name', loginResp.name, 1);
           this.setCookie('role', loginResp.role, 1);
           
-            // 存入 localStorage
+          // 存入 localStorage
           localStorage.setItem('user', JSON.stringify({
             token: loginResp.saTokenInfo.tokenValue,
             username: loginResp.username,
@@ -937,6 +957,15 @@ export default {
             name: loginResp.name,
             role: loginResp.role
           }));
+          
+          // 存入 Pinia store
+          const userStore = useUserStore();
+          userStore.setUser({
+            username: loginResp.username,
+            name: loginResp.name,
+            id: loginResp.userId,
+            role: loginResp.role
+          });
           
           // 延迟3秒后跳转
           await new Promise(resolve => setTimeout(resolve, 3000));
@@ -1274,7 +1303,7 @@ export default {
           this.setCookie('username', loginResp.userInfo.username, 1);
           this.setCookie('userid', loginResp.userInfo.userId, 1);
           this.setCookie('name', loginResp.userInfo.name, 1);
-          this.setCookie('role', loginResp.role, 1);
+          this.setCookie('role', loginResp.userInfo.role, 1);
           this.loginStatusMessage = '人脸登录成功！欢迎回来, ' + loginResp.userInfo.name;
           this.closeCamera();
           

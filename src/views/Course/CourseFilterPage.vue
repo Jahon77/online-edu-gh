@@ -1,28 +1,7 @@
 <template>
   <div class="course-filter-page">
     <!-- 顶部导航栏 -->
-    <header class="site-header">
-      <div class="header-container">
-        <div class="logo">
-          <h1>智学通</h1>
-        </div>
-        <nav class="main-nav">
-          <ul>
-            <li class="active"><router-link to="/courses">课程中心</router-link></li>
-            <li><router-link to="/dashboard">我的学习</router-link></li>
-            <li><a href="#" @click.prevent>论坛</a></li>
-            <li><a href="#" @click.prevent>学习助手</a></li>
-          </ul>
-        </nav>
-        <div class="user-actions">
-          <button class="btn-download">APP下载</button>
-          <div class="user-avatar">
-            <img src="https://via.placeholder.com/36" alt="用户头像">
-          </div>
-          <button class="btn-logout" @click="logout">退出</button>
-        </div>
-      </div>
-    </header>
+    <SiteHeader />
 
     <div class="main-content">
       <!-- 搜索框 -->

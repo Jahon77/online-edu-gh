@@ -1,28 +1,25 @@
 <template>
   <div class="course-detail-page">
+    <!-- 添加自定义弹窗组件 -->
+    <CustomAlert
+      :show="showAlert"
+      :message="alertMessage"
+      :title="alertTitle"
+      @close="showAlert = false"
+    />
+    
+    <!-- 添加自定义确认对话框组件 -->
+    <CustomConfirm
+      :show="showConfirm"
+      :message="confirmMessage"
+      :title="confirmTitle"
+      @confirm="handleConfirm"
+      @cancel="handleCancel"
+      @close="showConfirm = false"
+    />
+    
     <!-- 顶部导航栏 - 与课程列表页一致 -->
-    <header class="site-header">
-      <div class="header-container">
-        <div class="logo">
-          <h1>智学通</h1>
-        </div>
-        <nav class="main-nav">
-          <ul>
-            <li class="active"><router-link to="/courses">课程中心</router-link></li>
-            <li><router-link to="/dashboard">我的学习</router-link></li>
-            <li><a href="#" @click.prevent>论坛</a></li>
-            <li><a href="#" @click.prevent>学习助手</a></li>
-          </ul>
-        </nav>
-        <div class="user-actions">
-          <button class="btn-download">APP下载</button>
-          <div class="user-avatar">
-            <img src="https://via.placeholder.com/36" alt="用户头像">
-          </div>
-          <button class="btn-logout" @click="logout">退出登录</button>
-        </div>
-      </div>
-    </header>
+    <SiteHeader />
     
     <div class="course-detail">
       <div v-if="loading" class="loading">
@@ -295,8 +292,18 @@
 
 <script>
 import axios from 'src/utils/http';
+import { useUserStore } from 'src/stores/user';
+import { getUserInfo } from 'src/utils/authUtils';
+import CustomAlert from 'src/components/CustomAlert.vue';
+import CustomConfirm from 'src/components/CustomConfirm.vue';
+
+import courseService from '../../utils/courseService';
 export default {
   name: 'CourseDetail',
+  components: {
+    CustomAlert,
+    CustomConfirm
+  },
   props: {
     id: {
       type: [Number, String],
@@ -320,13 +327,18 @@ export default {
         rating: 5,
         content: ''
       },
-      // 模拟用户信息，实际应从登录状态获取
-      currentUser: {
-        id: 7,
-        name: '测试用户'
-      },
+
+      // 用户信息会从Pinia store中获取
+      currentUser: null,
       videoProgress: 0,
-      expandedChapters: [] // 存储已展开的章节索引
+      expandedChapters: [], // 存储已展开的章节索引
+      showAlert: false,
+      alertMessage: '',
+      alertTitle: '',
+      showConfirm: false,
+      confirmMessage: '',
+      confirmTitle: '',
+      pendingAction: null
     };
   },
   computed: {
@@ -343,11 +355,23 @@ export default {
     console.log('CourseDetail组件挂载，路由参数ID:', this.id);
     console.log('路由参数完整信息:', this.$route.params);
     
+    // 获取当前登录用户信息
+    this.initCurrentUser();
+    
     // 如果没有通过props获取到id，则尝试从路由参数获取
     const courseId = this.id || this.$route.params.id;
     if (!courseId) {
       this.error = '课程ID不存在，无法获取课程详情';
       this.loading = false;
+      return;
+    }
+    
+    // 检查用户是否已登录
+    if (!this.currentUser || !this.currentUser.id) {
+      this.error = '请先登录再查看课程详情';
+      this.loading = false;
+      // 可以选择跳转到登录页面
+      // this.$router.push('/login');
       return;
     }
     
@@ -357,10 +381,55 @@ export default {
     this.fetchCourseDetail();
   },
   methods: {
+    initCurrentUser() {
+      // 从Pinia store获取用户信息
+      const userStore = useUserStore();
+      
+      if (userStore.user && userStore.user.id) {
+        // 如果store中已有用户信息，直接使用
+        this.currentUser = {
+          id: userStore.user.id,
+          name: userStore.user.name || userStore.user.username
+        };
+        console.log('从用户store获取到用户信息:', this.currentUser);
+      } else {
+        // 如果store中没有，则从cookie获取
+        const userInfo = getUserInfo();
+        if (userInfo && userInfo.userId) {
+          this.currentUser = {
+            id: parseInt(userInfo.userId),
+            name: userInfo.name || userInfo.username
+          };
+          console.log('从cookie获取到用户信息:', this.currentUser);
+          
+          // 更新store
+          userStore.setUser({
+            id: parseInt(userInfo.userId),
+            username: userInfo.username,
+            name: userInfo.name,
+            role: userInfo.role
+          });
+        } else {
+          // 如果没有登录信息，可以重定向到登录页或显示提示
+          console.warn('未获取到用户登录信息');
+          this.$router.push('/login');
+          return;
+        }
+      }
+    },
+    
     async fetchCourseDetail() {
       this.loading = true;
       this.error = null;
       console.log('开始获取课程详情，课程ID:', this.courseId);
+      
+      // 确保用户已登录
+      if (!this.currentUser || !this.currentUser.id) {
+        console.warn('用户未登录，无法获取课程详情');
+        this.error = '请先登录后再查看课程详情';
+        this.loading = false;
+        return;
+      }
       
       // 最大重试次数
       const maxRetries = 3;
@@ -368,13 +437,8 @@ export default {
       
       const fetchData = async () => {
         try {
-          // 直接使用标准API
-          const res = await axios.get(`/api/courses/${this.courseId}`, {
-            params: {
-              studentId: this.currentUser.id
-            },
-            timeout: 15000 // 更长的超时时间
-          });
+          // 使用课程服务获取详情
+          const res = await courseService.getCourseDetail(this.courseId);
           
           console.log('获取课程详情成功:', res.data);
           
@@ -441,7 +505,7 @@ export default {
           return;
         }
         
-        console.log('开始获取订阅状态，课程ID:', this.courseId, '学生ID:', this.currentUser.id);
+        console.log('开始获取订阅状态，课程ID:', this.courseId);
         
         // 添加错误计数和重试
         let retries = 0;
@@ -450,11 +514,8 @@ export default {
         
         while (!success && retries < maxRetries) {
           try {
-            // 使用直接针对course_subscribe表的接口
-            const response = await axios.get(`/api/courses/${this.courseId}/subscribe`, {
-              params: { studentId: this.currentUser.id },
-              timeout: 15000 // 增加超时时间
-            });
+            // 使用课程服务获取订阅状态
+            const response = await courseService.isCourseSubscribed(this.courseId);
             
             console.log('订阅状态API响应数据:', JSON.stringify(response.data));
             
@@ -526,10 +587,7 @@ export default {
     async fetchLikeStatus() {
       try {
         console.log('开始获取收藏状态，课程ID:', this.courseId);
-        const likeRes = await axios.get(`/api/courses/${this.courseId}/like`, {
-          params: { studentId: this.currentUser.id },
-          timeout: 10000
-        });
+        const likeRes = await courseService.isCourseLiked(this.courseId);
         
         if (likeRes.data && likeRes.data.status === 0) {
           console.log('获取收藏状态成功:', likeRes.data.data);
@@ -546,7 +604,7 @@ export default {
     
     async fetchChapters() {
       try {
-        const chaptersRes = await axios.get(`/api/teacher/courses/${this.courseId}/chapters`);
+        const chaptersRes = await courseService.getCourseChapters(this.courseId);
         if (chaptersRes.data && Array.isArray(chaptersRes.data)) {
           console.log('获取章节和课时成功:', chaptersRes.data);
           // 打印第一个章节的数据结构，以便查看
@@ -584,7 +642,7 @@ export default {
       console.log('开始获取课程评论，课程ID:', this.courseId);
       
       try {
-        const response = await axios.get(`/api/courses/${this.courseId}/comments`);
+        const response = await courseService.getCourseComments(this.courseId);
         console.log('获取评论成功:', response.data);
         
         if (response.data.status === 0 && response.data.data) {
@@ -622,14 +680,13 @@ export default {
     
     async submitComment() {
       if (!this.newComment.content.trim()) {
-        alert('请输入评价内容');
+        this.showCustomAlert('请输入评价内容', '提示');
         return;
       }
       
       console.log('提交评价:', this.newComment);
       
       try {
-        // 使用正确的后端接口路径
         const response = await axios.post(`/api/courses/${this.courseId}/comments`, null, {
           params: {
             studentId: this.currentUser.id,
@@ -641,71 +698,62 @@ export default {
         console.log('提交评价响应:', response.data);
         
         if (response.data && (response.data.status === 0 || response.data.code === 200)) {
-          // 重新加载评论
           this.comments = [];
           await this.fetchComments();
           
-          // 更新课程平均评分
           if (this.updateAverageRating) {
             this.updateAverageRating();
           }
           
-          // 清空表单
           this.newComment.content = '';
           this.newComment.rating = 5;
           
-          alert('评价提交成功');
+          this.showCustomAlert('评价提交成功', '成功');
         } else {
-          alert('评价提交失败: ' + (response.data?.msg || response.data?.message || '未知错误'));
+          this.showCustomAlert('评价提交失败: ' + (response.data?.msg || response.data?.message || '未知错误'), '提交失败');
         }
       } catch (err) {
         console.error('提交评价失败:', err);
-        alert('评价提交失败: ' + (err.response?.data?.msg || err.response?.data?.message || '请稍后重试'));
+        this.showCustomAlert('评价提交失败: ' + (err.response?.data?.msg || err.response?.data?.message || '请稍后重试'), '错误');
       }
     },
     
     async toggleLike() {
       try {
-        console.log('开始收藏操作，课程ID:', this.courseId, '学生ID:', this.currentUser.id);
+        console.log('开始收藏操作，课程ID:', this.courseId);
         
         if (this.course.isLiked) {
-          // 取消收藏
           console.log('执行取消收藏');
-          const response = await axios.delete(`/api/courses/${this.courseId}/like`, {
-            params: { studentId: this.currentUser.id }
-          });
+          const response = await courseService.removeCourseLike(this.courseId);
           
           console.log('取消收藏响应:', response.data);
           if (response.data && response.data.status === 0) {
             this.course.isLiked = false;
-            alert('已取消收藏');
+            this.showCustomAlert('已取消收藏');
           } else {
-            alert('取消收藏失败: ' + (response.data?.msg || '未知错误'));
+            this.showCustomAlert('取消收藏失败: ' + (response.data?.msg || '未知错误'), '操作失败');
           }
         } else {
-          // 添加收藏
           console.log('执行添加收藏');
-          const response = await axios.post(`/api/courses/${this.courseId}/like`, null, {
-            params: { studentId: this.currentUser.id }
-          });
+          const response = await courseService.addCourseLike(this.courseId);
           
           console.log('添加收藏响应:', response.data);
           if (response.data && response.data.status === 0) {
             this.course.isLiked = true;
-            alert('收藏成功');
+            this.showCustomAlert('收藏成功');
           } else {
-            alert('收藏失败: ' + (response.data?.msg || '未知错误'));
+            this.showCustomAlert('收藏失败: ' + (response.data?.msg || '未知错误'), '操作失败');
           }
         }
       } catch (err) {
         console.error('收藏操作失败:', err);
-        alert('操作失败，请稍后重试');
+        this.showCustomAlert('操作失败，请稍后重试', '错误');
       }
     },
     
     async subscribeCourse() {
       if (!this.currentUser || !this.currentUser.id) {
-        alert('请先登录');
+        this.showCustomAlert('请先登录', '提示');
         return;
       }
       
@@ -714,69 +762,122 @@ export default {
         return;
       }
       
-      console.log('开始订阅课程，课程ID:', this.courseId, '学生ID:', this.currentUser.id);
+      console.log('开始订阅课程，课程ID:', this.courseId);
       
       try {
-        // 使用原生fetch API - 最简单的方式
         const url = `/api/studentcourse/${this.courseId}/subscribe?studentId=${this.currentUser.id}`;
         console.log('订阅课程请求URL:', url);
         
-        // 显示加载中
-        alert('正在订阅课程，请稍候...');
+        this.showCustomAlert('正在订阅课程，请稍候...', '处理中');
         
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        });
+        const response = await courseService.subscribeCourse(this.courseId);
         
-        console.log('订阅课程API响应状态:', response.status);
+        console.log('订阅课程API响应数据:', response.data);
         
-        if (response.ok) {
-          const data = await response.json();
-          console.log('订阅课程API响应数据:', data);
+        if (response.data && response.data.status === 0) {
+          console.log('订阅课程成功');
+          // 更新课程状态
+          this.course.isPurchased = true;
+          this.course.isBookmarked = true;
           
-          if (data && data.status === 0) {
-            console.log('订阅课程成功');
-            // 更新课程状态
-            this.course.isPurchased = true;
-            this.course.isBookmarked = true;
-            
-            // 更新订阅人数 - 直接+1
-            if (typeof this.course.subscriberCount === 'number') {
-              this.course.subscriberCount += 1;
-              console.log('更新订阅人数为:', this.course.subscriberCount);
-            } else {
-              // 如果订阅人数不是数字，设为1
-              this.course.subscriberCount = 1;
-            }
-            
-            alert('订阅成功，现在可以观看完整课程内容了！');
-            
-            // 如果当前在试看模式，重新加载视频
-            if (this.showPlayer && this.isPreviewMode) {
-              this.playChapter(this.currentChapterIndex);
-            }
+          // 更新订阅人数
+          if (typeof this.course.subscriberCount === 'number') {
+            this.course.subscriberCount += 1;
+            console.log('更新订阅人数为:', this.course.subscriberCount);
           } else {
-            alert('订阅失败: ' + (data?.message || '请稍后重试'));
+            this.course.subscriberCount = 1;
+          }
+          
+          this.checkAndJoinCourseGroup();
+          
+          if (this.showPlayer && this.isPreviewMode) {
+            this.playChapter(this.currentChapterIndex);
           }
         } else {
-          // 尝试读取错误响应
           let errorText = '';
           try {
-            const errorData = await response.text();
-            console.error('错误响应内容:', errorData);
-            errorText = errorData;
+            errorText = JSON.stringify(response.data);
+            console.error('错误响应内容:', errorText);
           } catch (e) {
             errorText = '无法读取错误详情';
           }
           
-          alert(`订阅失败: HTTP状态码 ${response.status}; ${errorText}`);
+          this.showCustomAlert(`订阅失败: ${errorText}`, '错误');
         }
       } catch (err) {
         console.error('订阅课程请求异常:', err);
-        alert('订阅失败: ' + err.message);
+        this.showCustomAlert('订阅失败: ' + err.message, '错误');
+      }
+    },
+    
+    // 检查课程群聊并自动加入
+    async checkAndJoinCourseGroup() {
+      try {
+        console.log('检查课程群聊，课程ID:', this.courseId);
+        
+        // 获取所有群聊
+        const conversationsRes = await axios.get(`/api/chat/all-conversations`);
+        console.log('所有群聊:', conversationsRes.data);
+        
+        if (conversationsRes.data.status === 10000) {
+          // 过滤出群聊类型的会话
+          const groupChats = conversationsRes.data.data.filter(c => 
+            c.conversation && 
+            c.conversation.type === 'GROUP' && 
+            c.group
+          );
+          console.log('过滤后的群聊:', groupChats);
+          
+          // 检查是否有同名群聊
+          const courseGroupName = `${this.course.title} 【课程群聊】`;
+          console.log('课程群聊名称:', courseGroupName);
+          const existingGroup = groupChats.find(g => g.title === courseGroupName);
+          
+          if (existingGroup) {
+            console.log('找到课程群聊:', existingGroup);
+            
+            // 检查用户是否已在群聊中
+            const isUserInGroup = await this.checkUserInGroup(existingGroup.conversation.id);
+            
+            if (!isUserInGroup) {
+              // 将用户加入群聊
+              const joinRes = await axios.post(`/api/chat/group/${existingGroup.group.id}/join?userId=${this.currentUser.id}`);
+              
+              if (joinRes.data.status === 10000) {
+                this.showCustomAlert(`订阅成功！已加入${this.course.title}课程班群`);
+              } else {
+                console.error('加入群聊失败:', joinRes.data);
+              }
+            } else {
+              console.log('用户已在群聊中，无需重复加入');
+              this.showCustomAlert('订阅成功，现在可以观看完整课程内容了！');
+            }
+          } else {
+            console.log('未找到对应的课程群聊');
+            this.showCustomAlert('订阅成功，现在可以观看完整课程内容了！');
+          }
+        }
+      } catch (err) {
+        console.error('检查课程群聊失败:', err);
+      }
+    },
+    
+    // 检查用户是否已在群聊中
+    async checkUserInGroup(groupId) {
+      try {
+        // 使用获取会话参与者的API
+        const membersRes = await axios.get(`/api/chat/participants/${groupId}`);
+        
+        if (membersRes.data.status === 10000 && membersRes.data.data) {
+          const members = membersRes.data.data;
+          console.log('群聊成员:', members);
+          console.log('当前用户ID:', this.currentUser.id);
+          return members.some(member => member.id === this.currentUser.id);
+        }
+        return false;
+      } catch (err) {
+        console.error('检查用户是否在群聊中失败:', err);
+        return false;
       }
     },
     
@@ -784,63 +885,60 @@ export default {
       if (!this.course.isPurchased) return;
       
       if (!this.currentUser || !this.currentUser.id) {
-        alert('请先登录');
+        this.showCustomAlert('请先登录', '提示');
         return;
       }
       
-      if (!confirm('确定要取消订阅该课程吗？')) {
-        return;
-      }
-      
-      try {
-        console.log('开始取消订阅课程 - 课程ID:', this.courseId, '学生ID:', this.currentUser.id);
-        
-        // 显示加载状态
-        this.$message = this.$message || {};
-        const loadingMessage = this.$message.loading ? 
-          this.$message.loading('正在取消订阅...', 0) : 
-          { close: () => console.log('关闭加载提示') };
-        
-        // 使用统一的DELETE API端点
-        const params = new URLSearchParams();
-        params.append('studentId', this.currentUser.id);
-        
-        const response = await axios.delete(`/api/studentcourse/${this.courseId}/unsubscribe`, {
-          params: { studentId: this.currentUser.id },
-          timeout: 15000
-        });
-        
-        // 关闭加载状态
-        loadingMessage.close();
-        
-        console.log('取消订阅响应:', JSON.stringify(response.data));
-        
-        if (response.data && response.data.status === 0) {
-          this.course.isPurchased = false;
-          this.course.isBookmarked = false;
-          
-          // 更新订阅人数 - 直接-1，但不小于0
-          if (typeof this.course.subscriberCount === 'number' && this.course.subscriberCount > 0) {
-            this.course.subscriberCount -= 1;
-            console.log('更新订阅人数为:', this.course.subscriberCount);
-          } else {
-            this.course.subscriberCount = 0;
+      // 使用自定义确认对话框
+      this.showCustomConfirm(
+        '确定要取消订阅该课程吗？',
+        async () => {
+          try {
+            console.log('开始取消订阅课程 - 课程ID:', this.courseId, '学生ID:', this.currentUser.id);
+            
+            // 显示加载状态
+            this.$message = this.$message || {};
+            const loadingMessage = this.$message.loading ? 
+              this.$message.loading('正在取消订阅...', 0) : 
+              { close: () => console.log('关闭加载提示') };
+            
+            const response = await axios.delete(`/api/studentcourse/${this.courseId}/unsubscribe`, {
+              params: { studentId: this.currentUser.id },
+              timeout: 15000
+            });
+            
+            // 关闭加载状态
+            loadingMessage.close();
+            
+            console.log('取消订阅响应:', JSON.stringify(response.data));
+            
+            if (response.data && response.data.status === 0) {
+              this.course.isPurchased = false;
+              this.course.isBookmarked = false;
+              
+              if (typeof this.course.subscriberCount === 'number' && this.course.subscriberCount > 0) {
+                this.course.subscriberCount -= 1;
+                console.log('更新订阅人数为:', this.course.subscriberCount);
+              } else {
+                this.course.subscriberCount = 0;
+              }
+              
+              this.showCustomAlert('取消订阅成功');
+              
+              if (this.showPlayer && !this.isPreviewMode) {
+                this.showPlayer = false;
+              }
+            } else {
+              console.error('取消订阅失败:', response.data);
+              this.showCustomAlert('取消订阅失败: ' + (response.data?.message || '请稍后重试'), '错误');
+            }
+          } catch (err) {
+            console.error('取消订阅失败:', err);
+            this.showCustomAlert('取消订阅失败: ' + (err.response?.data?.message || '网络错误，请稍后重试'), '错误');
           }
-          
-          alert('取消订阅成功');
-          
-          // 如果当前在视频播放模式，关闭播放器
-          if (this.showPlayer && !this.isPreviewMode) {
-            this.showPlayer = false;
-          }
-        } else {
-          console.error('取消订阅失败:', response.data);
-          alert('取消订阅失败: ' + (response.data?.message || '请稍后重试'));
-        }
-      } catch (err) {
-        console.error('取消订阅失败:', err);
-        alert('取消订阅失败: ' + (err.response?.data?.message || '网络错误，请稍后重试'));
-      }
+        },
+        '取消订阅'
+      );
     },
     
     previewCourse() {
@@ -857,7 +955,7 @@ export default {
       
       // 修改：无论订阅与否，都可以试看第一个章节
       if (!this.course.isPurchased && index > 0 && !chapter.isPreviewable) {
-        alert('请先订阅课程');
+        this.showCustomAlert('请先订阅课程', '提示');
         return;
       }
       
@@ -933,12 +1031,12 @@ export default {
           name: 'StudentCoursePlayer',
           params: { lessonId: lessonId },
           query: { 
-            courseId: courseId,
-            studentId: this.currentUser.id
+            courseId: courseId
+            // studentId不再需要传递，由PlayerCoursePlayer组件从Pinia store获取
           }
         });
       } else {
-        alert('请先订阅课程以观看完整内容');
+        this.showCustomAlert('请先订阅课程以观看完整内容', '提示');
       }
     },
     
@@ -979,6 +1077,30 @@ export default {
       } catch (err) {
         console.error('更新课程平均评分失败:', err);
       }
+    },
+    // 添加显示弹窗的方法
+    showCustomAlert(message, title = '') {
+      this.alertMessage = message;
+      this.alertTitle = title;
+      this.showAlert = true;
+    },
+    // 添加显示确认对话框的方法
+    showCustomConfirm(message, action, title = '确认') {
+      this.confirmMessage = message;
+      this.confirmTitle = title;
+      this.pendingAction = action;
+      this.showConfirm = true;
+    },
+    // 处理确认
+    handleConfirm() {
+      if (this.pendingAction) {
+        this.pendingAction();
+      }
+      this.pendingAction = null;
+    },
+    // 处理取消
+    handleCancel() {
+      this.pendingAction = null;
     }
   }
 }

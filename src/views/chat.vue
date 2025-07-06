@@ -25,7 +25,10 @@
       <div class="sidebar">
         <div class="sidebar-header">
           <div class="user-profile">
-            <div class="avatar">{{ currentUser?.name?.substring(0, 1) || 'U' }}</div>
+            <div class="avatar">
+              <img v-if="currentUser?.avatar" :src="currentUser.avatar" alt="头像" class="avatar-img" />
+              <template v-else>{{ currentUser?.name?.substring(0, 1) || 'U' }}</template>
+            </div>
             <div class="user-info">
               <div class="username-container">
                 <span class="username">{{ currentUser?.name || '未登录' }}</span>
@@ -51,7 +54,10 @@
           <el-tab-pane label="好友" name="friends">
             <div class="friend-list">
               <div v-for="friend in friends" :key="friend.id" class="friend-item">
-                <div class="avatar" @click="startPrivateChatWithFriend(friend)">{{ friend?.name?.substring(0, 1) || 'U' }}</div>
+                <div class="avatar" @click="startPrivateChatWithFriend(friend)">
+                  <img v-if="friend?.avatar" :src="friend.avatar" alt="头像" class="avatar-img" />
+                  <template v-else>{{ friend?.name?.substring(0, 1) || 'U' }}</template>
+                </div>
                 <div class="info" @click="startPrivateChatWithFriend(friend)">
                   <div class="title-time-wrapper">
                     <div class="title">
@@ -88,7 +94,10 @@
               <div v-for="conv in groupChats" :key="conv.conversation.id"
                    class="conversation-item"
                    :class="{ active: currentConversation && currentConversation.conversation.id === conv.conversation.id }">
-                <div class="avatar" @click="selectConversation(conv)">{{ (conv?.title || 'G').substring(0, 1) }}</div>
+                <div class="avatar" @click="selectConversation(conv)">
+                  <img v-if="conv?.groupAvatar" :src="conv.groupAvatar" alt="群头像" class="avatar-img" />
+                  <template v-else>{{ (conv?.title || 'G').substring(0, 1) }}</template>
+                </div>
                 <div class="info" @click="selectConversation(conv)">
                   <div class="title-time-wrapper">
                     <div class="title">{{ conv?.title || '未知群聊' }}</div>
@@ -125,7 +134,10 @@
               <div v-for="conv in temporaryChats" :key="conv.conversation.id"
                    class="conversation-item"
                    :class="{ active: currentConversation && currentConversation.conversation.id === conv.conversation.id }">
-                <div class="avatar" @click="selectConversation(conv)">{{ (conv.targetUser?.name || 'T').substring(0, 1) }}</div>
+                <div class="avatar" @click="selectConversation(conv)">
+                  <img v-if="conv.targetUser?.avatar" :src="conv.targetUser.avatar" alt="头像" class="avatar-img" />
+                  <template v-else>{{ (conv.targetUser?.name || 'T').substring(0, 1) }}</template>
+                </div>
                 <div class="info" @click="selectConversation(conv)">
                   <div class="title-time-wrapper">
                     <div class="title">
@@ -348,7 +360,10 @@
           </div>
           <div class="message-list" ref="messageList">
             <div v-for="(msg, index) in messages" :key="index" class="message-item" :class="{'self': msg.senderId === currentUser?.id}">
-               <div class="message-avatar">{{ (msg?.senderName || 'U').substring(0, 1) }}</div>
+               <div class="message-avatar">
+                 <img v-if="msg?.senderAvatar" :src="msg.senderAvatar" alt="头像" class="avatar-img" />
+                 <template v-else>{{ (msg?.senderName || 'U').substring(0, 1) }}</template>
+               </div>
                 <div class="message-content">
                   <div class="sender-name">
                     {{ msg?.senderName || '未知用户' }}
@@ -691,6 +706,21 @@ export default {
             username: username,
             role: parseInt(role) || 1
           };
+          
+          // 获取完整用户信息，包括头像
+          try {
+            const response = await axios.get(`/user/user-info?userId=${userId}`);
+            if (response.data.status === 0) {
+              const userData = response.data.data;
+              this.currentUser = {
+                ...this.currentUser,
+                avatar: userData.avatar || ''
+              };
+            }
+          } catch (error) {
+            console.error('获取用户详细信息失败:', error);
+          }
+          
           console.log('Current user info:', this.currentUser);
           
           // 使用 Promise.all 并行加载数据
@@ -942,6 +972,33 @@ export default {
       axios.get(`/api/chat/messages/${id}?userId=${currentUserId}`).then(res => {
         if(res.data.status === 10000) {
             this.messages = res.data.data.reverse();
+            
+            // 获取消息发送者的头像
+            const senderIds = new Set();
+            this.messages.forEach(msg => {
+                if (msg.senderId) senderIds.add(msg.senderId);
+            });
+            
+            // 获取所有发送者的信息
+            senderIds.forEach(senderId => {
+                axios.get(`/user/${senderId}`)
+                    .then(response => {
+                        if (response.data.status === 0) {
+                            const userData = response.data.data;
+                            // 更新所有来自该发送者的消息，添加头像
+                            this.messages.forEach(msg => {
+                                if (msg.senderId === senderId) {
+                                    msg.senderAvatar = userData.avatar || '';
+                                }
+                            });
+                            this.$forceUpdate(); // 强制更新视图
+                        }
+                    })
+                    .catch(err => {
+                        console.error(`获取用户 ${senderId} 详细信息失败:`, err);
+                    });
+            });
+            
             this.$nextTick(this.scrollToBottom);
         }
       });
@@ -994,7 +1051,12 @@ export default {
         };
 
         this.socket.send(JSON.stringify(message));
-        this.messages.push({ ...message, createdAt: new Date() });
+        // 添加自己的头像到消息中
+        this.messages.push({ 
+            ...message, 
+            createdAt: new Date(),
+            senderAvatar: this.currentUser.avatar || ''
+        });
         this.messageInput = '';
         this.$nextTick(this.scrollToBottom);
     },
@@ -1015,7 +1077,12 @@ export default {
         };
 
         this.socket.send(JSON.stringify(message));
-        this.messages.push({ ...message, createdAt: new Date() });
+        // 添加自己的头像到消息中
+        this.messages.push({ 
+            ...message, 
+            createdAt: new Date(),
+            senderAvatar: this.currentUser.avatar || ''
+        });
         this.$nextTick(this.scrollToBottom);
     },
      scrollToBottom() {
@@ -1031,6 +1098,22 @@ export default {
             if (res.data.status === 10000) {
                 this.friends = res.data.data;
                 console.log('Friends list with roles:', this.friends);
+                
+                // 获取每个好友的完整信息，包括头像
+                this.friends.forEach(friend => {
+                    axios.get(`/user/${friend.id}`)
+                        .then(response => {
+                            if (response.data.status === 0) {
+                                const userData = response.data.data;
+                                // 更新好友信息，添加头像
+                                Object.assign(friend, { avatar: userData.avatar || '' });
+                                this.$forceUpdate(); // 强制更新视图
+                            }
+                        })
+                        .catch(err => {
+                            console.error(`获取好友 ${friend.id} 详细信息失败:`, err);
+                        });
+                });
             }
         })
         .catch(error => {
@@ -1855,6 +1938,13 @@ export default {
   font-size: 18px;
   margin-right: 15px;
   box-shadow: 0 2px 5px rgba(249, 140, 83, 0.3);
+  overflow: hidden; /* 确保图片不会溢出圆形边界 */
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 确保图片填充整个容器且不变形 */
 }
 
 .user-info {
@@ -2047,14 +2137,21 @@ export default {
 .message-avatar {
   width: 40px;
   height: 40px;
-    border-radius: 50%;
-    background-color: var(--secondary-color);
-    color: white;
+  border-radius: 50%;
+  background-color: var(--secondary-color);
+  color: white;
   display: flex;
   justify-content: center;
   align-items: center;
   font-weight: 500;
   margin: 0 12px;
+  overflow: hidden; /* 确保图片不会溢出圆形边界 */
+}
+
+.message-avatar .avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .message-item.self .message-avatar {

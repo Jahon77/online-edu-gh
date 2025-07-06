@@ -343,8 +343,9 @@ function updateRegisterChart() {
 
 const fetchUserInfo = async () => {
   try {
+    const userId = getCookie('userid')
     // console.log('开始获取用户信息...');
-    const response = await http.get('http://localhost:8080/user/user-info')
+    const response = await http.get('http://localhost:8080/user/user-info?userId=' + userId)
     // console.log('获取用户信息响应:', response);
     
     if (response.data && response.data.status === 0) { // 成功状态码是0
@@ -365,6 +366,13 @@ const fetchUserInfo = async () => {
       console.error('错误响应:', error.response.data);
     }
   }
+}
+
+const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
 }
 
 onMounted(() => {
