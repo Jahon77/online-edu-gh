@@ -1,7 +1,7 @@
 <template>
       <div class="course-list-page">
     <!-- 顶部导航栏 -->
-    <header class="site-header">
+    <!-- <header class="site-header">
       <div class="header-container">
         <div class="logo">
           <h1>智学通</h1>
@@ -9,20 +9,21 @@
         <nav class="main-nav">
           <ul>
             <li class="active"><router-link to="/courses">课程中心</router-link></li>
-            <li><router-link to="/index">首页</router-link></li>
-            <li><router-link to="/notice">通知公告</router-link></li>
-            <li><router-link to="/about">关于我们</router-link></li>
-            <li><router-link to="/use">使用指南</router-link></li>
+            <li><router-link to="/dashboard">我的学习</router-link></li>
+            <li><a href="#" @click.prevent>论坛</a></li>
+            <li><a href="#" @click.prevent>学习助手</a></li>
           </ul>
         </nav>
         <div class="user-actions">
           <button class="btn-download">APP下载</button>
           <div class="user-avatar">
-            <img src="https://via.placeholder.com/36" alt="用户头像">
+            <img src="/src/assets/images/course/course-teacher/teacher1.png" alt="用户头像">
           </div>
+          <button class="btn-logout" @click="logout">退出登录</button>
         </div>
       </div>
-    </header>
+    </header> -->
+    <SiteHeader />
 
     <!-- 轮播Banner区 -->
     <div class="banner-slider">
@@ -125,7 +126,7 @@
           >
             <div class="course-card-inner">
               <div class="card-image">
-                <img :src="displayedCourses[0].coverUrl || 'https://via.placeholder.com/280x160'" alt="课程封面" class="cover">
+                <img :src="displayedCourses[0].coverUrl || '/src/assets/images/course/list-show1.png'" alt="课程封面" class="cover">
                 <div class="card-tag" :class="`level-${getLevelClass(displayedCourses[0].level)}`">{{ displayedCourses[0].level }}</div>
               </div>
               <div class="card-content">
@@ -152,7 +153,7 @@
           >
             <div class="course-card-inner">
               <div class="card-image">
-                <img :src="displayedCourses[1].coverUrl || 'https://via.placeholder.com/280x160'" alt="课程封面" class="cover">
+                <img :src="displayedCourses[1].coverUrl || '/src/assets/images/course/list-show2.png'" alt="课程封面" class="cover">
                 <div class="card-tag" :class="`level-${getLevelClass(displayedCourses[1].level)}`">{{ displayedCourses[1].level }}</div>
               </div>
               <div class="card-content">
@@ -176,7 +177,7 @@
           >
             <div class="course-card-inner">
               <div class="card-image">
-                <img :src="displayedCourses[2].coverUrl || 'https://via.placeholder.com/280x160'" alt="课程封面" class="cover">
+                <img :src="displayedCourses[2].coverUrl || '/src/assets/images/course/list-show3.png'" alt="课程封面" class="cover">
                 <div class="card-tag" :class="`level-${getLevelClass(displayedCourses[2].level)}`">{{ displayedCourses[2].level }}</div>
               </div>
               <div class="card-content">
@@ -200,7 +201,7 @@
           >
             <div class="course-card-inner">
               <div class="card-image">
-                <img :src="displayedCourses[3].coverUrl || 'https://via.placeholder.com/280x160'" alt="课程封面" class="cover">
+                <img :src="displayedCourses[3].coverUrl || '/src/assets/images/course/list-show4.png'" alt="课程封面" class="cover">
                 <div class="card-tag" :class="`level-${getLevelClass(displayedCourses[3].level)}`">{{ displayedCourses[3].level }}</div>
               </div>
               <div class="card-content">
@@ -227,7 +228,7 @@
           >
             <div class="course-card-inner">
               <div class="card-image">
-                <img :src="displayedCourses[4].coverUrl || 'https://via.placeholder.com/280x160'" alt="课程封面" class="cover">
+                <img :src="displayedCourses[4].coverUrl || '/src/assets/images/course/list-show1.png'" alt="课程封面" class="cover">
                 <div class="card-tag" :class="`level-${getLevelClass(displayedCourses[4].level)}`">{{ displayedCourses[4].level }}</div>
               </div>
               <div class="card-content">
@@ -251,7 +252,7 @@
           >
             <div class="course-card-inner">
               <div class="card-image">
-                <img :src="displayedCourses[5].coverUrl || 'https://via.placeholder.com/280x160'" alt="课程封面" class="cover">
+                <img :src="displayedCourses[5].coverUrl || '/src/assets/images/course/list-show2.png'" alt="课程封面" class="cover">
                 <div class="card-tag" :class="`level-${getLevelClass(displayedCourses[5].level)}`">{{ displayedCourses[5].level }}</div>
               </div>
               <div class="card-content">
@@ -275,7 +276,7 @@
           >
             <div class="course-card-inner">
               <div class="card-image">
-                <img :src="displayedCourses[6].coverUrl || 'https://via.placeholder.com/280x160'" alt="课程封面" class="cover">
+                <img :src="displayedCourses[6].coverUrl || '/src/assets/images/course/list-show3.png'" alt="课程封面" class="cover">
                 <div class="card-tag" :class="`level-${getLevelClass(displayedCourses[6].level)}`">{{ displayedCourses[6].level }}</div>
               </div>
               <div class="card-content">
@@ -293,10 +294,10 @@
         </div>
       </div>
 
-      <!-- 探索更多按钮 -->
+      <!-- 加载更多按钮 -->
       <div class="explore-more-container">
-        <button @click="exploreMore" class="explore-more-btn">
-          <span>探索更多</span>
+        <button @click="goToFilterPage" class="explore-more-btn">
+          <span>加载更多</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M5 12h14"></path>
             <path d="m12 5 7 7-7 7"></path>
@@ -696,23 +697,25 @@
       </div>
       <div class="copyright">
         <p>© 2025 智学通 版权所有</p>
+        <button @click="testApiCall" class="test-api-btn">测试API</button>
       </div>
     </footer>
       </div>
     </template>
     
     <script>
-    import axios from 'src/utils/http' // 你的http封装
+    import axios from '@/utils/http' // 使用封装好的http模块
+    import studentCourseListService from '@/utils/studentCourseListService'
+    import testApi from '@/utils/testApi'
+    
     export default {
       name: 'CourseList',
-  // computed: {
-  //   // 只显示7门课程
-  //   displayedCourses() {
-  //     const result = this.courses.slice(0, 7);
-  //     console.log("显示的课程数量:", result.length, "课程数据:", result);
-  //     return result;
-  //   }
-  // },
+      computed: {
+        // 只显示7门课程
+        displayedCourses() {
+          return this.courses.slice(0, 7);
+        }
+      },
       data() {
         return {
           courses: [],
@@ -787,6 +790,12 @@
         
         // 初始化教师卡片3D效果
         this.initTeacherCards();
+        
+        // 测试API调用
+        console.log("开始测试API调用...");
+        testApi.testGetAllCourses().then(courses => {
+          console.log("测试API调用结果:", courses ? `成功获取${courses.length}门课程` : "获取失败");
+        });
       },
       beforeUnmount() {
         this.stopCarousel(); // 清理定时器
@@ -831,338 +840,62 @@
       this.fetchCourses();
     },
     
+    // 跳转到高级筛选页面
+    goToFilterPage() {
+      // 构建查询参数
+      const queryParams = {};
+      
+      if (this.sort && this.sort !== 'recommend') {
+        queryParams.sort = this.sort;
+      }
+      
+      if (this.level) {
+        queryParams.level = this.level;
+      }
+      
+      // 使用顶部导航栏选择的分类或下拉列表选择的分类
+      const category = this.currentCategory || this.subject;
+      if (category) {
+        queryParams.category = category;
+      }
+      
+      // 跳转到筛选页面，带上查询参数
+      this.$router.push({
+        name: 'CourseFilterPage',
+        query: queryParams
+      });
+    },
+    
         async fetchCourses() {
       console.log("当前分类:", this.currentCategory, "当前主题:", this.subject);
       try {
-        // 模拟数据，因为可能没有实际API
-        setTimeout(() => {
-          // 模拟从API获取的数据 - 确保每个分类都有足够的数据
-          this.allCourses = [
-            {
-              id: 1,
-              title: '高等数学基础',
-              coverUrl: 'https://via.placeholder.com/280x160?text=高等数学',
-              category: '学科主修',
-              level: '基础',
-              introMd: '本课程讲解高等数学基础知识。',
-              subscriberCount: 1250,
-              createdAt: '2025-05-15 10:30:00'
-            },
-            {
-              id: 2,
-              title: '大学英语精讲',
-              coverUrl: '/src/assets/images/course/course-bar/course-bar2-1.png',
-              category: '学科主修',
-              level: '目标',
-              introMd: '提升大学英语听说读写能力。',
-              subscriberCount: 3580,
-              createdAt: '2025-04-20 14:15:00'
-            },
-            {
-              id: 3,
-              title: '物理实验进阶',
-              coverUrl: 'https://via.placeholder.com/280x160?text=物理实验',
-              category: '职场技能',
-              level: '菁英',
-              introMd: '物理实验操作与分析。',
-              subscriberCount: 1890,
-              createdAt: '2025-06-05 09:45:00'
-            },
-            {
-              id: 4,
-              title: '有机化学入门',
-              coverUrl: 'https://via.placeholder.com/280x160?text=有机化学',
-              category: '职场技能',
-              level: '基础',
-              introMd: '有机化学基础知识与实验。',
-              subscriberCount: 950,
-              createdAt: '2025-03-12 16:20:00'
-            },
-            {
-              id: 5,
-              title: '生物科学探索',
-              coverUrl: 'https://via.placeholder.com/280x160?text=生物科学',
-              category: '人文通识',
-              level: '目标',
-              introMd: '生物科学的前沿与应用。',
-              subscriberCount: 2150,
-              createdAt: '2025-05-28 11:30:00'
-            },
-            {
-              id: 6,
-              title: '中国近现代史',
-              coverUrl: 'https://via.placeholder.com/280x160?text=近现代史',
-              category: '人文通识',
-              level: '基础',
-              introMd: '中国近现代史重要事件梳理。',
-              subscriberCount: 1750,
-              createdAt: '2025-04-05 13:45:00'
-            },
-            {
-              id: 7,
-              title: '世界地理概览',
-              coverUrl: 'https://via.placeholder.com/280x160?text=世界地理',
-              category: '考研督学',
-              level: '目标',
-              introMd: '世界地理知识全景解析。',
-              subscriberCount: 2670,
-              createdAt: '2025-06-10 08:20:00'
-            },
-            {
-              id: 8,
-              title: '政治理论精讲',
-              coverUrl: 'https://via.placeholder.com/280x160?text=政治理论',
-              category: '兴趣探索',
-              level: '菁英',
-              introMd: '政治理论与时事热点分析。',
-              subscriberCount: 4250,
-              createdAt: '2025-05-20 15:40:00'
-            },
-            {
-              id: 9,
-              title: '微积分详解',
-              coverUrl: 'https://via.placeholder.com/280x160?text=微积分',
-              category: '学科主修',
-              level: '菁英',
-              introMd: '深入讲解微积分基础原理与应用。',
-              subscriberCount: 5120,
-              createdAt: '2025-06-15 10:15:00'
-            },
-            {
-              id: 10,
-              title: 'Excel数据分析',
-              coverUrl: 'https://via.placeholder.com/280x160?text=Excel',
-              category: '职场技能',
-              level: '目标',
-              introMd: 'Excel数据处理与图表制作。',
-              subscriberCount: 6780,
-              createdAt: '2025-06-18 09:30:00'
-            },
-            {
-              id: 11,
-              title: '哲学思想入门',
-              coverUrl: 'https://via.placeholder.com/280x160?text=哲学',
-              category: '人文通识',
-              level: '基础',
-              introMd: '西方哲学经典理论入门。',
-              subscriberCount: 3450,
-              createdAt: '2025-05-05 14:25:00'
-            },
-            {
-              id: 12,
-              title: '考研数学大纲解析',
-              coverUrl: 'https://via.placeholder.com/280x160?text=考研数学',
-              category: '考研督学',
-              level: '基础',
-              introMd: '考研数学考点与解题方法。',
-              subscriberCount: 7890,
-              createdAt: '2025-06-20 11:10:00'
-            },
-            {
-              id: 13,
-              title: '摄影入门技巧',
-              coverUrl: 'https://via.placeholder.com/280x160?text=摄影',
-              category: '兴趣探索',
-              level: '基础',
-              introMd: '数码摄影基础与构图技巧。',
-              subscriberCount: 5670,
-              createdAt: '2025-06-12 16:50:00'
-            },
-            {
-              id: 14,
-              title: '线性代数精讲',
-              coverUrl: 'https://via.placeholder.com/280x160?text=线性代数',
-              category: '学科主修',
-              level: '目标',
-              introMd: '线性代数理论与应用详解。',
-              subscriberCount: 4250,
-              createdAt: '2025-05-22 10:30:00'
-            },
-            {
-              id: 15,
-              title: '数据结构与算法',
-              coverUrl: 'https://via.placeholder.com/280x160?text=数据结构',
-              category: '学科主修',
-              level: '菁英',
-              introMd: '计算机科学核心课程。',
-              subscriberCount: 8350,
-              createdAt: '2025-04-18 14:45:00'
-            },
-            // 额外添加课程 - 学科主修
-            {
-              id: 16,
-              title: '概率统计导论',
-              coverUrl: 'https://via.placeholder.com/280x160?text=概率统计',
-              category: '学科主修',
-              level: '基础',
-              introMd: '概率论与数理统计入门。',
-              subscriberCount: 2780,
-              createdAt: '2025-05-03 11:20:00'
-            },
-            {
-              id: 17,
-              title: '离散数学基础',
-              coverUrl: 'https://via.placeholder.com/280x160?text=离散数学',
-              category: '学科主修',
-              level: '目标',
-              introMd: '离散数学理论与应用。',
-              subscriberCount: 3120,
-              createdAt: '2025-05-10 09:45:00'
-            },
-            // 额外添加课程 - 职场技能
-            {
-              id: 18,
-              title: 'Python数据分析',
-              coverUrl: 'https://via.placeholder.com/280x160?text=Python',
-              category: '职场技能',
-              level: '菁英',
-              introMd: 'Python在数据分析中的应用。',
-              subscriberCount: 9240,
-              createdAt: '2025-06-12 15:30:00'
-            },
-            {
-              id: 19,
-              title: '商务英语写作',
-              coverUrl: 'https://via.placeholder.com/280x160?text=商务英语',
-              category: '职场技能',
-              level: '目标',
-              introMd: '商务邮件与报告写作技巧。',
-              subscriberCount: 5120,
-              createdAt: '2025-05-25 14:20:00'
-            },
-            {
-              id: 20,
-              title: '项目管理实战',
-              coverUrl: 'https://via.placeholder.com/280x160?text=项目管理',
-              category: '职场技能',
-              level: '菁英',
-              introMd: '项目规划、实施与控制。',
-              subscriberCount: 7430,
-              createdAt: '2025-04-30 10:15:00'
-            },
-            // 额外添加课程 - 人文通识
-            {
-              id: 21,
-              title: '中国古代文学',
-              coverUrl: 'https://via.placeholder.com/280x160?text=古代文学',
-              category: '人文通识',
-              level: '基础',
-              introMd: '诗词歌赋与古典小说。',
-              subscriberCount: 4870,
-              createdAt: '2025-05-18 16:40:00'
-            },
-            {
-              id: 22,
-              title: '西方艺术史',
-              coverUrl: 'https://via.placeholder.com/280x160?text=西方艺术',
-              category: '人文通识',
-              level: '目标',
-              introMd: '西方艺术流派与代表作品。',
-              subscriberCount: 3980,
-              createdAt: '2025-06-08 11:25:00'
-            },
-            {
-              id: 23,
-              title: '电影语言解析',
-              coverUrl: 'https://via.placeholder.com/280x160?text=电影',
-              category: '人文通识',
-              level: '菁英',
-              introMd: '电影叙事与视听语言分析。',
-              subscriberCount: 6250,
-              createdAt: '2025-06-15 17:10:00'
-            },
-            // 额外添加课程 - 考研督学
-            {
-              id: 24,
-              title: '考研政治精讲',
-              coverUrl: 'https://via.placeholder.com/280x160?text=考研政治',
-              category: '考研督学',
-              level: '目标',
-              introMd: '考研政治重点知识点与答题技巧。',
-              subscriberCount: 8920,
-              createdAt: '2025-05-22 10:40:00'
-            },
-            {
-              id: 25,
-              title: '考研英语词汇',
-              coverUrl: 'https://via.placeholder.com/280x160?text=考研英语',
-              category: '考研督学',
-              level: '基础',
-              introMd: '考研英语核心词汇与记忆方法。',
-              subscriberCount: 9340,
-              createdAt: '2025-04-28 09:15:00'
-            },
-            {
-              id: 26,
-              title: '专业课考前冲刺',
-              coverUrl: 'https://via.placeholder.com/280x160?text=专业课',
-              category: '考研督学',
-              level: '菁英',
-              introMd: '专业课重难点突破与模拟试题。',
-              subscriberCount: 7560,
-              createdAt: '2025-06-05 14:50:00'
-            },
-            // 额外添加课程 - 兴趣探索
-            {
-              id: 27,
-              title: '咖啡品鉴入门',
-              coverUrl: 'https://via.placeholder.com/280x160?text=咖啡',
-              category: '兴趣探索',
-              level: '基础',
-              introMd: '咖啡豆种类与冲泡技巧。',
-              subscriberCount: 6430,
-              createdAt: '2025-06-10 15:30:00'
-            },
-            {
-              id: 28,
-              title: '手机摄影技巧',
-              coverUrl: 'https://via.placeholder.com/280x160?text=手机摄影',
-              category: '兴趣探索',
-              level: '目标',
-              introMd: '用手机拍出专业级照片。',
-              subscriberCount: 8210,
-              createdAt: '2025-05-30 12:45:00'
-            },
-            {
-              id: 29,
-              title: '健身减脂计划',
-              coverUrl: 'https://via.placeholder.com/280x160?text=健身',
-              category: '兴趣探索',
-              level: '菁英',
-              introMd: '科学健身与饮食控制方案。',
-              subscriberCount: 9580,
-              createdAt: '2025-06-18 08:20:00'
-            }
-          ];
-          
-          // 应用筛选条件
-          let filteredCourses = [...this.allCourses];
-          
-          // 分类筛选（从顶部分类导航或下拉菜单选择）
-          let categoryFilter = this.currentCategory || this.subject;
-          if (categoryFilter) {
-            filteredCourses = filteredCourses.filter(c => c.category === categoryFilter);
-          }
-          
-          // 级别筛选
-          if (this.level) {
-            filteredCourses = filteredCourses.filter(c => c.level === this.level);
-          }
-          
-          // 排序处理
-          if (this.sort === 'new') {
-            // 按创建时间排序（最新的在前）
-            filteredCourses.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-          } else if (this.sort === 'hot') {
-            // 按订阅人数排序（从高到低）
-            filteredCourses.sort((a, b) => b.subscriberCount - a.subscriberCount);
-          }
-          
-          // 所有满足条件的课程
-          this.courses = filteredCourses;
-        }, 500);
+        // 构建筛选条件
+        const filters = {
+          category: this.currentCategory || this.subject || '',
+          level: this.level || '',
+          sortType: this.sort || 'recommend'
+        };
+        
+        console.log("应用筛选条件:", filters);
+        
+        // 使用服务进行筛选
+        const courses = await studentCourseListService.filterCourses(filters);
+        
+        console.log("获取到原始课程数据:", courses);
+        
+        if (courses && Array.isArray(courses) && courses.length > 0) {
+          this.allCourses = courses;
+          this.courses = courses;
+          console.log("设置课程数据成功，共", this.courses.length, "门课程");
+        } else {
+          console.warn('未获取到课程数据或数据为空');
+          this.allCourses = [];
+          this.courses = [];
+        }
       } catch (err) {
         console.error('获取课程列表失败:', err);
+        this.allCourses = [];
+        this.courses = [];
       }
     },
     
@@ -1332,7 +1065,44 @@
               }, 1500);
             }, 800);
           }
-        }
+        },
+        
+        // 测试API调用
+        async testApiCall() {
+          console.log("手动测试API调用...");
+          try {
+            // 直接使用axios测试
+            const response = await axios.get('/api/students/course/all');
+            console.log("直接API调用响应:", response);
+            
+            if (response.data && response.data.code === 200) {
+              console.log("API调用成功，数据:", response.data.data);
+              if (response.data.data && response.data.data.length > 0) {
+                // 尝试使用获取到的数据
+                this.courses = response.data.data;
+                this.allCourses = response.data.data;
+                console.log("成功设置课程数据");
+              }
+            }
+          } catch (error) {
+            console.error("API调用失败:", error);
+          }
+        },
+        
+        // 退出登录
+        logout() {
+          // 清除本地存储的用户信息
+          localStorage.removeItem('userToken');
+          localStorage.removeItem('userInfo');
+          sessionStorage.removeItem('userToken');
+          sessionStorage.removeItem('userInfo');
+          
+          // 显示退出成功提示
+          alert('已成功退出登录');
+          
+          // 跳转到登录页面或首页
+          this.$router.push('/login');
+        },
       }
     }
     </script>
@@ -1428,6 +1198,22 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.btn-logout {
+  background: #ff4757;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-left: 10px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-logout:hover {
+  background: #ff3838;
 }
 
 /* 轮播Banner区 */
@@ -2643,6 +2429,21 @@
   text-align: center;
   font-size: 13px;
   color: #888;
+}
+
+.test-api-btn {
+  margin-top: 10px;
+  background-color: #F98C53;
+  color: white;
+  border: none;
+  padding: 5px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.test-api-btn:hover {
+  background-color: #e67641;
 }
 
 /* 响应式调整 */

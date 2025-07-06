@@ -24,7 +24,14 @@
             <option value="2024-03">2024年3月</option>
           </select>
         </div>
-        <button class="btn export">导出</button>
+        <div class="dropdown">
+          <button class="btn export">{{ selectedIds.length > 0 ? '批量导出' : '导出全部' }}</button>
+          <div class="dropdown-content">
+            <a @click="handleExportXlsx">导出为 xlsx</a>
+            <a @click="handleExportCsv">导出为 csv</a>
+          </div>
+        </div>
+        <button class="btn import" @click="handleBatchImport">批量导入</button>
       </div>
     </div>
     
@@ -34,35 +41,69 @@
         <thead>
           <tr>
             <th>课程名称</th>
+            <th>课程编号</th>
+            <th>类型</th>
             <th>讲师</th>
-            <th>笔记</th>
+            <th>订阅数</th>
             <th>价格</th>
-            <th>获训</th>
-            <th>总时间</th>
             <th>状态</th>
+            <th style="width: 60px;">批量导出</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(item, idx) in courseList" :key="idx">
+          <tr v-for="(item, idx) in courseList" :key="idx" @click="goToDetail(item)" style="cursor: pointer;" class="hover-row">
             <td>
-              <img class="cover" :src="item.cover" />
+              <img class="cover" :src="item.coverUrl || 'https://randomuser.me/api/portraits/men/60.jpg'" />
               <div class="info">
-                <div class="name">{{ item.name }}</div>
-                <div class="id">#{{ item.id }}</div>
+                <div class="name">{{ item.title }}</div>
               </div>
             </td>
-            <td>{{ item.teacher }}</td>
-            <td>{{ item.note }}</td>
-            <td>{{ item.price }}</td>
-            <td>{{ item.train }}</td>
-            <td>{{ item.duration }}</td>
+            <td>{{ item.courseId }}</td>
+            <td>{{ item.level }}</td>
+            <td>{{ item.teacherName }}</td>
+            <td>{{ item.subscriberCount || 0 }}</td>
+            <td>￥{{ item.price || 0 }}</td>
             <td>
-              <span :class="['status', item.statusClass]">{{ item.statusText }}</span>
+              <span :class="['status', getStatusClass(item.status)]">{{ getStatusText(item.status) }}</span>
+            </td>
+            <td @click.stop>
+              <label class="checkbox-wrapper">
+                <input
+                  type="checkbox"
+                  v-model="selectedIds"
+                  :value="item.id"
+                  class="custom-checkbox"
+                />
+                <span class="checkmark"></span>
+              </label>
             </td>
           </tr>
         </tbody>
       </table>
-      <div class="table-footer">显示 {{ courseList.length }} 个结果</div>
+      
+      <!-- 分页组件 -->
+      <div class="pagination-wrapper">
+        <div class="pagination-info">
+          显示 {{ (currentPage - 1) * pageSize + 1 }}-{{ Math.min(currentPage * pageSize, total) }} 条，共 {{ total }} 条
+        </div>
+        <div class="pagination">
+          <button 
+            :disabled="currentPage === 1" 
+            @click="changePage(currentPage - 1)"
+            class="page-btn prev"
+          >
+            上一页
+          </button>
+          <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
+          <button 
+            :disabled="currentPage === totalPages" 
+            @click="changePage(currentPage + 1)"
+            class="page-btn next"
+          >
+            下一页
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- 课程排名表格 -->
@@ -72,45 +113,87 @@
           <tr>
             <th>排名</th>
             <th>课程名称</th>
+            <th>课程编号</th>
             <th>讲师</th>
-            <th>订阅数量</th>
+            <th>订阅数</th>
             <th>价格</th>
-            <th>节数</th>
-            <th>总时间</th>
             <th>状态</th>
+            <th style="width: 60px;">批量导出</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(course, idx) in hotCourses" :key="course.id">
+          <tr v-for="(course, idx) in rankingList" :key="course.courseId" @click="goToDetail(course)" style="cursor: pointer;" class="hover-row">
             <td>
-              <img v-if="idx < 5" :src="topImages[idx]" alt="top icon" class="rank-img" />
-              <span v-else class="rank-num">{{ idx+1 }}</span>
+              <img v-if="idx < 5 && rankingCurrentPage === 1" :src="topImages[idx]" alt="top icon" class="rank-img" />
+              <span v-else class="rank-num">{{ idx + 1 + (rankingCurrentPage - 1) * rankingPageSize }}</span>
             </td>
             <td>
-              <img :src="course.img" class="cover" />
+              <img :src="course.coverUrl" class="cover" />
               <div class="info">
                 <div class="name">{{ course.title }}</div>
-                <div class="id">#{{ course.id }}</div>
               </div>
             </td>
-            <td>{{ course.teacher }}</td>
-            <td>{{ course.count }}</td>
-            <td>{{ course.price }}</td>
-            <td>{{ course.lessons }}</td>
-            <td>{{ course.duration }}</td>
+            <td>{{ course.courseId }}</td>
+            <td>{{ course.teacherName }}</td>
+            <td>{{ course.subscriberCount }}</td>
+            <td>￥{{ course.price }}</td>
             <td>
-              <span :class="['status', course.statusClass]">{{ course.statusText }}</span>
+              <span :class="['status', getStatusClass(course.status)]">{{ getStatusText(course.status) }}</span>
+            </td>
+            <td @click.stop>
+              <label class="checkbox-wrapper">
+                <input
+                  type="checkbox"
+                  v-model="selectedIds"
+                  :value="course.id"
+                  class="custom-checkbox"
+                />
+                <span class="checkmark"></span>
+              </label>
             </td>
           </tr>
         </tbody>
       </table>
-      <div class="table-footer">显示 {{ hotCourses.length }} 个结果</div>
+      
+      <div class="pagination-wrapper" v-if="activeTab === 'ranking'">
+        <div class="pagination-info">
+          显示 {{ (rankingCurrentPage - 1) * rankingPageSize + 1 }}-{{ Math.min(rankingCurrentPage * rankingPageSize, rankingTotal) }} 条，共 {{ rankingTotal }} 条
+        </div>
+        <div class="pagination">
+          <button 
+            :disabled="rankingCurrentPage === 1" 
+            @click="changeRankingPage(rankingCurrentPage - 1)"
+            class="page-btn prev"
+          >
+            上一页
+          </button>
+          <span class="page-info">{{ rankingCurrentPage }} / {{ rankingTotalPages }}</span>
+          <button 
+            :disabled="rankingCurrentPage === rankingTotalPages" 
+            @click="changeRankingPage(rankingCurrentPage + 1)"
+            class="page-btn next"
+          >
+            下一页
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import http from '@/utils/http.js'
+import { useRouter } from 'vue-router'
+import * as XLSX from 'xlsx'
+import { saveAs } from 'file-saver'
+const router = useRouter()
+const route = useRoute()
+
+
+const goToDetail = (course) => {
+  router.push(`/admin/courseDetail/${course.id}`)
+}
 
 const activeTab = ref('all')
 const selectedMonth = ref('2024-06')
@@ -123,125 +206,281 @@ import top5 from '@/assets/images/top5.png'
 
 const topImages = [top1, top2, top3, top4, top5]
 
-const courseList = ref([
-  { name: '机器学习算法', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/60.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 24, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-  { name: '均衡饮食食谱', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/61.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-  { name: '减步技术', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/62.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已下架', statusClass: 'danger' },
-  { name: '用户界面设计', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/63.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '即将发布', statusClass: 'warning' },
-  { name: '网页设计与开发', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/64.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-  { name: '心理学入门与心灵', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/65.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-  { name: '利用数据进行决策', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/66.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-  { name: '从零开始构建网站', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/67.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-  { name: '数字营销基础知识', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/68.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-  { name: 'Python编程', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/69.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-  { name: '均衡饮食食谱', id: '4204152', cover: 'https://randomuser.me/api/portraits/men/70.jpg', teacher: '姓名示例', note: 562, price: '400元', train: 32, duration: '248小时', statusText: '已发布', statusClass: 'success' },
-])
 
-const hotCourses = ref([
-  {
-    id: '54204152',
-    // img: require('@/assets/images/1.jpg'),
-    title: '机器学习算法',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 24,
-    duration: '248小时',
-    statusText: '已发布',
-    statusClass: 'published'
-  },
-  {
-    id: '54204153',
-    // img: require('@/assets/images/2.jpg'),
-    title: '均衡饮食食谱',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '已发布',
-    statusClass: 'published'
-  },
-  {
-    id: '54204154',
-    // img: require('@/assets/images/3.jpg'),
-    title: '减少技术',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '已下架',
-    statusClass: 'offline'
-  },
-  {
-    id: '54204155',
-    // img: require('@/assets/images/4.jpg'),
-    title: '用户界面设计',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '即将发布',
-    statusClass: 'pending'
-  },
-  {
-    id: '54204156',
-    // img: require('@/assets/images/5.jpg'),
-    title: '网页设计与开发',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '已发布',
-    statusClass: 'published'
-  },
-  {
-    id: '54204157',
-    // img: require('@/assets/images/6.jpg'),
-    title: '心理学入门与心灵',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '已发布',
-    statusClass: 'published'
-  },
-  {
-    id: '54204158',
-    // img: require('@/assets/images/7.jpg'),
-    title: '利用数据进行决策',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '已发布',
-    statusClass: 'published'
-  },
-  {
-    id: '54204159',
-    // img: require('@/assets/images/8.jpg'),
-    title: '从零开始构建网站',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '已发布',
-    statusClass: 'published'
+// 分页相关数据
+const courseList = ref([])
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const totalPages = ref(0)
+
+// 获取课程列表
+const fetchCourseList = async (page = 1) => {
+  try {
+    const response = await http.get(`/admin/courses?page=${page}&size=${pageSize.value}`)
+    // console.log("课程", response)
+    if (response.data.status === 200) {
+      const data = response.data.data
+      courseList.value = data.records
+      total.value = data.total
+      totalPages.value = data.pages
+      currentPage.value = data.current
+    }
+  } catch (error) {
+    console.error('获取课程列表失败:', error)
   }
-])
+}
+
+// 切换页码
+const changePage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    fetchCourseList(page)
+  }
+}
+
+// 获取状态样式类
+const getStatusClass = (status) => {
+  switch (status) {
+    case 1: return 'success'
+    case 2: return 'danger'
+    case 3: return 'warning'
+    case 4: return 'danger'
+    default: return 'warning'
+  }
+}
+
+// 获取状态文本
+const getStatusText = (status) => {
+  switch (status) {
+    case 0: return '草稿'
+    case 1: return '已发布'
+    case 2: return '已下架'
+    case 3: return '审核中'
+    case 4: return '拒绝'
+    default: return '未知'
+  }
+}
+
+const rankingList = ref([])
+const rankingCurrentPage = ref(1)
+const rankingPageSize = ref(10)
+const rankingTotal = ref(0)
+const rankingTotalPages = ref(0)
+
+const fetchRankingList = async (page = 1) => {
+  const response = await http.get(`/admin/courses/ranking?page=${page}&size=${rankingPageSize.value}`)
+  if (response.data.status === 200) {
+    const data = response.data.data
+    rankingList.value = data.records
+    rankingTotal.value = data.total
+    rankingTotalPages.value = Math.ceil(data.total / rankingPageSize.value)
+    rankingCurrentPage.value = data.current
+  }
+}
+
+const changeRankingPage = (page) => {
+  if (page >= 1 && page <= rankingTotalPages.value) {
+    fetchRankingList(page)
+  }
+}
 
 const switchTab = (tab) => {
   activeTab.value = tab
+  if (tab === 'ranking') {
+    fetchRankingList(1)
+  } else if (tab === 'all') {
+    fetchCourseList(1)
+  }
 }
+
+const selectedIds = ref([])
+
+function handleExport(type = 'xlsx') {
+  // 如果是全部导出，需要获取所有数据
+  if (selectedIds.value.length === 0) {
+    handleExportAll(type)
+    return
+  }
+  
+  // 批量导出：需要获取所有选中的课程数据
+  handleExportSelected(type)
+}
+
+async function handleExportAll(type = 'xlsx') {
+  try {
+    // 获取所有课程数据（不分页）
+    const response = await http.get('/admin/courses', {
+      params: {
+        page: 1,
+        size: 10000 // 设置一个很大的数字来获取所有数据
+      }
+    })
+    
+    if (response.data.status === 200) {
+      const allCourses = response.data.data.records
+      const data = allCourses.map(item => ({
+        课程名称: item.title,
+        课程编号: item.courseId,
+        类型: item.level,
+        讲师: item.teacherName,
+        订阅数: item.subscriberCount || 0,
+        价格: item.price || 0,
+        状态: getStatusText(item.status)
+      }))
+      
+      exportToFile(data, type, '课程')
+    }
+  } catch (error) {
+    console.error('导出失败:', error)
+  }
+}
+
+async function handleExportSelected(type = 'xlsx') {
+  try {
+    // 获取所有课程数据，然后过滤选中的
+    const response = await http.get('/admin/courses', {
+      params: {
+        page: 1,
+        size: 10000
+      }
+    })
+    
+    if (response.data.status === 200) {
+      const allCourses = response.data.data.records
+      const selectedCourses = allCourses.filter(item => selectedIds.value.includes(item.id))
+      
+      const data = selectedCourses.map(item => ({
+        课程名称: item.title,
+        课程编号: item.courseId,
+        类型: item.level,
+        讲师: item.teacherName,
+        订阅数: item.subscriberCount || 0,
+        价格: item.price || 0,
+        状态: getStatusText(item.status)
+      }))
+      
+      exportToFile(data, type, '课程')
+    }
+  } catch (error) {
+    console.error('导出失败:', error)
+  }
+}
+
+function exportToFile(data, type, sheetName) {
+  if (data.length === 0) return
+  
+  const ws = XLSX.utils.json_to_sheet(data)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, sheetName)
+  const fileType = type === 'csv' ? 'csv' : 'xlsx'
+  const fileName = `${sheetName}导出_${new Date().toISOString().slice(0,10)}.${fileType}`
+  
+  if (type === 'csv') {
+    const csv = XLSX.utils.sheet_to_csv(ws)
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    saveAs(blob, fileName)
+  } else {
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+    saveAs(new Blob([wbout], { type: 'application/octet-stream' }), fileName)
+  }
+}
+
+function handleExportXlsx() { handleExport('xlsx') }
+function handleExportCsv() { handleExport('csv') }
+
+function handleBatchImport() {
+  // 批量导入逻辑
+}
+
+function toggleSelect(id) {
+  const idx = selectedIds.value.indexOf(id)
+  if (idx === -1) {
+    selectedIds.value.push(id)
+  } else {
+    selectedIds.value.splice(idx, 1)
+  }
+}
+
+// 页面加载时获取数据
+onMounted(() => {
+  if (route.query.tab === 'ranking') {
+    activeTab.value = 'ranking'
+    fetchRankingList(1)
+  } else {
+    activeTab.value = 'all'
+    fetchCourseList(1)
+  }
+  
+  fetchCourseList()
+})
 </script>
 
 <style scoped>
+.checkbox-wrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.custom-checkbox {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 3px;
+  left: 7px;
+  height: 30px;
+  width: 30px;
+  background-color: #fff;
+  border: 2px solid #ff8c00;
+  border-radius: 50%; /* 变成圆形 */
+  transition: all 0.2s ease;
+}
+
+.checkbox-wrapper input:checked ~ .checkmark {
+  background-color: #409EFF;
+  border-color: #409EFF;
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox-wrapper input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.checkmark:after {
+  left: 5px;
+  top: 1px;
+  width: 4px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.hover-row td {
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
+  background-color: #f9fafb;  /* 默认背景 */
+}
+
+/* 鼠标悬停整行时改变所有单元格样式 */
+.course-table tr.hover-row:hover td {
+  background-color: #9ac9ff !important;       /* 背景加深 */
+  outline: 2px solid #409eff; /* 不占用布局空间 */      /* 蓝色边框 */
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3); /* 淡淡阴影 */
+}
+
+
+
 .course-page {
   background: var(--main-light);
   min-height: 100vh;
@@ -253,7 +492,7 @@ const switchTab = (tab) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  /* margin-bottom: 10px; */
 }
 
 .course-tabs {
@@ -271,7 +510,7 @@ const switchTab = (tab) => {
   font-weight: 500;
   color: #666;
   transition: all 0.3s ease;
-  font-size: 1rem;
+  font-size: 1.2em;
 }
 
 .tab.active {
@@ -305,7 +544,9 @@ const switchTab = (tab) => {
   background: #fff;
   outline: none;
   cursor: pointer;
-  margin-right: 8px;
+  margin-right: 2px;
+    font-size: 1.2em;
+    margin-top: 5px;
 }
 
 .month-select:focus {
@@ -313,7 +554,7 @@ const switchTab = (tab) => {
 }
 
 .course-actions .btn {
-  background: var(--main-blue);
+  background: var(--main-orange);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -322,6 +563,9 @@ const switchTab = (tab) => {
   font-size: 1em;
   cursor: pointer;
   transition: background 0.2s;
+  margin-top: 30px;
+  margin-bottom: 25px;
+  width: 200px;
 }
 
 
@@ -329,13 +573,16 @@ const switchTab = (tab) => {
   background: #fff;
   border-radius: 18px;
   box-shadow: 0 2px 12px #e0e0e0;
-  padding: 24px 18px;
+  padding: 10px 18px;
+  font-size: 1em;
+  margin-top: -10px;
 }
 
 .course-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0 10px;
+  font-size: 1.2em;
 }
 
 .course-table th {
@@ -343,11 +590,12 @@ const switchTab = (tab) => {
   font-weight: 500;
   text-align: left;
   padding-bottom: 8px;
+  font-size: 1.2em;
 }
 
 .course-table td {
   background: var(--main-light);
-  border-radius: 10px;
+  border-radius: 40px;
   padding: 10px 8px;
   vertical-align: middle;
 }
@@ -447,5 +695,87 @@ const switchTab = (tab) => {
   color: #888;
   font-size: 0.95em;
   margin-top: 16px;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.pagination-info {
+  color: #666;
+  font-size: 1em;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-btn {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1em;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--main-orange);
+  color: #fff;
+  border-color: var(--main-orange);
+}
+
+.page-btn:disabled {
+  background: #f5f5f5;
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.page-info {
+  color: #666;
+  font-size: 14px;
+  min-width: 60px;
+  text-align: center;
+  font-size: 1.1em;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background: #fff;
+  min-width: 120px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 99;
+  border-radius: 8px;
+  margin-top: 4px;
+  left: 14px;
+  top: 80px;
+}
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+.dropdown-content a {
+  color: #333;
+  padding: 10px 16px;
+  text-decoration: none;
+  display: block;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.dropdown-content a:hover {
+  background: var(--main-orange);
+  color: #fff;
 }
 </style>

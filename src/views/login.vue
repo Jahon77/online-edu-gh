@@ -697,6 +697,7 @@ form.sign-up-form{
 </style>
 <script>
 import axios from 'axios';
+import { setCookie } from '../utils/authUtils';
 
 export default {
   name: "Login",
@@ -815,6 +816,7 @@ export default {
           this.setCookie('username', loginResp.username, 1);
           this.setCookie('userid', loginResp.userId, 1);
           this.setCookie('name', loginResp.name, 1);
+          this.setCookie('role', loginResp.role, 1);
 
           // 检查是否有重定向路径
           const redirectPath = localStorage.getItem('redirectPath');
@@ -823,10 +825,17 @@ export default {
             await this.$router.push(redirectPath);
           } else {
             // 根据角色跳转
-            if (loginResp.role === 3) { // 管理员
+            // if (loginResp.role === 3) { // 管理员
+            //   await this.$router.push('/admin/home');
+            // } else { // 学生或教师
+            //   await this.$router.push('/index');
+            // }
+            if (loginResp.role === 3) {
               await this.$router.push('/admin/home');
-            } else { // 学生或教师
-              await this.$router.push('/index');
+            }else if(loginResp.role === 2){
+              await this.$router.push('/teacher/profile');
+            }else{
+              await this.$router.push('/courses');
             }
           }
         } else {
@@ -883,6 +892,13 @@ export default {
     },
     async handleSubmit() {
       if (this.loginMode !== 'password') return;
+      
+      // 验证输入
+      if (!this.username || !this.password || !this.captchaCode) {
+        this.loginStatusMessage = '请填写完整的登录信息';
+        return;
+      }
+
       try {
         const loginData = {
           username: this.username,
@@ -891,7 +907,8 @@ export default {
           captchaKey: this.captchaKey
         };
         
-        this.loginStatusMessage = '';
+        // 清空之前的状态消息
+        this.loginStatusMessage = '正在登录中...';
         
         const response = await axios.post('http://localhost:8080/login', loginData, {
           headers: {
@@ -905,10 +922,24 @@ export default {
           const loginResp = response.data.data;
           this.loginStatusMessage = '您已成功登录，正在跳转...';
           
+          // 设置 cookie
           this.setCookie('satoken', loginResp.saTokenInfo.tokenValue, 1);
           this.setCookie('username', loginResp.username, 1);
           this.setCookie('userid', loginResp.userId, 1);
           this.setCookie('name', loginResp.name, 1);
+          this.setCookie('role', loginResp.role, 1);
+          
+            // 存入 localStorage
+          localStorage.setItem('user', JSON.stringify({
+            token: loginResp.saTokenInfo.tokenValue,
+            username: loginResp.username,
+            userId: loginResp.userId,
+            name: loginResp.name,
+            role: loginResp.role
+          }));
+          
+          // 延迟3秒后跳转
+          await new Promise(resolve => setTimeout(resolve, 3000));
           
           // 检查是否有重定向路径
           const redirectPath = localStorage.getItem('redirectPath');
@@ -917,10 +948,17 @@ export default {
             await this.$router.push(redirectPath);
           } else {
             // 根据角色跳转
-            if (loginResp.role === 3) { // 管理员
+            // if (loginResp.role === 3) { // 管理员
+            //   await this.$router.push('/admin/home');
+            // } else { // 学生或教师
+            //   await this.$router.push('/index');
+            // }
+            if (loginResp.role === 3) {
               await this.$router.push('/admin/home');
-            } else { // 学生或教师
-              await this.$router.push('/index');
+            }else if(loginResp.role === 2){
+              await this.$router.push('/teacher/profile');
+            }else{
+              await this.$router.push('/courses');
             }
           }
         } else {
@@ -1116,10 +1154,7 @@ export default {
       this.showAuthModal = false;
     },
     setCookie(name, value, days) {
-      const date = new Date();
-      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-      const expires = "expires=" + date.toUTCString();
-      document.cookie = name + "=" + value + ";" + expires + ";path=/";
+      setCookie(name, value, days);
       console.log(`Cookie已设置: ${name}=${value}`);
     },
     refreshCaptcha() {
@@ -1239,6 +1274,7 @@ export default {
           this.setCookie('username', loginResp.userInfo.username, 1);
           this.setCookie('userid', loginResp.userInfo.userId, 1);
           this.setCookie('name', loginResp.userInfo.name, 1);
+          this.setCookie('role', loginResp.userInfo.role, 1);
           this.loginStatusMessage = '人脸登录成功！欢迎回来, ' + loginResp.userInfo.name;
           this.closeCamera();
           
@@ -1249,10 +1285,17 @@ export default {
             await this.$router.push(redirectPath);
           } else {
             // 根据角色跳转
-            if (loginResp.userInfo.role === 3) { // 管理员
+            // if (loginResp.userInfo.role === 3) { // 管理员
+            //   await this.$router.push('/admin/home');
+            // } else { // 学生或教师
+            //   await this.$router.push('/index');
+            // }
+            if (loginResp.userInfo.role === 3) {
               await this.$router.push('/admin/home');
-            } else { // 学生或教师
-              await this.$router.push('/index');
+            }else if(loginResp.userInfo.role === 2){
+              await this.$router.push('/teacher/profile');
+            }else{
+              await this.$router.push('/courses');
             }
           }
         } else {
@@ -1272,10 +1315,7 @@ export default {
       }
     },
     setCookieForLogin(name, value, days) {
-      const d = new Date();
-      d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-      const expires = "expires="+d.toUTCString();
-      document.cookie = name + "=" + value + ";" + expires + ";path=/";
+      setCookie(name, value, days);
       console.log(`Cookie已设置: ${name}=${value}`);
     },
   },

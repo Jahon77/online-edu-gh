@@ -1,4 +1,6 @@
 <template>
+    <TeacherHeader v-if="userRole === 2" />
+    <SiteHeader v-else />
     <div class="chat-page">
       <div class="chat-container">
         <div class="chat-header">
@@ -69,6 +71,7 @@
   export default {
     name: 'AiChat',
     setup() {
+      const userRole = ref(1);
       const inputMessage = ref('');
       const error = ref('');
       const chatBody = ref(null);
@@ -250,6 +253,10 @@
       };
       
       onMounted(() => {
+        const role = getCookie('role');
+        if (role) {
+            userRole.value = parseInt(role);
+        }
         // 组件挂载后滚动到底部
         scrollToBottom();
       });
@@ -260,6 +267,7 @@
       }, { deep: true });
   
       return {
+        userRole,
         inputMessage,
         error,
         messages,

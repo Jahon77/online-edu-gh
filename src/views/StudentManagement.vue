@@ -47,9 +47,9 @@
                 </div>
                 <div class="student-details">
                   <div style="display: flex; justify-content: flex-start; gap: 3rem; align-items: center;">
-  <h4 style="margin: 0;">{{ student.name }}</h4>
-  <p style="margin: 0; color: #6b7280; font-size: 0.95rem;">{{ student.phone }}</p>
-</div>
+                  <h4 style="margin: 0;">{{ student.name }}</h4>
+                  <p style="margin: 0; color: #6b7280; font-size: 0.95rem;">{{ student.phone }}</p>
+                </div>
 
                   <p>订阅时间：{{ formatDate(student.subscribeTime) }}</p>
                 </div>
@@ -59,13 +59,13 @@
                 <div class="progress-item">
                   <span>总进度：</span>
                   <div class="progress-bar">
-                    <div class="progress-fill" :style="{ width: student.totalProgress + '%' }"></div>
+                    <div class="progress-fill" :style="{ width: (student.totalProgress || 0) + '%' }"></div>
                   </div>
-                  <span>{{ student.totalProgress }}%</span>
+                  <span>{{ student.totalProgress || 0 }}%</span>
                 </div>
                 <div class="progress-item">
                   <span>已完成课时：</span>
-                  <span>{{ student.completedLessons }}/{{ student.totalLessons }}</span>
+                  <span>{{ student.completedLessons || 0 }}/{{ student.totalLessons || 0 }}</span>
                 </div>
                 <div class="toggle-detail" @click="toggleDetails(student.id)">
                   <span>{{ expandedIds.includes(student.id) ? '收起课时详情' : '展开课时详情' }}</span>
@@ -81,17 +81,17 @@
                   <div class="chapter-header">
                     <strong>{{ chapterTitle }}</strong>
                     <span class="chapter-progress">
-                      {{ Math.floor(lessons.reduce((acc, l) => acc + l.progress, 0) / lessons.length) }}%
+                      {{ lessons.length > 0 ? Math.floor(lessons.reduce((acc, l) => acc + (l.progress || 0), 0) / lessons.length) : 0 }}%
                     </span>
                   </div>
                   <div class="lesson-row" v-for="lesson in lessons" :key="lesson.lessonId">
-                    <div class="lesson-name">{{ lesson.lessonTitle }}</div>
+                    <div class="lesson-name">{{ lesson.lessonTitle || '未知课时' }}</div>
                     <div class="lesson-duration">{{ lesson.duration || '--:--' }}</div>
                     <div class="lesson-progress-bar">
-                      <div class="fill" :style="{ width: lesson.progress + '%' }"></div>
+                      <div class="fill" :style="{ width: (lesson.progress || 0) + '%' }"></div>
                     </div>
                     <div class="lesson-status">
-                      <span v-if="lesson.progress === 0" class="status not-started">未开始</span>
+                      <span v-if="!lesson.progress || lesson.progress === 0" class="status not-started">未开始</span>
                       <span v-else-if="lesson.progress >= 100" class="status completed">已完成</span>
                       <span v-else class="status learning">学习中</span>
                     </div>
@@ -140,8 +140,19 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 
+function getCurrentUserId() {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; userid=`);
+  if (parts.length === 2) {
+    const userId = parts.pop().split(";").shift();
+    return userId ? parseInt(userId) : null;
+  }
+  return null;
+}
+
+const teacherId = getCurrentUserId()
 const router = useRouter()
-const teacherId = 3
+//const teacherId = 3
 const selectedCourseId = ref('')
 const teacherCourses = ref([])
 const students = ref([])
@@ -169,7 +180,10 @@ const loadStudents = async () => {
     const res = await axios.get(`http://localhost:8080/api/teacher/course/${selectedCourseId.value}/students`, {
       params: { teacherId }
     })
-    students.value = res.data || []
+    students.value = (res.data || []).map(student => ({
+      ...student,
+      totalLessons: student.lessonProgressDetails ? student.lessonProgressDetails.length : 0
+    }))
     expandedIds.value = []
   } catch (e) {
     console.error('加载学生失败:', e)

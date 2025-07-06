@@ -14,7 +14,7 @@
     <div class="main-content">
       <div class="main-content-school1">
         <h1>华迪智学通</h1>
-        <P>让我们观看一个视频，了解为什么您应该使用我们的 Hwadee-SLP 产品。</P>
+        <p>让我们观看一个视频，了解为什么您应该使用我们的 Hwadee-SLP 产品。</p>
         <div class="video-class">
           <video controls autoplay loop width="1280" height="720">
             <source src="../assets/video/vi.mp4" type="video/mp4">
@@ -26,14 +26,14 @@
       <div class="main-content-schoolb">
         <div class="main-content-schoola">
           <h1>简介</h1>
-          <P>华迪智学通（Hwadee Families School
-            Communication，简写：Hwadee-SLP）是指利用无线通信技术和网络技术搭建的家校互通平台，为家校之间提供充分、准确、及时的沟通方式，为全面监控学生和学生成长提供有效的途径，该平台运行于移动终端，家长、学生、教师、领导都可以通过智能手机、平板电脑等媒介进行沟通和信息传递。</P>
+          <p>华迪智学通（Hwadee Families School
+            Communication，简写：Hwadee-SLP）是指利用无线通信技术和网络技术搭建的家校互通平台，为家校之间提供充分、准确、及时的沟通方式，为全面监控学生和学生成长提供有效的途径，该平台运行于移动终端，家长、学生、教师、领导都可以通过智能手机、平板电脑等媒介进行沟通和信息传递。</p>
         </div>
       </div>
 
       <div class="main-content-school2">
         <h1>选择我们</h1>
-        <P>为什么要选择我们呢？让我们来看看选择我们的理由！</P>
+        <p>为什么要选择我们呢？让我们来看看选择我们的理由！</p>
         <el-button class='button-choose' @click="buttonClick">{{ buttonText }}</el-button>
         <div class="main-content-school2-slice">
           <div class="main-content-school2-slice1">
@@ -65,7 +65,7 @@
       </div>
       <div class="main-content-school3">
         <h1>我们可以提供</h1>
-        <P>在中国大学MOOC的合作帮助下，我们的产品可以完全替代mooc等教学软件</P>
+        <p>在中国大学MOOC的合作帮助下，我们的产品可以完全替代mooc等教学软件</p>
         <div class="main-content-school3-content">
 
           <div class="boxes">
@@ -77,7 +77,7 @@
       </div>
       <div class="main-content-school4">
         <h1>产品用户</h1>
-        <P>谁可以使用我们的智学通产品呢？一共有三种身份</P>
+        <p>谁可以使用我们的智学通产品呢？一共有三种身份</p>
         <div class="main-content-school4-content">
           <div class="main-content-school4-content1">
             <div class="content-p">
@@ -146,12 +146,16 @@
 
     </div>
 
-    <div class="chat-test-button-container">
+    <!-- <div class="chat-test-button-container">
       <el-button type="primary" @click="goToChatTest" class="chat-test-button">
         聊天测试
       </el-button>
-    </div>
-
+    </div> -->
+    //////////////////////////////////////////////////////////////////////////////////////
+    <el-button type="success" @click="goToSurveyText" class="survey-text-button">
+        问卷填写
+      </el-button>
+      ////////////////////////////////////////////////////////////////////////////////
   </Layout>
 </template>
 
@@ -252,6 +256,9 @@ export default {
     },
     goToChatTest() {
       this.$router.push('/chat');
+    },
+    goToSurveyText() {
+      this.$router.push('/survey-text');
     }
   }
 }

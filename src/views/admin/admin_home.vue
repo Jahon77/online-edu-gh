@@ -75,7 +75,7 @@
               <option>2024-05</option>
               <option>2024-04</option>
             </select>
-            <button class="view-all-btn">查看全部</button>
+            <button class="view-all-btn" @click="goTo('/admin/course?tab=ranking')">查看全部</button>
           </div>
         </div>
         <table class="hot-courses-table">
@@ -92,26 +92,28 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(course, idx) in hotCourses" :key="course.id">
-              <td>
-                <img v-if="idx < 5" :src="topImages[idx]" alt="top icon" class="rank-img" />
-              </td>
-              <td>
-                <img :src="course.img" class="course-img" />
-                <div class="course-info">
-                  <div class="course-title">{{ course.title }}</div>
-                  <div class="course-id">#{{ course.id }}</div>
-                </div>
-              </td>
-              <td>{{ course.teacher }}</td>
-              <td>{{ course.count }}</td>
-              <td>{{ course.price }}</td>
-              <td>{{ course.lessons }}</td>
-              <td>{{ course.duration }}</td>
-              <td>
-                <span :class="['status', course.statusClass]">{{ course.statusText }}</span>
-              </td>
-            </tr>
+            <!-- template 热门课程区块部分 -->
+              <tr v-for="(course, idx) in hotCourses" :key="course.courseId">
+                <td>
+                  <img v-if="idx < 5" :src="topImages[idx]" alt="top icon" class="rank-img" />
+                  <span v-else>{{ idx + 1 }}</span>
+                </td>
+                <td>
+                  <img :src="course.coverUrl" class="course-img" />
+                  <div class="course-info">
+                    <div class="course-title">{{ course.title }}</div>
+                    <div class="course-id">#{{ course.courseId }}</div>
+                  </div>
+                </td>
+                <td>{{ course.teacherName }}</td>
+                <td>{{ course.subscriberCount }}</td>
+                <td>￥{{ course.price }}</td>
+                <td>-</td> <!-- 节数和总时间后端如未返回可先留空或补充 -->
+                <td>-</td>
+                <td>
+                  <span :class="['status', getStatusClass(course.status)]">{{ getStatusText(course.status) }}</span>
+                </td>
+              </tr>
           </tbody>
         </table>
       </div>
@@ -125,6 +127,7 @@ import ApexCharts from 'apexcharts'
 import VueApexCharts from 'vue3-apexcharts'
 import http from '@/utils/http.js'
 import { useUserStore } from '@/stores/user'
+import { useRouter } from 'vue-router'
 
 import top1 from '@/assets/images/top1.png'
 import top2 from '@/assets/images/top2.png'
@@ -133,6 +136,8 @@ import top4 from '@/assets/images/top4.png'
 import top5 from '@/assets/images/top5.png'
 
 const topImages = [top1, top2, top3, top4, top5]
+
+const router = useRouter() 
 
 const userStore = useUserStore()
 const apexchart = VueApexCharts
@@ -214,62 +219,41 @@ const registerYears = ref([])
 const allActiveData = ref([])
 const allRegisterData = ref([])
 
-const hotCourses = [
-  {
-    id: '54204152',
-    // img: require('@/assets/images/1.jpg'),
-    title: '机器学习算法',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 24,
-    duration: '248小时',
-    statusText: '已发布',
-    statusClass: 'published'
-  },
-  {
-    id: '54204153',
-    // img: require('@/assets/images/2.jpg'),
-    title: '均衡饮食食谱',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '已发布',
-    statusClass: 'published'
-  },
-  {
-    id: '54204154',
-    // img: require('@/assets/images/3.jpg'),
-    title: '减少技术',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '已下架',
-    statusClass: 'offline'
-  },
-  {
-    id: '54204155',
-    // img: require('@/assets/images/4.jpg'),
-    title: '用户界面设计',
-    teacher: '姓名示例',
-    count: 562,
-    price: '400元',
-    lessons: 32,
-    duration: '248小时',
-    statusText: '即将发布',
-    statusClass: 'pending'
+const hotCourses = ref([])
+
+const fetchHotCourses = async () => {
+  const res = await http.get('http://localhost:8080/admin/courses/ranking?page=1&size=5')
+  if (res.data.status === 200) {
+    hotCourses.value = res.data.data.records
   }
-]
+}
+
+const getStatusClass = (status) => {
+  switch (status) {
+    case 1: return 'success'
+    case 2: return 'danger'
+    case 3: return 'warning'
+    case 4: return 'danger'
+    default: return 'warning'
+  }
+}
+const getStatusText = (status) => {
+  switch (status) {
+    case 0: return '草稿'
+    case 1: return '已发布'
+    case 2: return '已下架'
+    case 3: return '审核中'
+    case 4: return '拒绝'
+    default: return '未知'
+  }
+}
 
 
 // 获取学生统计数据
 const fetchStudentStats = async () => {
   try {
-    const response = await http.get('admin/student-stats')
+    const response = await http.get('http://localhost:8080/admin/student-stats')
+    // console.log("学生response", response)
     if (response.data.status === 200) {
       studentStats.value = response.data.data
     } else {
@@ -283,7 +267,8 @@ const fetchStudentStats = async () => {
 // 获取课程统计数据
 const fetchCourseStats = async () => {
   try {
-    const response = await http.get('admin/course-stats')
+    const response = await http.get('http://localhost:8080/admin/course-stats')
+    // console.log("response", response)
     if (response.data.status === 200) {
       courseStats.value = response.data.data
     } else {
@@ -297,8 +282,7 @@ const fetchCourseStats = async () => {
 // 获取教师统计数据
 const fetchTeacherStats = async () => {
   try {
-    const response = await http.get('admin/teacher-stats')
-    // console.log("教师response",response)
+    const response = await http.get('http://localhost:8080/admin/teacher-stats')
     if (response.data.status === 200) {
       teacherStats.value = response.data.data
     } else {
@@ -311,24 +295,31 @@ const fetchTeacherStats = async () => {
 
 // 获取月活量
 const fetchActiveStudents = async () => {
-  const res = await http.get('/admin/statistics/monthly-active-students')
-  if (res.data && Array.isArray(res.data)) {
-    allActiveData.value = res.data
+  const res = await http.get('http://localhost:8080/admin/statistics/monthly-active-students')
+  // console.log("res", res)
+  if (res.data && Array.isArray(res.data.data)) {
+    allActiveData.value = res.data.data
     // 提取所有年份
-    const years = [...new Set(res.data.map(item => item.month.slice(0, 4)))]
+    const years = [...new Set(res.data.data.map(item => item.month.slice(0, 4)))]
     activeYears.value = years
     activeYear.value = years[years.length - 1] // 默认最新年
     updateActiveChart()
   }
 }
 
+const goTo = (path) => {
+  router.push(path)
+}
+
 // 获取月注册量
 const fetchRegisterStudents = async () => {
-  const res = await http.get('/admin/statistics/monthly-registered-students')
-  if (res.data && Array.isArray(res.data)) {
-    allRegisterData.value = res.data
+  const res = await http.get('http://localhost:8080/admin/statistics/monthly-registered-students')
+
+  // console.log("res", res)
+  if (res.data && Array.isArray(res.data.data)) {
+    allRegisterData.value = res.data.data
     // 提取所有年份
-    const years = [...new Set(res.data.map(item => item.month.slice(0, 4)))]
+    const years = [...new Set(res.data.data.map(item => item.month.slice(0, 4)))]
     registerYears.value = years
     registerYear.value = years[years.length - 1] // 默认最新年
     updateRegisterChart()
@@ -349,10 +340,12 @@ function updateRegisterChart() {
   registerChartSeries.value[0].data = months.map(m => dataMap[m] || 0)
 }
 
+
 const fetchUserInfo = async () => {
   try {
+    const userId = getCookie('userid')
     // console.log('开始获取用户信息...');
-    const response = await http.get('/user/user-info')
+    const response = await http.get('http://localhost:8080/user/user-info?userId=' + userId)
     // console.log('获取用户信息响应:', response);
     
     if (response.data && response.data.status === 0) { // 成功状态码是0
@@ -360,7 +353,7 @@ const fetchUserInfo = async () => {
       // console.log('用户信息数据:', data);
       if (data && data.username) {
         userStore.setUser(data);
-        console.log('用户信息已设置到store:', data);
+        // console.log('用户信息已设置到store:', data);
       } else {
         console.error('用户信息数据格式不正确:', data);
       }
@@ -373,6 +366,13 @@ const fetchUserInfo = async () => {
       console.error('错误响应:', error.response.data);
     }
   }
+}
+
+const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
 }
 
 onMounted(() => {
@@ -393,6 +393,9 @@ onMounted(() => {
 
   // 获取月注册量
   fetchRegisterStudents()
+
+  // 获取热门课程
+  fetchHotCourses()
 })
 </script>
 
@@ -408,6 +411,7 @@ onMounted(() => {
   margin-left: 8px;
   outline: none;
   cursor: pointer;
+  font-size: 1em;
 }
 .year-select:focus {
   border-color: #FF914D;
@@ -418,7 +422,7 @@ onMounted(() => {
   background: #fff;
   border-radius: 18px;
   box-shadow: 0 2px 12px #e0e0e0;
-  padding: 32px 24px;
+  padding: 20px 48px 0px 48px;
   margin-bottom: 32px;
 }
 .hot-courses-header {
@@ -444,6 +448,7 @@ onMounted(() => {
   outline: none;
   cursor: pointer;
   margin-right: 8px;
+  font-size: 1em;
 }
 
 .month-select:focus {
@@ -471,6 +476,7 @@ onMounted(() => {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0 12px;
+  font-size: 1.2em;
 }
 .hot-courses-table th, .hot-courses-table td {
   padding: 12px 10px;
@@ -611,10 +617,10 @@ onMounted(() => {
 }
 .main-content {
   flex: 1;
-  padding: 40px 48px 32px 48px;
+  padding: 20px 48px 0px 48px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 23px;
 }
 
 .stats-cards {
@@ -634,7 +640,7 @@ onMounted(() => {
 }
 .card-title {
   color: #888;
-  font-size: 1em;
+  font-size: 1.2em;
 }
 .card-value {
   font-size: 1.6em;
@@ -667,12 +673,13 @@ onMounted(() => {
   padding: 20px 18px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  /* gap: 12px; */
 }
 .chart-title {
   color: var(--main-orange);
   font-weight: bold;
   margin-bottom: 8px;
+  font-size: 1.3em;
 }
 .chart-placeholder {
   background: var(--main-blue);

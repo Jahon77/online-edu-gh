@@ -24,7 +24,11 @@
             </li>
             <li :class="{active: $route.path === '/admin/chat'}" @click="goTo('/admin/chat')">
               <img src="@/assets/images/chat.png" alt="聊天" class="icon" />
-              聊天
+              助手
+            </li>
+            <li :class="{active: $route.path === '/admin/notice'}" @click="goTo('/admin/notice')">
+              <img src="@/assets/images/notice2.png" alt="通知" class="icon" />
+              通知
             </li>
             <div class="title">帮助</div>
             <li :class="{active: $route.path === '/admin/setting'}" @click="goTo('/admin/setting')">
@@ -42,13 +46,13 @@
             <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="avatar" />
             <div>
               <div class="name">{{ userStore.user.name }}</div>
-              <div class="email">{{ userStore.user.phone }}</div>
+              <div class="phone">{{ userStore.user.phone }}</div>
             </div>
             <!-- 退出按钮 -->
               <img
                 src="@/assets/images/exit.png"
                 alt="退出"
-                style="width: 24px; height: 24px; cursor: pointer;"
+                style="width: 30px; height: 30px; cursor: pointer;"
                 @click="logout"
               />
           </div>
@@ -63,15 +67,15 @@
             <p>最轻松的管理和LMS平台绩效</p>
           </div>
           <div class="header-actions">
-            <div class="tooltip">
+            <div class="tooltip" @click="goTo('/admin/notice')" style="cursor: pointer;">
               <img src="@/assets/images/notice2.png" alt="notice" class="notice" style="width: 48px; height: 48px;"/>
               <span class="tooltip-text">通知</span> 
             </div>
-            <div class="tooltip">
+            <div class="tooltip" @click="goTo('/admin/chat')" style="cursor: pointer;">
               <img src="@/assets/images/chat.png" alt="chat" class="chat" style="width: 48px; height: 48px;"/>
               <span class="tooltip-text">消息</span>
             </div>
-            <div class="tooltip">
+            <div class="tooltip" @click="goTo('/admin/setting')" style="cursor: pointer;">
               <img src="@/assets/images/setting.png" alt="setting" class="setting" style="width: 48px; height: 48px; margin-right: 60px;"/>
               <span class="tooltip-text">设置</span>
             </div>
@@ -115,7 +119,11 @@ function logout() {
         type: 'success',
         message: '退出成功！'
       })
-      router.push('/login')
+       // 清除登录相关cookie
+      document.cookie = "satoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "userid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      router.push('/index')
     })
     .catch(() => {
       // 点击取消或关闭弹窗
@@ -162,6 +170,16 @@ function logout() {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex: 1;
+}
+
+.main-content {
+  display: flex;
+  flex: 9;
+  /* padding: 40px 48px 32px 48px; */
+  /* padding: 0; */
+  flex-direction: column;
+  /* gap: 0; */
 }
 
 .main-area {
@@ -169,6 +187,7 @@ function logout() {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  height: 100vh;
 }
 
 .welcome{
@@ -191,21 +210,6 @@ function logout() {
   margin-right: 50px;
 
 }
-/* .header-actions .icon-btn {
-  background: var(--main-blue);
-  border: none;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  font-size: 1.2rem;
-  color: #fff;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.header-actions .icon-btn:hover {
-  background: var(--main-orange);
-} */
-
 
 .header-actions img {
   cursor: pointer;
@@ -235,9 +239,10 @@ function logout() {
 }
 .admin-layout {
   display: flex;
-  min-height: 100vh;
   background: var(--main-light);
   font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+  height: 100vh;
+  overflow: hidden; 
 }
 
 .title {
@@ -249,7 +254,7 @@ function logout() {
   padding-left: 11px;
 }
 .sidebar {
-  width: 220px;
+  width: 270px;
   background: var(--main-green);
   padding: 32px 0 0 0;
   display: flex;
@@ -257,7 +262,7 @@ function logout() {
   justify-content: space-between;
   border-radius: 0 32px 32px 0;
   box-shadow: 2px 0 16px #e0e0e0;
-  height: auto;
+  height: 100vh;
 }
 .logo {
   font-size: 2rem;
@@ -270,7 +275,7 @@ function logout() {
   list-style: none;
   padding: 0;
   margin: 0;
-  margin-top: -183px
+  margin-top: -150px
 }
 .sidebar nav li {
   padding: 14px 32px;
@@ -289,7 +294,7 @@ function logout() {
   color: #fff;
 }
 .sidebar-footer {
-  padding: 24px 0 24px 32px;
+  padding: 24px 0 40px 32px;
 }
 .user-info {
   display: flex;
@@ -297,25 +302,18 @@ function logout() {
   gap: 12px;
 }
 .user-info img {
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
 }
 .user-info .name {
   font-weight: bold;
   color: #333;
+  font-size: 1.2em;
 }
-.user-info .email {
-  font-size: 0.9em;
+.user-info .phone {
   color: #888;
+  font-size: 1.1em;
 }
-.main-content {
-  flex: 1;
-  /* padding: 40px 48px 32px 48px; */
-  /* padding: 0; */
-  display: flex;
-  flex-direction: column;
-  /* gap: 0; */
-  /* gap: 32px; */
-}
+
 </style>

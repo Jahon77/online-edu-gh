@@ -70,7 +70,7 @@
             <!-- 我的帖子 -->
             <div v-if="activeTab === 'posts'" class="tab-content">
               <div v-if="myPosts.length > 0" class="posts-list">
-                <div v-for="post in myPosts" :key="post.id" class="post-item" @click="viewPost(post.id)">
+                <div v-for="post in paginatedMyPosts" :key="post.id" class="post-item" @click="viewPost(post.id)">
                   <div class="post-header">
                     <h4 class="post-title">{{ post.title }}</h4>
                     <span class="post-time">{{ formatTime(post.createdAt) }}</span>
@@ -96,12 +96,17 @@
                 <p>您還沒有發佈過帖子</p>
                 <button @click="goToForum" class="post-btn">去發帖</button>
               </div>
+              <BasePager
+                v-model="currentPagePosts"
+                :total-items="myPosts.length"
+                :page-size="pageSize"
+              />
             </div>
 
             <!-- 我的收藏 -->
             <div v-if="activeTab === 'favorites'" class="tab-content">
               <div v-if="favorites.length > 0" class="posts-list">
-                <div v-for="post in favorites" :key="post.id" class="post-item" @click="viewPost(post.id)">
+                <div v-for="post in paginatedFavorites" :key="post.id" class="post-item" @click="viewPost(post.id)">
                   <div class="post-header">
                     <h4 class="post-title">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
@@ -122,12 +127,17 @@
                 <p>您還沒有收藏任何帖子</p>
                 <button @click="goToForum" class="post-btn">去發現</button>
               </div>
+              <BasePager
+                v-model="currentPageFavorites"
+                :total-items="favorites.length"
+                :page-size="pageSize"
+              />
             </div>
 
             <!-- 我的點贊 -->
             <div v-if="activeTab === 'likes'" class="tab-content">
               <div v-if="likes.length > 0" class="posts-list">
-                <div v-for="post in likes" :key="post.id" class="post-item" @click="viewPost(post.id)">
+                <div v-for="post in paginatedLikes" :key="post.id" class="post-item" @click="viewPost(post.id)">
                   <div class="post-header">
                     <h4 class="post-title">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
@@ -148,6 +158,11 @@
                 <p>您還沒有給任何帖子點贊</p>
                 <button @click="goToForum" class="post-btn">去發現</button>
               </div>
+              <BasePager
+                v-model="currentPageLikes"
+                :total-items="likes.length"
+                :page-size="pageSize"
+              />
             </div>
 
             <!-- 我的關注 -->
@@ -203,11 +218,12 @@
 
 <script setup>
 import TeacherHeader from '@/components/commen/header/TeacherHeader.vue'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import BasePager from '@/components/BasePager.vue'
 
 const router = useRouter()
 
@@ -221,6 +237,33 @@ const following = ref([])
 const followers = ref([])
 const activeTab = ref('posts')
 const currentUserId = ref(null) // 當前用戶ID
+
+// 分頁設定
+const pageSize = ref(5)
+const currentPagePosts = ref(1)
+const currentPageFavorites = ref(1)
+const currentPageLikes = ref(1)
+
+// 分頁後的資料
+const paginatedMyPosts = computed(() => {
+  const start = (currentPagePosts.value - 1) * pageSize.value
+  return myPosts.value.slice(start, start + pageSize.value)
+})
+
+const paginatedFavorites = computed(() => {
+  const start = (currentPageFavorites.value - 1) * pageSize.value
+  return favorites.value.slice(start, start + pageSize.value)
+})
+
+const paginatedLikes = computed(() => {
+  const start = (currentPageLikes.value - 1) * pageSize.value
+  return likes.value.slice(start, start + pageSize.value)
+})
+
+// 當列表更新時重置頁碼
+watch(myPosts, () => { currentPagePosts.value = 1 })
+watch(favorites, () => { currentPageFavorites.value = 1 })
+watch(likes, () => { currentPageLikes.value = 1 })
 
 const tabs = [
   { id: 'posts', name: '我的帖子' },

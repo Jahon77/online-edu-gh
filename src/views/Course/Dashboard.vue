@@ -1,48 +1,134 @@
 <template>
-  <div class="dashboard-container">
-    <h1 class="page-title">我的课程</h1>
+  <div>
+    <!-- 添加统一的顶部导航栏 -->
+    <SiteHeader />
     
-    <!-- 课程卡片容器 -->
-    <div class="course-cards">
-      <div v-for="course in courses" :key="course.id" class="course-card">
-        <!-- 课程封面 -->
-        <div class="course-cover">
-          <img :src="course.coverUrl || '/src/assets/images/default-course.jpg'" :alt="course.title">
+    <div class="dashboard-page">
+      <!-- 左侧导航栏 -->
+      <div class="sidebar">
+        <div class="logo">
+          <span class="logo-icon">📚</span>
+          <span class="logo-text">智学通</span>
         </div>
         
-        <!-- 课程信息 -->
-        <div class="course-info">
-          <h3 class="course-title">{{ course.title }}</h3>
-          <div class="course-category">{{ course.category }} · {{ course.level }}</div>
-          
-          <!-- 进度环 -->
-          <div class="progress-container">
-            <div class="progress-circle" :style="getProgressStyle(course.progress)">
-              <div class="progress-inner">
-                <span class="progress-text">{{ Math.floor(course.progress * 100) }}%</span>
-              </div>
-            </div>
-            
-            <!-- 学习时间 -->
-            <div class="last-learn">
-              <div>上次学习</div>
-              <div>{{ formatDate(course.lastLearnTime) }}</div>
-            </div>
+        <div class="nav-item active">
+          <div class="nav-icon">📊</div>
+          <div class="nav-text">Dashboard</div>
+        </div>
+        
+        <div class="nav-item" @click="navigateTo('/course/list')">
+          <div class="nav-icon">📝</div>
+          <div class="nav-text">所有课程</div>
+        </div>
+        
+        <div class="nav-item">
+          <div class="nav-icon">📚</div>
+          <div class="nav-text">资源</div>
+        </div>
+        
+        <div class="nav-item" @click="navigateTo('/chat')">
+          <div class="nav-icon">💬</div>
+          <div class="nav-text">聊天</div>
+        </div>
+        
+        <div class="nav-item">
+          <div class="nav-icon">⚙️</div>
+          <div class="nav-text">设置</div>
+        </div>
+        
+        <div class="upgrade-container">
+          <div class="upgrade-lock">🔒</div>
+          <div class="upgrade-text">
+            升级到 <span class="pro-text">Pro</span><br>
+            获取更多资源
           </div>
-          
-          <!-- 下一学习点 -->
-          <div class="next-learning-point">
-            <h4>继续学习</h4>
-            <div class="next-point">{{ course.nextLearningPoint }}</div>
-            <button class="continue-btn" @click="continueLearning(course)">继续学习</button>
-          </div>
+          <button class="upgrade-btn">升级</button>
         </div>
       </div>
       
-      <!-- 暂无课程的提示 -->
-      <div v-if="courses.length === 0" class="no-courses">
-        <div class="empty-message">您目前还没有订阅课程</div>
-        <button class="browse-courses-btn" @click="browseCourses">浏览课程</button>
+      <!-- 主内容区 -->
+      <div class="main-content">
+        <!-- 欢迎区域 -->
+        <div class="welcome-section">
+          <div class="welcome-text">
+            <h1>欢迎回来，{{ name }} 👋</h1>
+            <p>您已完成 <strong>{{ completionRate }}%</strong> 的学习目标！继续努力，提高您的学习进度！</p>
+          </div>
+          <div class="welcome-image">
+            <img src="/src/assets/images/6402d73b1c4a9f72c60a257bac3cd93a.png" alt="Welcome illustration">
+          </div>
+        </div>
+        
+        <!-- 使用StudentDashboard组件 -->
+        <StudentDashboard />
+      </div>
+      
+      <!-- 右侧边栏 -->
+      <div class="right-sidebar">
+        <!-- 个人信息 -->
+        <div class="user-profile">
+          <div class="notification-icon">🔔</div>
+          <div class="user-avatar">
+            <img :src="userAvatar" :alt="username">
+          </div>
+          <div class="user-name">{{ name }} <span class="dropdown-icon">▼</span></div>
+        </div>
+        
+        <!-- 学习进度日历 -->
+        <div class="progress-section">
+          <div class="section-header">
+            <h3>我的进度</h3>
+            <div class="month-selector">{{ currentMonth }}</div>
+          </div>
+          
+          <div class="calendar">
+            <div class="calendar-header">
+              <div v-for="day in weekDays" :key="day" class="calendar-day-header">{{ day }}</div>
+            </div>
+            <div class="calendar-body">
+              <div v-for="(day, index) in calendarDays" :key="index" 
+                   :class="['calendar-day', { 'has-activity': day.hasActivity, 'current': day.isCurrent, 'other-month': !day.isCurrentMonth }]">
+                {{ day.date }}
+              </div>
+            </div>
+          </div>
+          
+          <div class="activity-legend">
+            <div class="legend-item">
+              <div class="legend-color light"></div>
+              <div class="legend-text">轻度</div>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color medium"></div>
+              <div class="legend-text">中度</div>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color heavy"></div>
+              <div class="legend-text">重度</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 待办事项 -->
+        <div class="tasks-section">
+          <div class="section-header">
+            <h3>待办任务</h3>
+            <div class="view-all">查看全部</div>
+          </div>
+          
+          <div class="task-list">
+            <div v-for="task in upcomingTasks" :key="task.id" class="task-item">
+              <div class="task-icon" :style="{ backgroundColor: task.iconBg }">
+                <img :src="task.icon" alt="Task icon">
+              </div>
+              <div class="task-content">
+                <div class="task-title">{{ task.title }}</div>
+                <div class="task-time">{{ task.time }}</div>
+              </div>
+              <div class="task-arrow">›</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -50,311 +136,612 @@
 
 <script>
 import axios from 'axios';
+import StudentDashboard from '@/components/studentCenter/StudentDashboard.vue';
+import SiteHeader from '@/components/commen/header/SiteHeader.vue';
 
 export default {
   name: 'Dashboard',
+  components: {
+    StudentDashboard,
+    SiteHeader
+  },
   data() {
     return {
-      courses: [],
-      userId: 1, // 默认用户ID，实际应从登录信息获取
-      loading: false,
-      error: null
+      username: 'Deena',
+      name: 'Deena',
+      userAvatar: '/src/assets/pictures/logo.png',
+      completionRate: 80,
+      currentMonth: 'October',
+      weekDays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+      calendarDays: [],
+      upcomingTasks: [
+        {
+          id: 1,
+          title: 'Prototyping Section',
+          time: '09:00-10:00 Today',
+          icon: '/src/assets/pictures/logo.png',
+          iconBg: '#e6f7f2'
+        },
+        {
+          id: 2,
+          title: 'Wireframing Section',
+          time: '11:00-12:30 Today',
+          icon: '/src/assets/pictures/web.svg',
+          iconBg: '#f0e6f7'
+        },
+        {
+          id: 3,
+          title: 'Blog Writing Section',
+          time: '14:00-15:30 Today',
+          icon: '/src/assets/pictures/teacher.svg',
+          iconBg: '#fff8e6'
+        },
+        {
+          id: 4,
+          title: 'Video Editing Section',
+          time: '17:00-20:00 Today',
+          icon: '/src/assets/pictures/QQ.png',
+          iconBg: '#ffe6e6'
+        }
+      ]
     };
   },
-  created() {
-    this.fetchStudentCourses();
+  mounted() {
+    this.generateCalendarDays();
+    
+    // 从后端获取数据
+    this.fetchUserData();
   },
   methods: {
-    async fetchStudentCourses() {
-      this.loading = true;
-      try {
-        const response = await axios.get(`/api/students/${this.userId}/courses`);
-        if (response.data && response.data.status === 0) {
-          this.courses = response.data.data;
-        } else {
-          this.error = '获取课程失败';
-          console.error('获取课程失败:', response.data);
+    generateCalendarDays() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth();
+      
+      // 获取当月第一天和最后一天
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      
+      // 获取当月第一天是星期几
+      const firstDayOfWeek = firstDay.getDay();
+      
+      // 获取上月的一些天数来填充日历的第一行
+      const prevMonthLastDay = new Date(year, month, 0).getDate();
+      
+      const days = [];
+      
+      // 添加上月的日期
+      for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+        days.push({
+          date: prevMonthLastDay - i,
+          isCurrentMonth: false,
+          hasActivity: false,
+          isCurrent: false
+        });
+      }
+      
+      // 添加当月的日期
+      for (let i = 1; i <= lastDay.getDate(); i++) {
+        // 随机生成活动强度
+        const hasActivity = Math.random() > 0.5;
+        const activityLevel = hasActivity ? Math.floor(Math.random() * 3) + 1 : 0; // 0: 无活动, 1: 轻度, 2: 中度, 3: 重度
+        
+        days.push({
+          date: i,
+          isCurrentMonth: true,
+          hasActivity: hasActivity,
+          activityLevel: activityLevel,
+          isCurrent: i === today.getDate()
+        });
+      }
+      
+      // 如果不足42天，添加下月的日期
+      const remainingDays = 42 - days.length;
+      for (let i = 1; i <= remainingDays; i++) {
+        days.push({
+          date: i,
+          isCurrentMonth: false,
+          hasActivity: false,
+          isCurrent: false
+        });
+      }
+      
+      this.calendarDays = days;
+    },
+    fetchUserData() {
+      // 从localStorage或cookie中获取用户信息
+      const userStr = localStorage.getItem('user');
+      let userId;
+      
+      if (userStr) {
+        // 如果localStorage中有用户信息，则从中获取
+        const userData = JSON.parse(userStr);
+        userId = userData.userId;
+        this.username = userData.username || userData.name || '用户';
+        this.name = userData.name || '用户';
+      } else {
+        // 如果localStorage中没有，则尝试从cookie中获取
+        userId = this.getCookie('userid');
+        this.username = this.getCookie('username') || this.getCookie('name') || '用户';
+        this.name = this.getCookie('name') || '用户';
+      }
+      
+      // 如果没有获取到用户ID，则使用默认值
+      if (!userId) {
+        console.warn('未找到用户ID，使用默认值');
+        userId = 1;
+      }
+      
+      // 存储用户ID到localStorage
+      localStorage.setItem('userId', userId);
+      
+      console.log('当前用户信息:', {
+        userId: userId,
+        username: this.username
+      });
+      
+      // 设置默认头像
+      this.userAvatar = '/src/assets/pictures/logo.png';
+      
+      // 调用后端API获取更多用户信息
+      axios.get(`http://localhost:8080/api/user/${userId}`)
+        .then(response => {
+          if (response.data.status === 200) {
+            const userData = response.data.data;
+            if (userData) {
+              this.username = userData.username || this.username;
+              this.userAvatar = userData.avatarUrl || this.userAvatar;
+            }
+          }
+        })
+        .catch(error => {
+          console.error('获取用户数据失败:', error);
+        });
+    },
+    navigateTo(path) {
+      this.$router.push(path);
+    },
+    // 获取cookie的方法
+    getCookie(name) {
+      const cookieArr = document.cookie.split(';');
+      for (let i = 0; i < cookieArr.length; i++) {
+        const cookiePair = cookieArr[i].split('=');
+        const cookieName = cookiePair[0].trim();
+        if (cookieName === name) {
+          return decodeURIComponent(cookiePair[1]);
         }
-      } catch (error) {
-        this.error = '获取课程失败';
-        console.error('获取课程出错:', error);
-      } finally {
-        this.loading = false;
       }
+      return null;
     },
-    getProgressStyle(progress) {
-      const angle = progress * 360;
-      let style = {};
-      
-      if (progress <= 0.5) {
-        style = {
-          '--progress-angle': `${angle}deg`,
-          '--progress-color': '#F98C53' // 使用指定的橙色
-        };
-      } else {
-        style = {
-          '--progress-right-angle': '180deg', 
-          '--progress-left-angle': `${angle - 180}deg`,
-          '--progress-color': '#F98C53' // 使用指定的橙色
-        };
-      }
-      
-      return style;
-    },
-    formatDate(dateString) {
-      if (!dateString) return '未开始学习';
-      
-      const date = new Date(dateString);
-      const now = new Date();
-      const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-      
-      if (diffDays === 0) {
-        return '今天';
-      } else if (diffDays === 1) {
-        return '昨天';
-      } else if (diffDays < 7) {
-        return `${diffDays}天前`;
-      } else {
-        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-      }
-    },
-    continueLearning(course) {
-      this.$router.push(`/courses/${course.courseId}`);
-    },
-    browseCourses() {
-      this.$router.push('/courses');
-    }
   }
 };
 </script>
 
-<style>
-.dashboard-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  font-family: 'Microsoft YaHei', sans-serif;
+<style scoped>
+.dashboard-page {
+  display: flex;
+  min-height: 100vh;
+  background-color: #F9F2EF;
+  font-family: 'Segoe UI', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
 }
 
-.page-title {
-  font-size: 28px;
-  color: #333;
-  margin-bottom: 30px;
-  font-weight: 600;
-  border-left: 5px solid #F98C53;
-  padding-left: 15px;
-}
-
-.course-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 25px;
-}
-
-.course-card {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+/* 左侧导航栏样式 */
+.sidebar {
+  width: 240px;
   background-color: white;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.course-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-.course-cover {
-  height: 180px;
-  overflow: hidden;
-}
-
-.course-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
-}
-
-.course-card:hover .course-cover img {
-  transform: scale(1.05);
-}
-
-.course-info {
   padding: 20px;
-  flex: 1;
   display: flex;
   flex-direction: column;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+  border-right: 1px solid rgba(249, 140, 83, 0.1);
 }
 
-.course-title {
-  margin: 0 0 8px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
-  line-height: 1.4;
-  height: 50px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+.logo {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+  color: #F98C53;
+  padding: 10px;
 }
 
-.course-category {
-  color: #666;
+.logo-icon {
+  font-size: 24px;
+  margin-right: 10px;
+  color: #F98C53;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: bold;
+  color: #F98C53;
+  letter-spacing: 0.5px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.nav-item:hover {
+  background-color: #F9F2EF;
+}
+
+.nav-item.active {
+  background-color: #F98C53;
+  color: white;
+}
+
+.nav-icon {
+  font-size: 20px;
+  margin-right: 15px;
+}
+
+.nav-text {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.upgrade-container {
+  margin-top: auto;
+  background-color: #F9F2EF;
+  border-radius: 15px;
+  padding: 20px;
+  text-align: center;
+  position: relative;
+}
+
+.upgrade-lock {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.upgrade-text {
   font-size: 14px;
+  color: #666;
   margin-bottom: 15px;
 }
 
-.progress-container {
+.pro-text {
+  color: #F98C53;
+  font-weight: bold;
+}
+
+.upgrade-btn {
+  background-color: #F98C53;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 30px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.upgrade-btn:hover {
+  background-color: #e67a42;
+  transform: translateY(-2px);
+}
+
+/* 主内容区样式 */
+.main-content {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+}
+
+.welcome-section {
+  background: linear-gradient(135deg, #F98C53, #FCCEB4);
+  border-radius: 20px;
+  padding: 30px;
+  color: white;
+  margin-bottom: 30px;
   display: flex;
   align-items: center;
-  margin-bottom: 20px;
-}
-
-.progress-circle {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background-color: #f0f0f0;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 8px 20px rgba(249, 140, 83, 0.2);
 }
 
-.progress-circle::before {
-  content: '';
+.welcome-text {
+  flex: 1;
+}
+
+.welcome-text h1 {
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.welcome-text p {
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+.welcome-image {
   position: absolute;
+  right: 0;
   top: 0;
-  left: 0;
-  width: 100%;
   height: 100%;
-  border-radius: 50%;
-  background: conic-gradient(
-    var(--progress-color) var(--progress-angle, 0deg),
-    #f0f0f0 var(--progress-angle, 0deg)
-  );
-}
-
-.progress-circle::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: 
-    conic-gradient(
-      var(--progress-color) var(--progress-right-angle, 0deg),
-      #f0f0f0 var(--progress-right-angle, 0deg)
-    );
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 0, 50% 0, 50% 100%, 0 100%);
-}
-
-.progress-inner {
-  position: absolute;
-  top: 10%;
-  left: 10%;
-  width: 80%;
-  height: 80%;
-  border-radius: 50%;
-  background-color: white;
+  width: 300px;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1;
 }
 
-.progress-text {
-  font-size: 18px;
-  font-weight: bold;
-  color: var(--progress-color, #F98C53);
+.welcome-image img {
+  max-width: 100%;
+  max-height: 100%;
 }
 
-.last-learn {
-  padding-left: 20px;
-  color: #666;
-  font-size: 14px;
+/* 右侧边栏样式 */
+.right-sidebar {
+  width: 300px;
+  background-color: white;
+  padding: 20px;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.05);
+  border-left: 1px solid rgba(249, 140, 83, 0.1);
 }
 
-.next-learning-point {
-  margin-top: auto;
-  padding-top: 15px;
-  border-top: 1px solid #eee;
+.user-profile {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 30px;
 }
 
-.next-learning-point h4 {
+.notification-icon {
+  font-size: 20px;
+  margin-right: 20px;
+  color: #F98C53;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.notification-icon:hover {
+  transform: scale(1.1);
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 10px;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-name {
   font-size: 16px;
-  margin: 0 0 8px 0;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+}
+
+.dropdown-icon {
+  font-size: 12px;
+  margin-left: 5px;
+  color: #999;
+}
+
+.progress-section {
+  margin-bottom: 30px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.section-header h3 {
+  font-size: 18px;
   font-weight: 600;
   color: #333;
 }
 
-.next-point {
+.month-selector {
   font-size: 14px;
-  color: #555;
-  margin-bottom: 15px;
-  line-height: 1.5;
-}
-
-.continue-btn {
-  background-color: #F98C53;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 20px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  width: 100%;
-}
-
-.continue-btn:hover {
-  background-color: #e67e45;
-}
-
-/* 暂无课程样式 */
-.no-courses {
-  grid-column: 1 / -1;
-  background-color: #f9f9f9;
-  border-radius: 12px;
-  padding: 80px;
-  text-align: center;
-}
-
-.empty-message {
-  font-size: 18px;
   color: #666;
-  margin-bottom: 20px;
+  cursor: pointer;
 }
 
-.browse-courses-btn {
+.calendar {
+  margin-bottom: 15px;
+}
+
+.calendar-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.calendar-day-header {
+  font-size: 12px;
+  color: #999;
+  padding: 5px;
+}
+
+.calendar-body {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+.calendar-day {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #666;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.calendar-day:hover:not(.current) {
+  background-color: #FCCEB4;
+  color: white;
+}
+
+.calendar-day.current {
   background-color: #F98C53;
   color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 12px 30px;
-  font-size: 16px;
+}
+
+.calendar-day.other-month {
+  color: #ccc;
+}
+
+.calendar-day.has-activity {
+  position: relative;
+}
+
+.calendar-day.has-activity::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #F98C53;
+}
+
+.activity-legend {
+  display: flex;
+  justify-content: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin: 0 10px;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.legend-color.light {
+  background-color: rgba(249, 140, 83, 0.3);
+}
+
+.legend-color.medium {
+  background-color: rgba(249, 140, 83, 0.6);
+}
+
+.legend-color.heavy {
+  background-color: rgba(249, 140, 83, 1);
+}
+
+.legend-text {
+  font-size: 12px;
+  color: #999;
+}
+
+.tasks-section {
+  margin-bottom: 30px;
+}
+
+.view-all {
+  font-size: 14px;
+  color: #F98C53;
   cursor: pointer;
-  transition: background-color 0.3s;
 }
 
-.browse-courses-btn:hover {
-  background-color: #e67e45;
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
-/* 响应式调整 */
+.task-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 10px;
+  background-color: #F9F2EF;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border-left: 3px solid #FCCEB4;
+}
+
+.task-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(249, 140, 83, 0.1);
+  border-left: 3px solid #F98C53;
+}
+
+.task-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
+}
+
+.task-icon img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.task-content {
+  flex: 1;
+}
+
+.task-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.task-time {
+  font-size: 12px;
+  color: #999;
+}
+
+.task-arrow {
+  font-size: 20px;
+  color: #999;
+}
+
+@media (max-width: 1200px) {
+  .right-sidebar {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
-  .course-cards {
-    grid-template-columns: 1fr;
+  .dashboard-page {
+    flex-direction: column;
   }
   
-  .no-courses {
-    padding: 40px 20px;
+  .sidebar {
+    width: 100%;
+    padding: 10px;
+  }
+  
+  .main-content {
+    padding: 15px;
   }
 }
-</style> 
+</style>
+

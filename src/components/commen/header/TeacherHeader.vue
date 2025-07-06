@@ -8,20 +8,23 @@
       <!-- 目录栏 -->
       <div class="menu-bar">
         <ul class="menu-list">
-          <li class="menu-item" @click="goTo('index')">首页</li>
+          <li class="menu-item" @click="goTo('teacherProfile')">个人中心</li>
           <li class="menu-item dropdown" @mouseenter="showCourseDropdown = true" @mouseleave="showCourseDropdown = false">
              课程管理
              <ul class="dropdown-menu" v-show="showCourseDropdown">
                 <li class="dropdown-item" @click="goTo('create')">创建课程</li>
                 <li class="dropdown-item" @click="goTo('teacherCourseList')">课程列表</li>
-                <li class="dropdown-item" @click="goTo(' ')">草稿箱</li>
+                <li class="dropdown-item" @click="goTo('courseDraftBox')">草稿箱</li>
              </ul>
          </li>
-         <li class="menu-item dropdown" @mouseenter="showStudentDropdown = true" @mouseleave="showStudentDropdown = false">
+         <li class="menu-item" @click="goTo('studentManagement')">学生管理</li>
+         <li class="menu-item" @click="goTo('commentManagement')">互动管理</li>
+
+         <!-- <li class="menu-item dropdown" @mouseenter="showStudentDropdown = true" @mouseleave="showStudentDropdown = false">
             学生管理与互动
              <ul class="dropdown-menu" v-show="showStudentDropdown">
                 <li class="dropdown-item" @click="goTo('studentManagement')">学生管理</li>
-                <li class="dropdown-item" @click="goTo('forum')">互动管理</li>
+                <li class="dropdown-item" @click="goTo('commentManagement')">互动管理</li>
              </ul>
          </li>
          <li class="menu-item dropdown" @mouseenter="showLiveDropdown = true" @mouseleave="showLiveDropdown = false">
@@ -30,10 +33,11 @@
                 <li class="dropdown-item" @click="goTo('create')">我要直播</li>
                 <li class="dropdown-item" @click="goTo('teacherCourseList')">直播回放</li>
              </ul>
-         </li>
-          <li class="menu-item">收入统计</li>
-          <li class="menu-item">帮助中心</li>
-          <li class="menu-item">智能客服</li>
+         </li> -->
+          <!-- <li class="menu-item">帮助中心</li> -->
+          <li class="menu-item" @click="goTo('chat')">消息中心</li>
+          <li class="menu-item" @click="goTo('aichat')">智能助手</li>
+          <li class="menu-item" @click="goTo('index')">系统门户</li>
         </ul>
       </div>  
   
@@ -44,7 +48,7 @@
             <span>当前位置：{{ currentPath }}</span>
           </div>
           <div class="nav-right">
-            <button @click="logout" class="logout-button">退出登录</button>
+            <button @click="confirmLogout" class="logout-button">退出登录</button>
           </div>
         </div>
       </div>
@@ -53,6 +57,8 @@
   
   <script>
   import AppFunctions from "../../../utils/appFunction.js";
+  import { ElMessageBox } from 'element-plus';
+  import { logout } from '../../../utils/authUtils';
   
   export default {
     name: "TeacherHeader",
@@ -61,7 +67,7 @@
       showCourseDropdown: false,
       showStudentDropdown: false, 
       showLiveDropdown: false, 
-      currentPath: '首页'
+      currentPath: '个人中心'
     };
   },
     methods: {
@@ -73,49 +79,84 @@
           AppFunctions.removeClass('.header-default', 'sticky');
         }
       },
-      logout() {
-        // 清除登录相关cookie
-        document.cookie = "satoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie = "userid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        // 返回登录页
-        this.$router.push({ name: 'login' });
+      async confirmLogout() {
+        try {
+          await ElMessageBox.confirm(
+            '确定要退出登录吗？',
+            '提示',
+            {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning',
+            }
+          );
+          // 用户确认退出
+          this.handleLogout();
+        } catch {
+          // 用户取消退出
+        }
+      },
+      handleLogout() {
+        // 使用authUtils中的logout函数清除登录信息
+        logout();
+        // 跳转到首页
+        this.$router.push('/');
       },
       goTo(type) {
         if (type === 'create') {
           this.$router.push({ name: 'create' });
         } else if (type === 'teacherCourseList') {
           this.$router.push({ name: 'teacherCourseList' });
-        } else if (type === 'index') {
-          this.$router.push({ name: 'index' });
+        // } else if (type === 'index') {
+        //   this.$router.push({ name: 'index' });
         } else if (type === 'studentManagement') {
           this.$router.push({ name: 'studentManagement' });
-        } else if (type === 'chat') {
-          this.$router.push({ name: 'chat' });
-        } else if (type === 'forum') {
-          this.$router.push({ name: 'forum' });
+        } else if (type === 'commentManagement') {
+          this.$router.push({ name: 'commentManagement' });
+        }else if (type === 'courseDraftBox') {
+          this.$router.push({ name: 'courseDraftBox' });
+        } else if (type === 'teacherProfile') {
+          this.$router.push({ name: 'teacherProfile' });
+        }else if (type === 'chat') {
+          this.$router.push({ name: 'Chat' });
+        } else if (type === 'aichat') {
+          this.$router.push({ name: 'aichat' });
+        } else if (type === 'index') {
+          this.$router.push({ name: 'index' });
         }
       },
       updateCurrentPath() {
         const routeName = this.$route.name;
         switch (routeName) {
-          case 'index':
-            this.currentPath = '首页';
-            break;
+          // case 'index':
+          //   this.currentPath = '首页';
+          //   break;
           case 'create':
             this.currentPath = '课程管理 > 创建课程';
             break;
           case 'teacherCourseList':
             this.currentPath = '课程管理 > 课程列表';
             break;
-          case 'studentManagement':
-            this.currentPath = '学生管理与互动 > 学生管理';
+          case 'courseDraftBox':
+            this.currentPath = '课程管理 > 草稿箱';
             break;
-          case 'chat':
-            this.currentPath = '学生管理与互动 > 互动管理';
+          case 'studentManagement':
+            this.currentPath = '学生管理';
+            break;
+          case 'commentManagement':
+            this.currentPath = '互动管理';
+            break;
+          case 'teacherProfile':
+            this.currentPath = '个人中心';
             break;
           case 'login':
             this.currentPath = '登录';
+            break;
+          case 'Chat':
+            this.currentPath = '消息中心';
+            break;
+          case 'aichat':
+            this.currentPath = '智能助手';
             break;
           // Add more cases for other routes as needed
           default:

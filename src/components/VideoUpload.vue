@@ -119,6 +119,7 @@ const isDragOver = ref(false)
 const errorMessage = ref('')
 const videoInfo = ref(null)
 const showVideoInfo = ref(false)
+const uploadedFile = ref(null)
 
 // 监听 modelValue 变化
 watch(() => props.modelValue, (newValue) => {
@@ -235,26 +236,44 @@ const processFile = async (file) => {
     return
   }
   
-  // 创建预览URL
+  uploadedFile.value = file
+  // 本地预览
   const reader = new FileReader()
-  reader.onload = async (e) => {
+  reader.onload = (e) => {
     videoUrl.value = e.target.result
     emit('update:modelValue', e.target.result)
-    
-    // 获取视频信息
-    try {
-      videoInfo.value = await getVideoInfo(file)
-    } catch (error) {
-      console.error('获取视频信息失败:', error)
-    }
-    
-    emit('upload-success', {
-      file,
-      url: e.target.result,
-      info: videoInfo.value
-    })
+    // 先触发一个基础的上传成功事件，时长信息会在后续的onloadedmetadata中补充
+    emit('upload-success', { fileUrl: e.target.result, file: file })
   }
   reader.readAsDataURL(file)
+  
+  // 获取视频信息
+  try {
+    const video = document.createElement('video')
+    video.preload = 'metadata'
+    video.onloadedmetadata = () => {
+      videoInfo.value = {
+        name: file.name,
+        size: file.size,
+        duration: video.duration,
+        type: file.type
+      }
+      // 在获取到视频信息后，重新触发upload-success事件，包含时长信息
+      emit('upload-success', { 
+        fileUrl: videoUrl.value, 
+        file: file,
+        info: {
+          duration: video.duration,
+          name: file.name,
+          size: file.size,
+          type: file.type
+        }
+      })
+    }
+    video.src = URL.createObjectURL(file)
+  } catch (error) {
+    console.error('获取视频信息失败:', error)
+  }
 }
 
 // 删除视频
@@ -262,11 +281,16 @@ const removeVideo = () => {
   videoUrl.value = ''
   videoInfo.value = null
   showVideoInfo.value = false
+  uploadedFile.value = null
   emit('update:modelValue', '')
   if (fileInput.value) {
     fileInput.value.value = ''
   }
 }
+
+// 获取上传的文件
+const getFile = () => uploadedFile.value
+defineExpose({ getFile })
 </script>
 
 <style scoped>

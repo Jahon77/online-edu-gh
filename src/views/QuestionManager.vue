@@ -193,10 +193,10 @@
                   <div class="file-list">
                     <div v-for="file in uploadedFiles" :key="file.id" class="file-item">
                       <div class="file-icon">
-                        <i :class="getFileIcon(file.originalFilename)"></i>
+                        <i :class="getFileIcon(file.originalFilename || file.originalName || file.filename)"></i>
                       </div>
                       <div class="file-info">
-                        <div class="file-name">{{ file.originalFilename }}</div>
+                        <div class="file-name">{{ file.originalFilename || file.originalName || file.filename }}</div>
                         <div class="file-meta">
                           <span class="file-size">{{ formatFileSize(file.size) }}</span>
                           <span class="file-status">已上传</span>
@@ -230,10 +230,10 @@
                     <div class="file-list">
                                           <div v-for="file in selectedFiles" :key="file.id" class="file-item">
                       <div class="file-icon">
-                        <i :class="getFileIcon(file.originalFilename)"></i>
+                        <i :class="getFileIcon(file.originalFilename || file.originalName || file.filename)"></i>
                       </div>
                       <div class="file-info">
-                        <div class="file-name">{{ file.originalFilename }}</div>
+                        <div class="file-name">{{ file.originalFilename || file.originalName || file.filename }}</div>
                         <div class="file-meta">
                           <span class="file-size">{{ formatFileSize(file.size) }}</span>
                           <span class="file-status">已选择</span>
@@ -291,10 +291,10 @@
                 @click="toggleFileSelection(file)"
               >
                 <div class="file-icon">
-                  <i :class="getFileIcon(file.originalFilename)"></i>
+                  <i :class="getFileIcon(file.originalFilename || file.originalName || file.filename)"></i>
                 </div>
                 <div class="file-info">
-                  <div class="file-name">{{ file.originalFilename }}</div>
+                  <div class="file-name">{{ file.originalFilename || file.originalName || file.filename }}</div>
                   <div class="file-size">{{ formatFileSize(file.size) }}</div>
                   <div class="file-date">{{ formatDate(file.uploadTime) }}</div>
                 </div>
@@ -395,6 +395,7 @@
         fileSearchKeyword: "", // 文件搜索关键词
         tempSelectedFiles: [], // 临时选择的文件（用于文件库选择）
         originalResourceUrls: [], // 存储原始的资源URL列表
+        fileInfoCache: new Map(), // 緩存文件信息，避免重複請求
         
         // 上传进度相关
         showUploadProgress: false, // 是否显示进度条
@@ -450,6 +451,8 @@
           .then((data) => {
             if (data.status === 0) {
               this.questionList = data.data || [];
+              // 獲取所有作業中引用的文件信息
+              this.fetchAllReferencedFiles();
             } else {
               console.error("获取作业列表失败:", data.message);
             }
@@ -516,6 +519,19 @@
         console.log('selectedFiles:', this.selectedFiles);
         console.log('fileLibrary:', this.fileLibrary);
         
+        // 先檢查緩存
+        if (this.fileInfoCache.has(url)) {
+          const cachedName = this.fileInfoCache.get(url);
+          console.log('從緩存中獲取文件名:', cachedName);
+          return cachedName;
+        }
+        
+        // 先檢查fileLibrary的第一個記錄的結構
+        if (this.fileLibrary.length > 0) {
+          console.log('fileLibrary第一個記錄的結構:', Object.keys(this.fileLibrary[0]));
+          console.log('fileLibrary第一個記錄:', this.fileLibrary[0]);
+        }
+        
         // 先从uploadedFiles中查找（新上传的文件）
         let fileRecord = this.uploadedFiles.find(file => file.fileUrl === url);
         if (fileRecord) {
@@ -530,30 +546,62 @@
           return fileRecord.originalFilename;
         }
         
-        // 從fileLibrary中查找（精確匹配）
-        fileRecord = this.fileLibrary.find(file => file.fileUrl === url);
+        // 從fileLibrary中查找（精確匹配）- 嘗試多種可能的字段名
+        fileRecord = this.fileLibrary.find(file => 
+          file.fileUrl === url || 
+          file.url === url || 
+          file.file_url === url ||
+          file.filePath === url
+        );
         if (fileRecord) {
-          console.log('在fileLibrary中找到文件（精確匹配）:', fileRecord.originalFilename);
-          return fileRecord.originalFilename;
+          console.log('在fileLibrary中找到文件（精確匹配）:', fileRecord.originalFilename || fileRecord.originalName || fileRecord.filename);
+          return fileRecord.originalFilename || fileRecord.originalName || fileRecord.filename;
         }
         
         // 再用結尾模糊比對（從URL中提取文件名）
         const urlName = url.split('/').pop();
         if (urlName) {
           console.log('嘗試模糊匹配，URL文件名:', urlName);
-          // 先嘗試精確匹配文件名
+          // 嘗試多種可能的字段名進行模糊匹配
           fileRecord = this.fileLibrary.find(file => {
-            if (!file.fileUrl) return false;
-            const fileUrlName = file.fileUrl.split('/').pop();
+            const fileUrl = file.fileUrl || file.url || file.file_url || file.filePath;
+            if (!fileUrl) return false;
+            const fileUrlName = fileUrl.split('/').pop();
+            console.log('比較:', fileUrlName, '===', urlName, '結果:', fileUrlName === urlName);
             return fileUrlName === urlName;
           });
           if (fileRecord) {
-            console.log('在fileLibrary中找到文件（模糊匹配）:', fileRecord.originalFilename);
-            return fileRecord.originalFilename;
+            console.log('在fileLibrary中找到文件（模糊匹配）:', fileRecord.originalFilename || fileRecord.originalName || fileRecord.filename);
+            return fileRecord.originalFilename || fileRecord.originalName || fileRecord.filename;
           }
         }
         
-        // 如果都找不到，返回URL的最後一部分作為文件名
+        // 如果模糊匹配也失敗，檢查是否是因為bucket不同
+        console.log('模糊匹配失敗，檢查所有fileLibrary中的文件URL:');
+        this.fileLibrary.forEach((file, index) => {
+          const fileUrl = file.fileUrl || file.url || file.file_url || file.filePath;
+          if (fileUrl) {
+            const fileUrlName = fileUrl.split('/').pop();
+            console.log(`文件${index}: ${fileUrlName} (原始名稱: ${file.originalFilename})`);
+          }
+        });
+        
+        // 如果本地找不到，嘗試從後端獲取文件信息
+        console.log('本地未找到文件記錄，嘗試從後端獲取文件信息...');
+        this.fetchFileInfoByUrl(url);
+        
+        // 如果都找不到，嘗試生成一個更友好的文件名
+        if (urlName) {
+          // 從時間戳和UUID中提取文件類型
+          const extension = urlName.split('.').pop();
+          if (extension) {
+            // 生成一個友好的文件名
+            const friendlyName = `文件.${extension}`;
+            console.log('生成友好文件名:', friendlyName);
+            return friendlyName;
+          }
+        }
+        
         console.log('未找到文件記錄，返回URL文件名:', urlName || url);
         return urlName || url;
       },
@@ -960,6 +1008,59 @@
       closeUploadProgress() {
         this.showUploadProgress = false;
         this.uploadCompleted = false;
+      },
+      
+      // 獲取所有作業中引用的文件信息
+      fetchAllReferencedFiles() {
+        const allUrls = new Set();
+        
+        // 收集所有作業中的文件URL
+        this.questionList.forEach(question => {
+          if (question.resourceUrls) {
+            const urls = this.getResourceUrlList(question.resourceUrls);
+            urls.forEach(url => allUrls.add(url));
+          }
+        });
+        
+        console.log('需要獲取信息的文件URL:', Array.from(allUrls));
+        
+        // 為每個URL獲取文件信息
+        allUrls.forEach(url => {
+          this.fetchFileInfoByUrl(url);
+        });
+      },
+      
+      // 根據URL從後端獲取文件信息
+      fetchFileInfoByUrl(url) {
+        // 檢查緩存
+        if (this.fileInfoCache.has(url)) {
+          console.log('從緩存中獲取文件信息:', this.fileInfoCache.get(url));
+          return;
+        }
+        
+        // 從URL中提取文件名
+        const fileName = url.split('/').pop();
+        if (!fileName) return;
+        
+        console.log('向後端請求文件信息:', fileName);
+        
+        // 發送請求到後端獲取文件信息
+        fetch(`http://localhost:8080/api/file/info?fileName=${encodeURIComponent(fileName)}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 0 && data.data) {
+              console.log('後端返回的文件信息:', data.data);
+              // 緩存文件信息
+              this.fileInfoCache.set(url, data.data.originalFilename || data.data.originalName || data.data.filename);
+              // 強制更新視圖
+              this.$forceUpdate();
+            } else {
+              console.log('後端未找到文件信息');
+            }
+          })
+          .catch(error => {
+            console.error('獲取文件信息失敗:', error);
+          });
       },
     }
   };

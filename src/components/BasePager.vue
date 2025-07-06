@@ -68,14 +68,23 @@ function goLast() {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  justify-content: center;
+  margin-top: 1rem;
 }
 .pager-btn {
-  padding: 0.3rem 0.8rem;
-  background-color: #f3f4f6;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  padding: 0.4rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 0.9rem;
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+.pager-btn:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 .pager-btn:disabled {
   opacity: 0.5;

@@ -21,21 +21,34 @@
         </div>
       </div>
       <div class="header-right">
+          <a href="#" @click.prevent="goToDashboard" class="dashboard-link" v-if="isLoggedIn">
+            <i class="user-icon am-icon-user"></i> 个人中心
+          </a>
           <button type="button" v-if="!isLoggedIn" @click="login">登录</button>
-          <button type="button" v-else @click="logout">退出登录</button>
+          <button type="button" v-else @click="confirmLogout">退出登录</button>
       </div>
     </div>
 
-    <div class="nav-wrapper header-default">
+    <!-- <div class="nav-wrapper header-default">
       <div class="nav">
-
+        <div class="nav-links">
+          <router-link to="/index" class="nav-link">首页</router-link>
+          <router-link to="/courses" class="nav-link">课程中心</router-link>
+          <router-link to="/dashboard" class="nav-link" v-if="isLoggedIn">我的学习</router-link>
+          <router-link to="/notice" class="nav-link">通知公告</router-link>
+          <router-link to="/about" class="nav-link">关于我们</router-link>
+          <router-link to="/use" class="nav-link">使用指南</router-link>
+        </div>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 
 <script>
 import AppFunctions from "../../../utils/appFunction.js";
+import { getUserRole, logout } from "../../../utils/authUtils";
+import { ElMessageBox } from 'element-plus';
+
 export default {
   name: "Header",
   components: {},
@@ -61,13 +74,40 @@ export default {
     login(){
       this.$router.push({ name: 'login' });
     },
-    logout(){
-      // 清除cookie
-      document.cookie = "satoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "userid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      // 跳转到登录页
-      this.$router.push({ name: 'login' });
+    async confirmLogout() {
+      try {
+        await ElMessageBox.confirm(
+          '确定要退出登录吗？',
+          '提示',
+          {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning',
+          }
+        );
+        this.handleLogout();
+      } catch {
+        // 用户取消退出登录
+      }
+    },
+    handleLogout(){
+      // 使用authUtils中的logout函数
+      logout();
+      // 更新登录状态
+      this.isLoggedIn = false;
+      this.username = '';
+      // 跳转到首页
+      this.$router.push({ name: 'index' });
+    },
+    goToDashboard() {
+      const userRole = getUserRole();
+      if (userRole === 3) {
+        this.$router.push('/admin/home');
+      } else if (userRole === 2) {
+        this.$router.push('/teacher/profile');
+      } else {
+        this.$router.push('/courses');
+      }
     },
     checkLoginStatus() {
       // 检查cookie中是否有用户信息
@@ -97,7 +137,6 @@ export default {
   beforeDestroy() {
     window.removeEventListener('scroll', this.toggleStickyHeader);
   },
-
 }
 </script>
 
@@ -111,4 +150,59 @@ export default {
   color: #0e90d2;
 }
 
+.nav-wrapper {
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #e5e5e5;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.nav {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px;
+  display: flex;
+  justify-content: center;
+}
+
+.nav-links {
+  display: flex;
+  justify-content: center;
+}
+
+.nav-link {
+  padding: 15px 20px;
+  color: #333;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.nav-link:hover, .nav-link.router-link-active {
+  color: #F98C53;
+}
+
+.dashboard-link {
+  display: inline-flex;
+  align-items: center;
+  color: #F98C53;
+  text-decoration: none;
+  font-weight: 500;
+  margin-right: 15px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.dashboard-link:hover {
+  background-color: rgba(249, 140, 83, 0.1);
+}
+
+.user-icon {
+  margin-right: 5px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
 </style>
