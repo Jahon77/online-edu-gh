@@ -15,7 +15,7 @@
             <div class="profile-header">
               <div class="avatar-section">
                 <img :src="teacherInfo.avatar || '/default-avatar.png'" alt="教师头像" class="avatar" />
-                <button class="change-avatar-btn" @click="changeAvatar">更换头像</button>
+                <!-- <button class="change-avatar-btn" @click="changeAvatar">更换头像</button> -->
               </div>
               <div class="basic-info">
                 <h3>{{ teacherInfo.name || '未设置姓名' }}</h3>
@@ -23,7 +23,9 @@
                 <p class="join-date">加入时间: {{ formatDate(teacherInfo.createdAt) }}</p>
               </div>
             </div>
-            
+            <el-button type="success" @click="goToSurveyText" class="survey-text-button">
+              问卷填写
+            </el-button>
             <div class="profile-details">
               <div class="detail-row">
                 <label>姓名:</label>
@@ -105,7 +107,7 @@
                 <h4>{{ course.title }}</h4>
                 <p class="course-category">{{ course.category }}</p>
                 <div class="course-stats">
-                  <span>{{ course.subscriberCount }} 学生</span>
+                  <span>{{ course.subscriberCount ?? 0 }} 学生</span>
                   <span>评分 ：{{ course.rating !== null && course.rating !== undefined ? course.rating.toFixed(1) : '暂无' }}</span>
                 </div>
                 <div class="course-status" :class="getStatusClass(course.status)">
@@ -333,7 +335,9 @@ const goToStudentManagement = () => {
 const goToCommentManagement = () => {
   router.push('/teacher/comment-management')
 }
-
+const goToSurveyText = () => {
+  router.push('/survey-text')
+}
 onMounted(() => {
   if (teacherId) {
     loadTeacherInfo()
