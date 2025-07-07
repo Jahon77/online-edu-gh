@@ -27,6 +27,14 @@ const routes = [
         path: '/login',
         name: 'login',
         component: Login,
+        props: route => ({
+            token: route.query.token,
+            username: route.query.username,
+            userId: route.query.userId,
+            role: route.query.role,
+            name: route.query.name,
+            error: route.query.error
+        }),
         meta: {
             requiresAuth: false
         }
