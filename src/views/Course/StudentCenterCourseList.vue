@@ -1,7 +1,9 @@
 <template>
   <div>
     <!-- 添加统一的顶部导航栏 -->
-    <SiteHeader />
+    <keep-alive>
+      <SiteHeader />
+    </keep-alive>
     
     <div class="student-center-course-list">
       <!-- 使用新的StudentSidebar组件 -->

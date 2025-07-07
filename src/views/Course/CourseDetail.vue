@@ -18,8 +18,10 @@
       @close="showConfirm = false"
     />
     
-    <!-- 顶部导航栏 - 与课程列表页一致 -->
-    <SiteHeader />
+    <!-- 添加统一的顶部导航栏 -->
+    <keep-alive>
+      <SiteHeader />
+    </keep-alive>
     
     <div class="course-detail">
       <div v-if="loading" class="loading">
