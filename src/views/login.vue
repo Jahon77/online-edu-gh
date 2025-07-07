@@ -82,6 +82,9 @@
             <a href="https://weibo.com/newlogin?tabtype=weibo&gid=102803&openLoginLayer=0&url=https%3A%2F%2Fwww.weibo.com%2F" class="social-icon">
               <img src="../assets/pictures/weibo.png" STYLE="height: 40px;width:40px">
             </a>
+            <a href="#" @click.prevent="giteeLogin" class="social-icon">
+              <img src="../assets/pictures/gitee.png" STYLE="height: 40px;width:40px">
+            </a>
 
           </div>
         </form>
@@ -146,6 +149,9 @@
             </a>
             <a href="https://weibo.com/newlogin?tabtype=weibo&gid=102803&openLoginLayer=0&url=https%3A%2F%2Fwww.weibo.com%2F" class="social-icon">
               <img src="../assets/pictures/weibo.png" STYLE="height: 40px;width:40px">
+            </a>
+            <a href="#" @click.prevent="giteeLogin" class="social-icon">
+              <img src="../assets/pictures/gitee.png" STYLE="height: 40px;width:40px">
             </a>
           </div>
         </form>
@@ -703,6 +709,14 @@ import { useUserStore } from '../stores/user';
 
 export default {
   name: "Login",
+  props: {
+    token: String,
+    username: String,
+    userId: String,
+    role: String,
+    name: String,
+    error: String
+  },
   data() {
     return {
       // 登录模式：selection, password, phone, face
@@ -753,6 +767,109 @@ export default {
   created() {
     // 在组件创建时获取验证码
     this.refreshCaptcha();
+    
+    console.log('Login组件created，检查第三方登录参数');
+    
+    // 尝试从props获取参数
+    let token = this.token;
+    let username = this.username;
+    let userId = this.userId;
+    let role = this.role;
+    let name = this.name;
+    let error = this.error;
+    
+    console.log('从props获取的参数:', { token, username, userId, role, name, error });
+    
+    // 如果props中没有参数，则从URL中读取（兼容直接访问URL的情况）
+    if (!token && !error) {
+      const urlParams = new URLSearchParams(window.location.search);
+      token = urlParams.get('token');
+      username = urlParams.get('username');
+      userId = urlParams.get('userId');
+      role = urlParams.get('role');
+      name = urlParams.get('name');
+      error = urlParams.get('error');
+      console.log('从URL获取的参数:', { token, username, userId, role, name, error });
+    }
+    
+    // 处理错误情况
+    if (error) {
+      // 如果有错误参数，显示错误信息
+      this.loginStatusMessage = decodeURIComponent(error);
+      console.log('登录错误:', this.loginStatusMessage);
+      return;
+    }
+    
+    // 处理登录成功的情况
+    if (token && userId) {
+      console.log('检测到登录成功参数，处理登录流程');
+      
+      try {
+        // 将userId和role转换为数字
+        const userIdInt = parseInt(userId);
+        const roleInt = parseInt(role);
+        
+        // 保存登录凭证到cookie - 与账号密码登录保持一致
+        console.log('保存登录凭证到cookie');
+        this.setCookie('satoken', token, 1);
+        this.setCookie('username', username, 1);
+        this.setCookie('userid', userIdInt, 1);
+        this.setCookie('name', name, 1);
+        this.setCookie('role', roleInt, 1);
+        
+        // 保存到localStorage - 与账号密码登录保持一致
+        console.log('保存登录凭证到localStorage');
+        const userData = {
+          token: token,
+          username: username,
+          userId: userIdInt,
+          name: name,
+          role: roleInt
+        };
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // 保存到Pinia store - 与账号密码登录保持一致
+        console.log('保存登录凭证到Pinia store');
+        const userStore = useUserStore();
+        userStore.setUser({
+          username: username,
+          name: name,
+          id: userIdInt,
+          role: roleInt
+        });
+        
+        this.loginStatusMessage = '第三方登录成功，正在跳转...';
+        console.log('用户已登录，准备跳转页面');
+        
+        // 检查是否有重定向路径 - 与账号密码登录保持一致
+        const redirectPath = localStorage.getItem('redirectPath');
+        if (redirectPath) {
+          localStorage.removeItem('redirectPath'); // 使用后删除
+          setTimeout(() => {
+            console.log('跳转到重定向路径:', redirectPath);
+            this.$router.push(redirectPath);
+          }, 2000);
+        } else {
+          // 根据角色跳转 - 与账号密码登录保持一致
+          setTimeout(() => {
+            console.log('开始页面跳转，角色:', roleInt);
+            if (roleInt === 3) {
+              console.log('跳转到管理员页面');
+              this.$router.push('/admin/home');
+            } else if (roleInt === 2) {
+              console.log('跳转到教师页面');
+              this.$router.push('/teacher/profile');
+            } else {
+              console.log('跳转到学生页面');
+              this.$router.push('/courses');
+            }
+          }, 2000);
+        }
+      } catch (error) {
+        console.error('处理第三方登录参数时出错:', error);
+        this.loginStatusMessage = '登录处理失败，请尝试其他方式登录';
+      }
+    }
   },
   mounted() {
     // 添加DOM事件监听
@@ -1113,11 +1230,11 @@ export default {
       // 检查用户名是否已存在
       axios.get(`http://localhost:8080/check-username?username=${this.registerForm.username}`)
         .then(response => {
-          if (response.data.data.exists) {
+          // 添加数据结构检查，防止空值错误
+          if (response.data && response.data.data && response.data.data.exists) {
             alert('用户名已存在');
             return;
           }
-          
           // 显示认证弹窗
           this.showAuthModal = true;
         })
@@ -1343,9 +1460,13 @@ export default {
         this.isProcessing = false;
       }
     },
-    setCookieForLogin(name, value, days) {
-      setCookie(name, value, days);
-      console.log(`Cookie已设置: ${name}=${value}`);
+    giteeLogin() {
+      // 实现Gitee登录逻辑
+      console.log('正在跳转到Gitee授权页面...');
+      window.location.href = 'http://localhost:8080/api/oauth/gitee/login';
+      // 注意：需要在后端实现以下API:
+      // 1. GET /api/oauth/gitee/login - 重定向到Gitee授权页面
+      // 2. GET /api/oauth/gitee/callback - 处理Gitee回调并登录用户
     },
   },
   watch: {
