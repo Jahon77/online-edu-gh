@@ -4,47 +4,8 @@
     <SiteHeader />
     
     <div class="dashboard-page">
-      <!-- 左侧导航栏 -->
-      <div class="sidebar">
-        <div class="logo">
-          <span class="logo-icon">📚</span>
-          <span class="logo-text">智学通</span>
-        </div>
-        
-        <div class="nav-item active">
-          <div class="nav-icon">📊</div>
-          <div class="nav-text">Dashboard</div>
-        </div>
-        
-        <div class="nav-item" @click="navigateTo('/course/list')">
-          <div class="nav-icon">📝</div>
-          <div class="nav-text">所有课程</div>
-        </div>
-        
-        <div class="nav-item">
-          <div class="nav-icon">📚</div>
-          <div class="nav-text">资源</div>
-        </div>
-        
-        <div class="nav-item" @click="navigateTo('/chat')">
-          <div class="nav-icon">💬</div>
-          <div class="nav-text">聊天</div>
-        </div>
-        
-        <div class="nav-item">
-          <div class="nav-icon">⚙️</div>
-          <div class="nav-text">设置</div>
-        </div>
-        
-        <div class="upgrade-container">
-          <div class="upgrade-lock">🔒</div>
-          <div class="upgrade-text">
-            升级到 <span class="pro-text">Pro</span><br>
-            获取更多资源
-          </div>
-          <button class="upgrade-btn">升级</button>
-        </div>
-      </div>
+      <!-- 使用StudentSidebar组件替换原有侧边栏 -->
+      <StudentSidebar activePage="dashboard" :showUpgrade="true" />
       
       <!-- 主内容区 -->
       <div class="main-content">
@@ -138,12 +99,14 @@
 import axios from 'axios';
 import StudentDashboard from '@/components/studentCenter/StudentDashboard.vue';
 import SiteHeader from '@/components/commen/header/SiteHeader.vue';
+import StudentSidebar from '@/components/studentCenter/StudentSidebar.vue';
 
 export default {
   name: 'Dashboard',
   components: {
     StudentDashboard,
-    SiteHeader
+    SiteHeader,
+    StudentSidebar
   },
   data() {
     return {
@@ -325,107 +288,7 @@ export default {
   font-family: 'Segoe UI', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
 }
 
-/* 左侧导航栏样式 */
-.sidebar {
-  width: 240px;
-  background-color: white;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
-  border-right: 1px solid rgba(249, 140, 83, 0.1);
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  margin-bottom: 30px;
-  color: #F98C53;
-  padding: 10px;
-}
-
-.logo-icon {
-  font-size: 24px;
-  margin-right: 10px;
-  color: #F98C53;
-}
-
-.logo-text {
-  font-size: 20px;
-  font-weight: bold;
-  color: #F98C53;
-  letter-spacing: 0.5px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  padding: 15px;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.nav-item:hover {
-  background-color: #F9F2EF;
-}
-
-.nav-item.active {
-  background-color: #F98C53;
-  color: white;
-}
-
-.nav-icon {
-  font-size: 20px;
-  margin-right: 15px;
-}
-
-.nav-text {
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.upgrade-container {
-  margin-top: auto;
-  background-color: #F9F2EF;
-  border-radius: 15px;
-  padding: 20px;
-  text-align: center;
-  position: relative;
-}
-
-.upgrade-lock {
-  font-size: 40px;
-  margin-bottom: 10px;
-}
-
-.upgrade-text {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 15px;
-}
-
-.pro-text {
-  color: #F98C53;
-  font-weight: bold;
-}
-
-.upgrade-btn {
-  background-color: #F98C53;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  padding: 8px 30px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.upgrade-btn:hover {
-  background-color: #e67a42;
-  transform: translateY(-2px);
-}
+/* 删除了左侧导航栏样式，现在使用Sidebar组件 */
 
 /* 主内容区样式 */
 .main-content {

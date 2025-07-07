@@ -36,7 +36,7 @@
           <div class="slider-content">
             <h2>{{image.title}}</h2>
             <p>{{image.description}}</p>
-            <button class="btn-explore">立即探索</button>
+            <button class="btn-explore" @click="scrollToDiscoverSection">立即探索</button>
           </div>
         </div>
       </div>
@@ -57,7 +57,7 @@
     <!-- 主内容区 -->
     <div class="main-content">
       <!-- 分类导航 -->
-      <div class="category-nav">
+      <div id="discover-section" class="category-nav">
         <h2 class="section-title">发现好课</h2>
         <div class="category-tabs">
           <button 
@@ -89,25 +89,25 @@
 
       <!-- 筛选区 -->
       <div class="filter-section">
-        <div class="tabs">
-          <button :class="{active: sort==='recommend'}" @click="changeSort('recommend')">推荐</button>
-          <button :class="{active: sort==='new'}" @click="changeSort('new')">最新</button>
-          <button :class="{active: sort==='hot'}" @click="changeSort('hot')">热门</button>
+          <div class="tabs">
+            <button :class="{active: sort==='recommend'}" @click="changeSort('recommend')">推荐</button>
+            <button :class="{active: sort==='new'}" @click="changeSort('new')">最新</button>
+            <button :class="{active: sort==='hot'}" @click="changeSort('hot')">热门</button>
+          </div>
+          <div class="filters">
+            <select v-model="level">
+              <option value="">全部层级</option>
+              <option value="基础">基础</option>
+              <option value="目标">目标</option>
+              <option value="菁英">菁英</option>
+            </select>
+            <select v-model="subject">
+            <option value="">全部分类</option>
+              <option v-for="s in subjects" :key="s" :value="s">{{ s }}</option>
+            </select>
+          <button @click="applyFilters" class="filter-btn">筛选</button>
+          </div>
         </div>
-        <div class="filters">
-          <select v-model="level">
-            <option value="">全部层级</option>
-            <option value="基础">基础</option>
-            <option value="目标">目标</option>
-            <option value="菁英">菁英</option>
-          </select>
-          <select v-model="subject">
-          <option value="">全部分类</option>
-            <option v-for="s in subjects" :key="s" :value="s">{{ s }}</option>
-          </select>
-        <button @click="applyFilters" class="filter-btn">筛选</button>
-        </div>
-      </div>
 
       <!-- 课程列表 -->
       <div class="course-layout">
@@ -309,28 +309,28 @@
       <div class="featured-section">
         <h2 class="section-title">精选推荐</h2>
         <div class="featured-grid">
-          <div class="featured-card big-card">
-            <img src="/src/assets/images/course/course-bar/course-bar1-1.png" alt="精选课程">
+          <div v-if="topCourses.length > 0" class="featured-card big-card" @click="goDetail(topCourses[0].id)">
+            <img :src="topCourses[0].coverUrl || '/src/assets/images/course/course-bar/course-bar1-1.png'" alt="精选课程">
             <div class="featured-content">
-              <h3>2025备考指导</h3>
-              <p>全学科高分策略 · 高效学习规划</p>
-              <div class="tag">热门</div>
+              <h3>{{ topCourses[0].title }}</h3>
+              <p>{{ topCourses[0].category }} · {{ topCourses[0].level }}</p>
+              <div class="tag">{{ topCourses[0].subscriberCount || 0 }}人已订阅</div>
             </div>
           </div>
-          <div class="featured-card">
-            <img src="/src/assets/images/course/course-bar/course-bar2-2.png" alt="精选课程">
+          <div v-if="topCourses.length > 1" class="featured-card" @click="goDetail(topCourses[1].id)">
+            <img :src="topCourses[1].coverUrl || '/src/assets/images/course/course-bar/course-bar2-2.png'" alt="精选课程">
             <div class="featured-content">
-              <h3>数学思维训练营</h3>
-              <p>提高解题能力和数学思维</p>
-              <div class="tag tag-green">基础</div>
+              <h3>{{ topCourses[1].title }}</h3>
+              <p>{{ topCourses[1].category }}</p>
+              <div class="tag" :class="'tag-' + getLevelClass(topCourses[1].level)">{{ topCourses[1].subscriberCount || 0 }}人已订阅</div>
             </div>
           </div>
-          <div class="featured-card">
-            <img src="/src/assets/images/course/course-bar/course-bar3-3.png" alt="精选课程">
+          <div v-if="topCourses.length > 2" class="featured-card" @click="goDetail(topCourses[2].id)">
+            <img :src="topCourses[2].coverUrl || '/src/assets/images/course/course-bar/course-bar3-3.png'" alt="精选课程">
             <div class="featured-content">
-              <h3>英语听力突破</h3>
-              <p>独家听力训练方法</p>
-              <div class="tag tag-blue">进阶</div>
+              <h3>{{ topCourses[2].title }}</h3>
+              <p>{{ topCourses[2].category }}</p>
+              <div class="tag" :class="'tag-' + getLevelClass(topCourses[2].level)">{{ topCourses[2].subscriberCount || 0 }}人已订阅</div>
             </div>
           </div>
         </div>
@@ -385,12 +385,14 @@
         <!-- 成果展示内容 -->
         <div class="achievement-content">
           <!-- 考研督学 -->
-          <div class="achievement-item active" id="tab1">
-            <div class="achievement-image">
-              <img src="/src/assets/images/course/course-show/systen1.png" alt="考研督学成果">
-              <div class="achievement-badge">
-                <span>98%</span>
-                <small>通过率</small>
+          <div class="achievement-item active achievement-3d-item" id="tab1">
+            <div class="achievement-image achievement-3d-card">
+              <div class="card-3d-wrapper">
+                <img src="/src/assets/images/course/course-show/systen1.png" alt="考研督学成果">
+                <div class="achievement-badge">
+                  <span>98%</span>
+                  <small>通过率</small>
+                </div>
               </div>
             </div>
             <div class="achievement-info">
@@ -422,12 +424,14 @@
           </div>
           
           <!-- 职场技能 -->
-          <div class="achievement-item" id="tab2">
-            <div class="achievement-image">
-              <img src="/src/assets/images/course/course-show/systen1.png" alt="职场技能成果">
-              <div class="achievement-badge">
-                <span>92%</span>
-                <small>就业率</small>
+          <div class="achievement-item achievement-3d-item" id="tab2">
+            <div class="achievement-image achievement-3d-card">
+              <div class="card-3d-wrapper">
+                <img src="/src/assets/images/course/course-show/systen1.png" alt="职场技能成果">
+                <div class="achievement-badge">
+                  <span>92%</span>
+                  <small>就业率</small>
+                </div>
               </div>
             </div>
             <div class="achievement-info">
@@ -459,12 +463,14 @@
           </div>
           
           <!-- 兴趣探索 -->
-          <div class="achievement-item" id="tab3">
-            <div class="achievement-image">
-              <img src="/src/assets/images/course/course-show/systen1.png" alt="兴趣探索成果">
-              <div class="achievement-badge">
-                <span>96%</span>
-                <small>满意度</small>
+          <div class="achievement-item achievement-3d-item" id="tab3">
+            <div class="achievement-image achievement-3d-card">
+              <div class="card-3d-wrapper">
+                <img src="/src/assets/images/course/course-show/systen1.png" alt="兴趣探索成果">
+                <div class="achievement-badge">
+                  <span>96%</span>
+                  <small>满意度</small>
+                </div>
               </div>
             </div>
             <div class="achievement-info">
@@ -700,6 +706,38 @@
         <button @click="testApiCall" class="test-api-btn">测试API</button>
       </div>
     </footer>
+      
+    <!-- 人脸注册提示弹窗 -->
+    <div class="auth-modal" v-if="showFaceRegisterModal">
+      <div class="auth-modal-content face-register-modal">
+        <h3>人脸识别注册</h3>
+        <p>检测到您尚未注册人脸识别，是否现在进行注册？</p>
+        <p class="modal-desc">注册人脸识别后可以使用人脸快速登录，更加安全便捷。</p>
+        <div v-if="!showFaceCamera">
+          <div class="button-group">
+            <button @click="closeFaceRegisterModal" class="btn modal-btn secondary">暂不注册</button>
+            <button @click="startFaceRegistration" class="btn modal-btn">立即注册</button>
+          </div>
+        </div>
+        <div v-else>
+          <canvas ref="canvas" style="display:none;"></canvas>
+          <div v-if="!capturedImage">
+            <video ref="video" autoplay playsinline class="video-preview"></video>
+            <button @click="capture" class="btn modal-btn">拍照</button>
+          </div>
+          <div v-else>
+            <img :src="capturedImage" class="video-preview" />
+            <div class="button-group">
+              <button @click="resetCapture" class="btn modal-btn secondary">重拍</button>
+              <button @click="registerFace" class="btn modal-btn" :disabled="isProcessing">
+                {{ isProcessing ? '注册中...' : '确认注册' }}
+              </button>
+            </div>
+          </div>
+          <button @click="closeCamera" class="btn modal-btn transparent">关闭</button>
+        </div>
+      </div>
+    </div>
       </div>
     </template>
     
@@ -720,68 +758,76 @@
         return {
           courses: [],
           allCourses: [], // 存储所有课程，用于探索更多
+          topCourses: [], // 存储订阅人数最多的三个课程
           sort: 'recommend',
           level: '',
           subject: '',
-      currentCategory: '', // 当前选中的课程分类
-      subjects: ['学科主修', '职场技能', '人文通识', '考研督学', '兴趣探索'], // 更新为新的分类
-      categoryImages: { // 分类图片映射
-        '': '/src/assets/images/course/course-bar/course-bar1-1.png', // 全部课程
-        '学科主修': '/src/assets/images/course/course-bar/course-bar1-3.png',
-        '职场技能': '/src/assets/images/course/course-bar/course-bar1-2.png',
-        '人文通识': '/src/assets/images/course/course-bar/course-bar1-7.png',
-        '考研督学': '/src/assets/images/course/course-bar/course-bar1-4.png',
-        '兴趣探索': '/src/assets/images/course/course-bar/course-bar1-6.png'
-      },
-      trainingItems: [
-        { 
-          title: '素质培养', 
-          description: '以国家战略为导向，以素养人才的最新标准为教研准则',
-          icon: 'cube'
-        },
-        { 
-          title: '升学规划', 
-          description: '通过AI技术，为学生提供全面、个性化、深层次的升学规划服务',
-          icon: 'arrow'
-        },
-        { 
-          title: '赛考服务', 
-          description: '提供一站式权威赛事辅导，助力特长培养，收获竞赛好成绩',
-          icon: 'star'
-        }
-      ],
-      currentSlide: 0,
-      carouselImages: [
-        { 
-          url: '/src/assets/images/course/list-show1.png', 
-          alt: '轮播图1',
-          title: '精品课程，成就未来',
-          description: '海量优质课程，助你实现学习目标'
-        },
-        { 
-          url: '/src/assets/images/course/list-show2.png', 
-          alt: '轮播图2',
-          title: '名师授课，学习无忧',
-          description: '一线名师在线指导，助你攻克学习难关'
-        },
-        { 
-          url: '/src/assets/images/course/list-show3.png', 
-          alt: '轮播图3',
-          title: '个性化学习，提高效率',
-          description: '根据学习需求定制专属学习计划'
-        },
-        { 
-          url: '/src/assets/images/course/list-show4.png', 
-          alt: '轮播图4',
-          title: '全面提升，综合发展',
-          description: '全方位培养能力，助力综合素质提升'
-        }
-      ],
-      // progressWidth已移除
+          currentCategory: '', // 当前选中的课程分类
+          subjects: ['学科主修', '职场技能', '人文通识', '考研督学', '兴趣探索'], // 更新为新的分类
+          categoryImages: { // 分类图片映射
+            '': '/src/assets/images/course/course-bar/course-bar1-1.png', // 全部课程
+            '学科主修': '/src/assets/images/course/course-bar/course-bar1-3.png',
+            '职场技能': '/src/assets/images/course/course-bar/course-bar1-2.png',
+            '人文通识': '/src/assets/images/course/course-bar/course-bar1-7.png',
+            '考研督学': '/src/assets/images/course/course-bar/course-bar1-4.png',
+            '兴趣探索': '/src/assets/images/course/course-bar/course-bar1-6.png'
+          },
+          trainingItems: [
+            { 
+              title: '素质培养', 
+              description: '以国家战略为导向，以素养人才的最新标准为教研准则',
+              icon: 'cube'
+            },
+            { 
+              title: '升学规划', 
+              description: '通过AI技术，为学生提供全面、个性化、深层次的升学规划服务',
+              icon: 'arrow'
+            },
+            { 
+              title: '赛考服务', 
+              description: '提供一站式权威赛事辅导，助力特长培养，收获竞赛好成绩',
+              icon: 'star'
+            }
+          ],
+          currentSlide: 0,
+          carouselImages: [
+            { 
+              url: '/src/assets/images/course/list-show1.png', 
+              alt: '轮播图1',
+              title: '精品课程，成就未来',
+              description: '海量优质课程，助你实现学习目标'
+            },
+            { 
+              url: '/src/assets/images/course/list-show2.png', 
+              alt: '轮播图2',
+              title: '名师授课，学习无忧',
+              description: '一线名师在线指导，助你攻克学习难关'
+            },
+            { 
+              url: '/src/assets/images/course/list-show3.png', 
+              alt: '轮播图3',
+              title: '个性化学习，提高效率',
+              description: '根据学习需求定制专属学习计划'
+            },
+            { 
+              url: '/src/assets/images/course/list-show4.png', 
+              alt: '轮播图4',
+              title: '全面提升，综合发展',
+              description: '全方位培养能力，助力综合素质提升'
+            }
+          ],
+          // 人脸注册相关
+          showFaceRegisterModal: false,
+          showFaceCamera: false,
+          capturedImage: null,
+          isProcessing: false,
+          stream: null,
+          userId: null
         }
       },
       mounted() {
         this.fetchCourses();
+        this.fetchTopCourses(); // 确保在组件加载时也获取热门课程
         this.startCarousel(); // 启动轮播
         window.addEventListener('scroll', this.handleScroll); // 添加滚动监听
         
@@ -790,6 +836,9 @@
         
         // 初始化教师卡片3D效果
         this.initTeacherCards();
+        
+        // 检查用户是否注册了人脸识别
+        this.checkFaceRegistration();
         
         // 测试API调用
         console.log("开始测试API调用...");
@@ -800,6 +849,11 @@
       beforeUnmount() {
         this.stopCarousel(); // 清理定时器
         window.removeEventListener('scroll', this.handleScroll); // 移除滚动监听
+        // 确保关闭摄像头
+        if (this.stream) {
+          this.stream.getTracks().forEach(track => track.stop());
+          this.stream = null;
+        }
       },
       methods: {
         getCardColor(level) {
@@ -886,24 +940,43 @@
         if (courses && Array.isArray(courses) && courses.length > 0) {
           this.allCourses = courses;
           this.courses = courses;
+          
+          // 获取订阅人数最多的三个课程
+          this.fetchTopCourses();
+          
           console.log("设置课程数据成功，共", this.courses.length, "门课程");
         } else {
           console.warn('未获取到课程数据或数据为空');
           this.allCourses = [];
           this.courses = [];
+          this.topCourses = [];
         }
       } catch (err) {
         console.error('获取课程列表失败:', err);
         this.allCourses = [];
         this.courses = [];
+        this.topCourses = [];
       }
     },
     
-    // 探索更多功能
     // 获取分类对应的图片
     getCategoryImage() {
       const category = this.currentCategory || '';
       return this.categoryImages[category];
+    },
+    
+    // 滚动到"发现好课"部分
+    scrollToDiscoverSection() {
+      const discoverSection = document.getElementById('discover-section');
+      if (discoverSection) {
+        // 获取元素位置
+        const rect = discoverSection.getBoundingClientRect();
+        // 滚动到元素位置，添加平滑滚动效果
+        window.scrollTo({
+          top: window.scrollY + rect.top - 80, // 减去80px的偏移，让元素更靠上显示
+          behavior: 'smooth'
+        });
+      }
     },
     
     // 探索更多功能
@@ -1003,7 +1076,80 @@
                 });
               });
             }
+
+            // 添加3D鼠标移动效果
+            this.initAchievement3DEffect();
           }, 500);
+        },
+        
+        // 初始化教学成果的3D效果
+        initAchievement3DEffect() {
+          const achievementCards = document.querySelectorAll('.achievement-3d-card');
+          
+          achievementCards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+              const cardRect = card.getBoundingClientRect();
+              const cardWidth = cardRect.width;
+              const cardHeight = cardRect.height;
+              
+              // 计算鼠标在卡片内的相对位置
+              const mouseX = (e.clientX - cardRect.left) / cardWidth - 0.5; // -0.5到0.5之间
+              const mouseY = (e.clientY - cardRect.top) / cardHeight - 0.5; // -0.5到0.5之间
+              
+              // 根据鼠标位置计算旋转角度
+              const rotateY = mouseX * 10; // -5°到5°之间
+              const rotateX = -mouseY * 10; // -5°到5°之间
+              
+              // 计算卡片和图标的位移
+              const translateZ = 20;
+              
+              // 应用3D变换
+              const cardWrapper = card.querySelector('.card-3d-wrapper');
+              if (cardWrapper) {
+                cardWrapper.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(${translateZ}px)`;
+              }
+              
+              // 添加光影效果
+              const gradientX = (mouseX + 0.5) * 100;
+              const gradientY = (mouseY + 0.5) * 100;
+              card.style.background = `radial-gradient(circle at ${gradientX}% ${gradientY}%, rgba(255,255,255,0.2), transparent)`;
+            });
+            
+            card.addEventListener('mouseleave', () => {
+              const cardWrapper = card.querySelector('.card-3d-wrapper');
+              if (cardWrapper) {
+                cardWrapper.style.transform = '';
+              }
+              card.style.background = '';
+            });
+          });
+          
+          // 监听切换标签事件，确保新显示的内容也有3D效果
+          const tabBtns = document.querySelectorAll('.tab-btn');
+          tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+              // 给新选中的标签页添加延迟，等待其显示后再初始化3D效果
+              setTimeout(() => this.refreshAchievement3DEffect(), 100);
+            });
+          });
+        },
+        
+        // 刷新3D效果，用于标签切换后
+        refreshAchievement3DEffect() {
+          const activeItem = document.querySelector('.achievement-item.active');
+          if (activeItem) {
+            const card = activeItem.querySelector('.achievement-3d-card');
+            if (card) {
+              // 添加一个短暂的动画，使卡片看起来"激活"
+              const cardWrapper = card.querySelector('.card-3d-wrapper');
+              if (cardWrapper) {
+                cardWrapper.style.transform = 'perspective(1000px) rotateX(2deg) rotateY(2deg) translateZ(10px)';
+                setTimeout(() => {
+                  cardWrapper.style.transform = '';
+                }, 500);
+              }
+            }
+          }
         },
         
         // 初始化教师卡片3D效果
@@ -1103,6 +1249,202 @@
           // 跳转到登录页面或首页
           this.$router.push('/login');
         },
+        // 获取订阅人数最多的三个课程
+        async fetchTopCourses() {
+          try {
+            // 使用服务获取所有课程
+            const allCourses = await studentCourseListService.getAllCourses();
+            
+            // 按订阅人数排序
+            const sortedCourses = allCourses.sort((a, b) => {
+              const aCount = a.subscriberCount || 0;
+              const bCount = b.subscriberCount || 0;
+              return bCount - aCount;
+            });
+            
+            // 获取前三个课程
+            this.topCourses = sortedCourses.slice(0, 3);
+            console.log("获取到订阅人数最多的三个课程:", this.topCourses);
+          } catch (err) {
+            console.error('获取热门课程失败:', err);
+            this.topCourses = [];
+          }
+        },
+        // 检查用户是否注册了人脸识别
+        async checkFaceRegistration() {
+          try {
+            // 从cookie获取userId
+            const userId = this.getCookie('userid');
+            if (!userId) {
+              console.log('未找到用户ID，无法检查人脸注册状态');
+              return;
+            }
+            
+            this.userId = userId; // 保存userId以备后用
+            
+            // 检查本地存储中是否已经记录了该用户的选择
+            const hasDeclined = localStorage.getItem(`face_register_declined_${userId}`);
+            if (hasDeclined) {
+              console.log('用户之前已选择暂不注册，不再显示提示');
+              return;
+            }
+            
+            // 获取用户信息
+            const response = await axios.get(`/user/user-info?userId=${userId}`);
+            console.log('获取用户信息响应:', response);
+            
+            if (response.data && response.data.status === 0) {
+              const user = response.data.data;
+              
+              // 检查是否已注册人脸
+              if (user.isFaceRegistered === false) {
+                console.log('用户未注册人脸，显示注册提示');
+                this.showFaceRegisterModal = true;
+              } else {
+                console.log('用户已注册人脸，无需显示提示');
+              }
+            }
+          } catch (error) {
+            console.error('检查人脸注册状态失败:', error);
+          }
+        },
+        
+        // 获取Cookie值
+        getCookie(name) {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop().split(';').shift();
+          return null;
+        },
+        
+        // 关闭人脸注册提示弹窗
+        closeFaceRegisterModal() {
+          this.showFaceRegisterModal = false;
+          // 记录用户选择不注册的决定
+          if (this.userId) {
+            localStorage.setItem(`face_register_declined_${this.userId}`, 'true');
+          }
+        },
+        
+        // 开始人脸注册流程
+        startFaceRegistration() {
+          this.showFaceCamera = true;
+          this.openCamera();
+        },
+        
+        // 打开摄像头
+        async openCamera() {
+          if (this.stream) return;
+          try {
+            this.stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            this.$nextTick(() => {
+              const videoElement = this.$refs.video;
+              if(videoElement) {
+                videoElement.srcObject = this.stream;
+              }
+            });
+          } catch (err) {
+            alert('无法访问摄像头，请检查权限。');
+            console.error("Error accessing camera: ", err);
+            this.closeCamera();
+          }
+        },
+        
+        // 关闭摄像头
+        closeCamera() {
+          if (this.stream) {
+            this.stream.getTracks().forEach(track => track.stop());
+            this.stream = null;
+          }
+          this.resetCapture();
+          this.showFaceCamera = false;
+          this.showFaceRegisterModal = false;
+        },
+        
+        // 拍照
+        capture() {
+          const videoElement = this.$refs.video;
+          const canvasElement = this.$refs.canvas;
+          if (videoElement && canvasElement) {
+            if (videoElement.videoWidth === 0) {
+              alert('摄像头尚未准备好或权限被阻止，请稍等片刻或刷新重试。');
+              return;
+            }
+            const context = canvasElement.getContext('2d');
+            
+            // 设置较小的尺寸以减小图像大小
+            const maxWidth = 640;
+            const maxHeight = 480;
+            let width = videoElement.videoWidth;
+            let height = videoElement.videoHeight;
+            
+            // 保持宽高比的情况下调整尺寸
+            if (width > height) {
+              if (width > maxWidth) {
+                height = Math.round(height * maxWidth / width);
+                width = maxWidth;
+              }
+            } else {
+              if (height > maxHeight) {
+                width = Math.round(width * maxHeight / height);
+                height = maxHeight;
+              }
+            }
+            
+            canvasElement.width = width;
+            canvasElement.height = height;
+            context.drawImage(videoElement, 0, 0, width, height);
+            
+            // 使用较低的图像质量
+            this.capturedImage = canvasElement.toDataURL('image/jpeg', 0.7);
+            
+            console.log('图像已压缩，大小约为：' + Math.round(this.capturedImage.length / 1024) + 'KB');
+          } else {
+            alert('拍照功能初始化失败，请关闭弹窗后重试。');
+          }
+        },
+        
+        // 重置拍照
+        resetCapture() {
+          this.capturedImage = null;
+          if (this.showFaceCamera) {
+            this.$nextTick(() => this.openCamera());
+          }
+        },
+        
+        // 注册人脸
+        async registerFace() {
+          if (!this.userId) {
+            alert('用户ID无效，请重新登录。');
+            return;
+          }
+          if (!this.capturedImage) {
+            alert('请先拍照');
+            return;
+          }
+          this.isProcessing = true;
+          try {
+            const response = await axios.post('/api/face/register', {
+              userId: parseInt(this.userId),
+              image: this.capturedImage,
+            });
+            console.log('人脸注册响应:', response);
+            if (response.data.status === 0) {
+              alert('人脸注册成功！');
+              // 注册成功后，移除本地存储中的记录
+              localStorage.removeItem(`face_register_declined_${this.userId}`);
+              this.closeCamera();
+            } else {
+              alert(response.data.message || '人脸注册失败，请重试。');
+            }
+          } catch (error) {
+            console.error('人脸注册错误:', error);
+            const errorMessage = error.response?.data?.message || '请求失败，请检查网络或联系管理员。';
+            alert(errorMessage);
+          } finally {
+            this.isProcessing = false;
+          }
+        }
       }
     }
     </script>
@@ -1581,7 +1923,7 @@
 .section-title {
   font-size: 24px;
   font-weight: 600;
-  margin-bottom: 20px;
+      margin-bottom: 20px;
   color: #D4AF37; /* 金色 */
   position: relative;
   padding-left: 15px;
@@ -1625,138 +1967,98 @@
   padding-bottom: 10px;
 }
 
-/* 分类标签样式改进 */
+/* 分类标签样式 - 玻璃拟态效果 (Glassmorphism) */
 .category-tab {
-  background: transparent;
-  border: 1px solid rgba(0,0,0,0.1);
-  padding: 10px 25px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 14px 30px;
   font-size: 16px;
-  color: #333; /* 默认深色文字 */
+  color: #333; /* 修改为黑色字体 */
   cursor: pointer;
-  margin-right: 10px;
-  border-radius: 20px;
-  transition: all 0.3s ease;
+  margin-right: 18px;
+  border-radius: 50px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  /* 移除阴影效果 */
   z-index: 1;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-align: center;
 }
 
-/* 简化闪光效果 */
+/* 按钮内部发光效果 */
 .category-tab::before {
   content: '';
   position: absolute;
   top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
-  transition: left 0.5s ease;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at 30% 30%, 
+    rgba(255, 255, 255, 0.3) 0%, 
+    rgba(255, 255, 255, 0.05) 60%, 
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
   z-index: -1;
 }
 
-/* 悬停时显示颜色和白色文字 */
+/* 悬停效果 */
 .category-tab:hover {
-  color: white; /* 悬停时文字变白色 */
+  transform: translateY(-3px) scale(1.02);
+  /* 移除阴影 */
+  color: #333; /* 保持黑色字体 */
 }
 
 .category-tab:hover::before {
-  left: 100%;
+  opacity: 1;
 }
 
-/* 使用指定的色卡颜色，但只在悬停时显示 */
-.category-tab:nth-child(1):hover {
-  background-color: #F98C53; /* 橙色 */
-  border-color: #F98C53;
-}
-
-.category-tab:nth-child(2):hover {
-  background-color: #D2E0AA; /* 浅绿色 */
-  border-color: #D2E0AA;
-  color: white; /* 白色文字 */
-}
-
-.category-tab:nth-child(3):hover {
-  background-color: #ABD7FB; /* 浅蓝色 */
-  border-color: #ABD7FB;
-  color: white; /* 白色文字 */
-}
-
-.category-tab:nth-child(4):hover {
-  background-color: #F9F2EF; /* 浅粉色 */
-  border-color: #F9F2EF;
-  color: white; /* 白色文字 */
-}
-
-.category-tab:nth-child(5):hover {
-  background-color: #FCCEB4; /* 浅橙色 */
-  border-color: #FCCEB4;
-  color: white; /* 白色文字 */
-}
-
-.category-tab:nth-child(6):hover {
-  background-color: #F98C53; /* 橙色 */
-  border-color: #F98C53;
-  color: white; /* 白色文字 */
-}
-
-.category-tab.active {
-  font-weight: 600;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  color: white; /* 激活状态文字为白色 */
-}
-
-.category-tab:hover:not(.active) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
+/* 按下效果 */
 .category-tab:active {
-  transform: scale(0.98);
+  transform: translateY(1px) scale(0.98);
+  /* 移除阴影 */
 }
 
-/* 更新激活状态的样式 */
+/* 激活状态样式 */
+.category-tab.active {
+  color: white; /* 激活状态保持白色文字，便于区分 */
+  font-weight: 600;
+  /* 移除阴影 */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.7px;
+}
+
+/* 各按钮颜色 - 确保与背景不同 */
 .category-tab.active:nth-child(1) {
-  background-color: #F98C53;
-  border-color: #F98C53;
-  box-shadow: 0 4px 8px rgba(249, 140, 83, 0.3);
-  color: white;
+  background: linear-gradient(135deg, rgba(249, 140, 83, 0.9), rgba(249, 140, 83, 0.7)); /* 橙色 */
 }
 
 .category-tab.active:nth-child(2) {
-  background-color: #D2E0AA;
-  border-color: #D2E0AA;
-  box-shadow: 0 4px 8px rgba(210, 224, 170, 0.3);
-  color: white; /* 白色文字 */
+  background: linear-gradient(135deg, rgba(210, 224, 170, 0.9), rgba(210, 224, 170, 0.7)); /* 浅绿色 */
 }
 
 .category-tab.active:nth-child(3) {
-  background-color: #ABD7FB;
-  border-color: #ABD7FB;
-  box-shadow: 0 4px 8px rgba(171, 215, 251, 0.3);
-  color: white; /* 白色文字 */
+  background: linear-gradient(135deg, rgba(171, 215, 251, 0.9), rgba(171, 215, 251, 0.7)); /* 浅蓝色 */
 }
 
 .category-tab.active:nth-child(4) {
-  background-color: #F9F2EF;
-  border-color: #F9F2EF;
-  box-shadow: 0 4px 8px rgba(249, 242, 239, 0.3);
-  color: white; /* 白色文字 */
+  background: linear-gradient(135deg, rgba(252, 206, 180, 0.9), rgba(252, 206, 180, 0.7)); /* 改为浅橙色，避免与背景相似 */
 }
 
 .category-tab.active:nth-child(5) {
-  background-color: #FCCEB4;
-  border-color: #FCCEB4;
-  box-shadow: 0 4px 8px rgba(252, 206, 180, 0.3);
-  color: white; /* 白色文字 */
+  background: linear-gradient(135deg, rgba(249, 140, 83, 0.9), rgba(249, 140, 83, 0.7)); /* 改为橙色 */
 }
 
 .category-tab.active:nth-child(6) {
-  background-color: #F98C53;
-  border-color: #F98C53;
-  box-shadow: 0 4px 8px rgba(249, 140, 83, 0.3);
-  color: white; /* 白色文字 */
+  background: linear-gradient(135deg, rgba(210, 224, 170, 0.9), rgba(210, 224, 170, 0.7)); /* 改为浅绿色 */
 }
 
 
@@ -1790,20 +2092,52 @@
   margin-bottom: 35px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03);
   transition: all 0.4s ease;
-  border: 1px solid rgba(171,215,251,0.2);
+  border: none;
   position: relative;
   overflow: hidden;
 }
 
+/* 移除原有的顶部彩色条 */
 .filter-section::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(90deg, #ABD7FB, #D2E0AA, #F9F2EF, #FCCEB4, #F98C53);
-  opacity: 0.7;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(171,215,251,0.1) 0%, rgba(171,215,251,0) 70%);
+  z-index: -1;
+  animation: rotate 20s linear infinite;
+}
+
+/* 添加流动彩色边框 */
+.filter-section::after {
+  content: '';
+  position: absolute;
+  inset: 0; /* 四周都有边框 */
+  border: 5px solid transparent; /* 增加边框宽度从3px到5px */
+  border-radius: 16px;
+  background: linear-gradient(90deg, 
+    #F98C53, #FCCEB4, #ABD7FB, #D2E0AA, #F98C53
+  ) border-box;
+  background-size: 300% 100%; /* 增加渐变范围使流动更明显 */
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, 
+                linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  animation: borderRotate 4s linear infinite; /* 加快动画速度从6秒到4秒 */
+  z-index: -1; /* 降低z-index，确保不会遮挡交互元素 */
+  pointer-events: none; /* 确保边框不会捕获鼠标事件 */
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes borderRotate {
+  0% { background-position: 0% 0; }
+  100% { background-position: 300% 0; } /* 调整到300%匹配background-size */
 }
 
 .filter-section:hover {
@@ -1816,6 +2150,8 @@
   display: flex;
   border-bottom: 1px solid rgba(171,215,251,0.2);
   padding-bottom: 8px;
+  position: relative;
+  z-index: 2; /* 确保在边框之上 */
 }
 
 .tabs button {
@@ -1826,7 +2162,7 @@
   font-size: 16px;
   font-weight: 500;
   color: #777;
-  cursor: pointer;
+      cursor: pointer;
   position: relative;
   transition: all 0.3s ease;
   border-radius: 30px;
@@ -1857,11 +2193,12 @@
 }
 
 .filters {
-  display: flex;
-  flex-wrap: wrap;
+      display: flex;
+      flex-wrap: wrap;
   gap: 15px;
   align-items: center;
   position: relative;
+  z-index: 2; /* 确保在边框之上 */
 }
 
 /* 美化下拉列表 */
@@ -1872,7 +2209,7 @@
   min-width: 150px;
   font-size: 15px;
   color: #444;
-  cursor: pointer;
+      cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
   background-color: #fff;
@@ -1907,7 +2244,7 @@
   font-weight: 500;
   transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
+      overflow: hidden;
 }
 
 .filter-btn::before {
@@ -2031,7 +2368,7 @@
   flex: 0 0 32%; /* 第一行的课程卡片占据66%的宽度，与后面行的三个卡片宽度总和一致 */
 }
 
-.course-card:hover {
+    .course-card:hover {
   transform: translateY(-8px);
 }
 
@@ -2058,10 +2395,10 @@
   overflow: hidden;
 }
 
-.cover {
-  width: 100%;
+    .cover {
+      width: 100%;
   height: 100%;
-  object-fit: cover;
+      object-fit: cover;
   border-radius: 12px 12px 0 0;
   transition: transform 0.5s ease, filter 0.5s ease;
 }
@@ -2356,6 +2693,24 @@
   background-color: #ABD7FB;
   color: #333;
   box-shadow: 0 2px 8px rgba(171, 215, 251, 0.4);
+}
+
+.tag-basic {
+  background-color: #D2E0AA;
+  color: #333;
+  box-shadow: 0 2px 8px rgba(210, 224, 170, 0.4);
+}
+
+.tag-target {
+  background-color: #ABD7FB;
+  color: #333;
+  box-shadow: 0 2px 8px rgba(171, 215, 251, 0.4);
+}
+
+.tag-elite {
+  background-color: #FCCEB4;
+  color: #333;
+  box-shadow: 0 2px 8px rgba(252, 206, 180, 0.4);
 }
 
 /* 学习路径 */
@@ -2906,6 +3261,7 @@
 .achievement-section {
   margin: 60px 0;
   padding: 20px;
+  perspective: 1000px; /* 添加3D视角 */
 }
 
 .achievement-tabs {
@@ -2948,6 +3304,7 @@
 .achievement-content {
   position: relative;
   min-height: 400px;
+  perspective: 2000px; /* 增强3D效果 */
 }
 
 .achievement-item {
@@ -2956,6 +3313,11 @@
   gap: 30px;
   align-items: center;
   animation: fadeIn 0.5s ease;
+  transform-style: preserve-3d;
+}
+
+.achievement-3d-item {
+  transition: transform 0.5s ease;
 }
 
 @keyframes fadeIn {
@@ -2974,15 +3336,40 @@
   box-shadow: 0 10px 30px rgba(171, 215, 251, 0.3);
 }
 
-.achievement-image img {
+.achievement-3d-card {
+  transform-style: preserve-3d;
+  perspective: 1200px;
+}
+
+.card-3d-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+}
+
+.achievement-3d-card:hover .card-3d-wrapper {
+  transform: translateZ(20px);
+}
+
+.card-3d-wrapper img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.5s ease;
+  transform-style: preserve-3d;
 }
 
-.achievement-item:hover .achievement-image img {
-  transform: scale(1.05);
+.achievement-item.active .card-3d-wrapper img {
+  animation: floatImage 6s ease-in-out infinite;
+}
+
+@keyframes floatImage {
+  0%, 100% { transform: translateY(0) rotateX(0) rotateY(0); }
+  25% { transform: translateY(-6px) rotateX(2deg) rotateY(-2deg); }
+  50% { transform: translateY(0) rotateX(0) rotateY(0); }
+  75% { transform: translateY(6px) rotateX(-2deg) rotateY(2deg); }
 }
 
 .achievement-badge {
@@ -2999,6 +3386,14 @@
   justify-content: center;
   align-items: center;
   box-shadow: 0 5px 15px rgba(171, 215, 251, 0.5);
+  transition: transform 0.5s ease, box-shadow 0.5s ease;
+  transform: translateZ(30px); /* 3D效果 */
+  animation: pulseBadge 3s infinite ease-in-out;
+}
+
+@keyframes pulseBadge {
+  0%, 100% { transform: translateZ(30px) scale(1); box-shadow: 0 5px 15px rgba(171, 215, 251, 0.5); }
+  50% { transform: translateZ(40px) scale(1.05); box-shadow: 0 10px 25px rgba(171, 215, 251, 0.7); }
 }
 
 .achievement-badge span {
@@ -3497,4 +3892,88 @@
   transform: scale(0.95);
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
-</style>
+
+/* 人脸注册弹窗样式 */
+.auth-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.auth-modal-content {
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  text-align: center;
+}
+
+.face-register-modal h3 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.face-register-modal p {
+  font-size: 16px;
+  margin-bottom: 15px;
+  color: #555;
+}
+
+.modal-desc {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 25px;
+}
+
+.video-preview {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  background-color: #eee;
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.modal-btn {
+  padding: 10px 25px;
+  border-radius: 30px;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.3s;
+  width: auto;
+  height: auto;
+}
+
+.modal-btn.secondary {
+  background-color: #f0f0f0;
+  color: #555;
+}
+
+.modal-btn.transparent {
+  background: none;
+  color: #888;
+  margin-top: 15px;
+}
+
+.modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+    </style>

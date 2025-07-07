@@ -1,46 +1,7 @@
 <template>
   <div class="student-center-course-list">
-    <!-- 左侧导航栏 -->
-    <div class="sidebar">
-      <div class="logo">
-        <span class="logo-icon">📚</span>
-        <span class="logo-text">智学通</span>
-      </div>
-      
-      <div class="nav-item" @click="navigateTo('/course/dashboard')">
-        <div class="nav-icon">📊</div>
-        <div class="nav-text">Dashboard</div>
-      </div>
-      
-      <div class="nav-item active">
-        <div class="nav-icon">📝</div>
-        <div class="nav-text">所有课程</div>
-      </div>
-      
-      <div class="nav-item">
-        <div class="nav-icon">📚</div>
-        <div class="nav-text">资源</div>
-      </div>
-      
-      <div class="nav-item" @click="navigateTo('/chat')">
-        <div class="nav-icon">💬</div>
-        <div class="nav-text">聊天</div>
-      </div>
-      
-      <div class="nav-item">
-        <div class="nav-icon">⚙️</div>
-        <div class="nav-text">设置</div>
-      </div>
-      
-      <div class="upgrade-container">
-        <div class="upgrade-lock">🔒</div>
-        <div class="upgrade-text">
-          升级到 <span class="pro-text">Pro</span><br>
-          获取更多资源
-        </div>
-        <button class="upgrade-btn">升级</button>
-      </div>
-    </div>
+    <!-- 使用Sidebar组件替换原有侧边栏，并禁用升级提示 -->
+    <Sidebar activePage="course-list" :showUpgrade="false" />
     
     <!-- 主内容区 -->
     <div class="main-content">
@@ -173,60 +134,19 @@
         </div>
       </div>
     </div>
-    
-    <!-- 右侧边栏 -->
-    <div class="right-sidebar">
-      <!-- 个人信息 -->
-      <div class="user-profile">
-        <div class="notification-icon">🔔</div>
-        <div class="user-avatar">
-          <img :src="userAvatar" :alt="username">
-        </div>
-        <div class="user-name">{{ username }} <span class="dropdown-icon">▼</span></div>
-      </div>
-      
-      <!-- 学习统计 -->
-      <div class="stats-section">
-        <div class="section-header">
-          <h3>学习统计</h3>
-        </div>
-        
-        <div class="stats-card">
-          <div class="stat-item">
-            <div class="stat-icon" style="background-color: #F98C53">📚</div>
-            <div class="stat-info">
-              <div class="stat-value">{{ uncompletedCourses.length + completedCourses.length }}</div>
-              <div class="stat-label">已订阅课程</div>
-            </div>
-          </div>
-          
-          <div class="stat-item">
-            <div class="stat-icon" style="background-color: #D2E0AA">✓</div>
-            <div class="stat-info">
-              <div class="stat-value">{{ completedCourses.length }}</div>
-              <div class="stat-label">已完成课程</div>
-            </div>
-          </div>
-          
-          <div class="stat-item">
-            <div class="stat-icon" style="background-color: #ABD7FB">❤️</div>
-            <div class="stat-info">
-              <div class="stat-value">{{ likedCourses.length }}</div>
-              <div class="stat-label">已收藏课程</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
 import StudentCenterService from '@/utils/studentCenterService';
+import Sidebar from '@/components/commen/sidebar/Sidebar.vue';
 
 export default {
   name: 'StudentCenterCourseList',
+  components: {
+    Sidebar
+  },
   data() {
     return {
       userId: 7, // 默认用户ID
@@ -443,95 +363,64 @@ export default {
   min-height: 100vh;
   background-color: #f5f5f7;
   font-family: 'Roboto', Arial, sans-serif;
+  position: relative;
 }
 
-/* 左侧导航栏样式 */
-.sidebar {
-  width: 220px;
-  background-color: #fff;
+/* 添加回被删除的滚动条样式 */
+/* 横向展示的课程卡片样式 */
+.courses-horizontal-grid {
+  display: flex;
+  overflow-x: auto;
+  gap: 20px;
+  padding: 10px 0;
+  scrollbar-width: thin;
+  scrollbar-color: #F98C53 #f0f0f0;
+}
+
+.courses-horizontal-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.courses-horizontal-grid::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+.courses-horizontal-grid::-webkit-scrollbar-thumb {
+  background-color: #F98C53;
+  border-radius: 4px;
+}
+
+.today-course-card {
+  flex: 0 0 auto;
+  width: 280px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   padding: 20px;
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+  transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.logo {
-  display: flex;
-  align-items: center;
-  margin-bottom: 40px;
-  padding: 0 10px;
+.today-course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
 }
 
-.logo-icon {
-  font-size: 24px;
-  margin-right: 10px;
+/* 动态进度环动画 */
+@keyframes progress {
+  0% {
+    stroke-dasharray: 0 100;
+  }
 }
 
-.logo-text {
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 15px;
-  border-radius: 10px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.nav-item:hover {
-  background-color: #f0f0f0;
-}
-
-.nav-item.active {
-  background-color: #F98C53;
-  color: white;
-}
-
-.nav-icon {
-  font-size: 18px;
-  margin-right: 12px;
-}
-
-.upgrade-container {
-  margin-top: auto;
-  background-color: #f9f0ff;
-  border-radius: 10px;
-  padding: 15px;
-  text-align: center;
-}
-
-.upgrade-lock {
-  font-size: 24px;
-  margin-bottom: 10px;
-}
-
-.upgrade-text {
-  margin-bottom: 12px;
-  font-size: 14px;
-}
-
-.pro-text {
-  font-weight: 600;
-  color: #6200ea;
-}
-
-.upgrade-btn {
-  background-color: #6200ea;
-  color: white;
-  border: none;
-  padding: 8px 20px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.upgrade-btn:hover {
-  background-color: #5000d6;
+.circle {
+  fill: none;
+  stroke-width: 3.8;
+  stroke-linecap: round;
+  stroke: #F98C53;
+  animation: progress 1.5s ease-out forwards;
 }
 
 /* 主内容区样式 */
@@ -704,7 +593,7 @@ export default {
   fill: none;
   stroke-width: 3.8;
   stroke-linecap: round;
-  stroke: #F98C53; /* 使用橙色 */
+  stroke: #F98C53;
   animation: progress 1.5s ease-out forwards;
 }
 
@@ -953,151 +842,4 @@ export default {
   font-size: 18px;
   color: #333;
 }
-
-/* 右侧边栏样式 */
-.right-sidebar {
-  width: 280px;
-  padding: 30px 20px;
-  background-color: #fff;
-  box-shadow: -2px 0 10px rgba(0,0,0,0.05);
-}
-
-.user-profile {
-  display: flex;
-  align-items: center;
-  margin-bottom: 30px;
-}
-
-.notification-icon {
-  margin-right: auto;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  overflow: hidden;
-  margin-right: 12px;
-}
-
-.user-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.user-name {
-  font-weight: 500;
-}
-
-.dropdown-icon {
-  font-size: 10px;
-  margin-left: 5px;
-}
-
-.stats-section {
-  margin-bottom: 30px;
-}
-
-.stats-card {
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 15px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-.stats-card .stat-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.stats-card .stat-item:last-child {
-  margin-bottom: 0;
-}
-
-.stats-card .stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 15px;
-  color: white;
-  font-size: 18px;
-}
-
-.stats-card .stat-info {
-  flex: 1;
-}
-
-.stats-card .stat-value {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 3px;
-}
-
-.stats-card .stat-label {
-  font-size: 14px;
-  color: #666;
-}
 </style>
-
-/* 横向展示的课程卡片样式 */
-.courses-horizontal-grid {
-  display: flex;
-  overflow-x: auto;
-  gap: 20px;
-  padding: 10px 0;
-  scrollbar-width: thin;
-  scrollbar-color: #F98C53 #f0f0f0;
-}
-
-.courses-horizontal-grid::-webkit-scrollbar {
-  height: 8px;
-}
-
-.courses-horizontal-grid::-webkit-scrollbar-track {
-  background: #f0f0f0;
-  border-radius: 4px;
-}
-
-.courses-horizontal-grid::-webkit-scrollbar-thumb {
-  background-color: #F98C53;
-  border-radius: 4px;
-}
-
-.today-course-card {
-  flex: 0 0 auto;
-  width: 280px;
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.today-course-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-}
-
-/* 动态进度环动画 */
-@keyframes progress {
-  0% {
-    stroke-dasharray: 0 100;
-  }
-}
-
-.circle {
-  fill: none;
-  stroke-width: 3.8;
-  stroke-linecap: round;
-  stroke: #F98C53;
-  animation: progress 1.5s ease-out forwards;
-}

@@ -4,47 +4,8 @@
     <SiteHeader />
     
     <div class="student-center-course-list">
-      <!-- 左侧导航栏 -->
-      <div class="sidebar">
-        <div class="logo">
-          <span class="logo-icon">📚</span>
-          <span class="logo-text">智学通</span>
-        </div>
-        
-        <div class="nav-item" @click="navigateTo('/dashboard')">
-          <div class="nav-icon">📊</div>
-          <div class="nav-text">Dashboard</div>
-        </div>
-        
-        <div class="nav-item active">
-          <div class="nav-icon">📝</div>
-          <div class="nav-text">所有课程</div>
-        </div>
-        
-        <div class="nav-item">
-          <div class="nav-icon">📚</div>
-          <div class="nav-text">资源</div>
-        </div>
-        
-        <div class="nav-item" @click="navigateTo('/chat')">
-          <div class="nav-icon">💬</div>
-          <div class="nav-text">聊天</div>
-        </div>
-        
-        <div class="nav-item">
-          <div class="nav-icon">⚙️</div>
-          <div class="nav-text">设置</div>
-        </div>
-        
-        <div class="upgrade-container">
-          <div class="upgrade-lock">🔒</div>
-          <div class="upgrade-text">
-            升级到 <span class="pro-text">Pro</span><br>
-            获取更多资源
-          </div>
-          <button class="upgrade-btn">升级</button>
-        </div>
-      </div>
+      <!-- 使用新的StudentSidebar组件 -->
+      <StudentSidebar activePage="course-list" :showUpgrade="true" />
       
       <!-- 主内容区 -->
       <div class="main-content">
@@ -205,74 +166,6 @@
           </div>
         </div>
       </div>
-      
-      <!-- 右侧边栏 -->
-      <div class="right-sidebar">
-        <!-- 个人信息 -->
-        <div class="user-profile">
-          <div class="notification-icon">🔔</div>
-          <div class="user-avatar">
-            <img :src="userAvatar" :alt="username">
-          </div>
-          <div class="user-name">{{ username }} <span class="dropdown-icon">▼</span></div>
-        </div>
-        
-        <!-- 学习统计 -->
-        <div class="stats-section">
-          <div class="section-header">
-            <h3>学习统计</h3>
-          </div>
-          
-          <div class="card-navigation">
-            <span class="nav-arrow">&#10095;</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- 右侧边栏 -->
-    <div class="right-sidebar">
-      <!-- 个人信息 -->
-      <div class="user-profile">
-        <div class="notification-icon">🔔</div>
-        <div class="user-avatar">
-          <img :src="userAvatar" :alt="name || username">
-        </div>
-        <div class="user-name">{{ name || username }} <span class="dropdown-icon">▼</span></div>
-      </div>
-      
-      <!-- 学习统计 -->
-      <div class="stats-section">
-        <div class="section-header">
-          <h3>学习统计</h3>
-        </div>
-        
-        <div class="stats-card">
-          <div class="stat-item">
-            <div class="stat-icon" style="background-color: #F98C53">📚</div>
-            <div class="stat-info">
-              <div class="stat-value">{{ uncompletedCourses.length + completedCourses.length }}</div>
-              <div class="stat-label">已订阅课程</div>
-            </div>
-            
-            <div class="stat-item">
-              <div class="stat-icon" style="background-color: #D2E0AA">✓</div>
-              <div class="stat-info">
-                <div class="stat-value">{{ completedCourses.length }}</div>
-                <div class="stat-label">已完成课程</div>
-              </div>
-            </div>
-            
-            <div class="stat-item">
-              <div class="stat-icon" style="background-color: #ABD7FB">❤️</div>
-              <div class="stat-info">
-                <div class="stat-value">{{ likedCourses.length }}</div>
-                <div class="stat-label">已收藏课程</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -281,11 +174,13 @@
 import axios from 'axios';
 import StudentCenterService from '@/utils/studentCenterService';
 import SiteHeader from '@/components/commen/header/SiteHeader.vue';
+import StudentSidebar from '@/components/studentCenter/StudentSidebar.vue';
 
 export default {
   name: 'StudentCenterCourseList',
   components: {
-    SiteHeader
+    SiteHeader,
+    StudentSidebar
   },
   data() {
     return {
@@ -541,167 +436,7 @@ export default {
   font-family: 'Roboto', Arial, sans-serif;
 }
 
-/* 左侧导航栏样式 */
-.sidebar {
-  width: 220px;
-  background: linear-gradient(135deg, #fff 0%, #F9F2EF 100%);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 2px 0 15px rgba(249, 140, 83, 0.1);
-  position: relative;
-  overflow: hidden;
-}
-
-.sidebar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(45deg, rgba(249, 140, 83, 0.05) 0%, rgba(210, 224, 170, 0.05) 50%, rgba(171, 215, 251, 0.05) 100%);
-  pointer-events: none;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  margin-bottom: 40px;
-  padding: 15px;
-  background: linear-gradient(135deg, #F98C53, #FCCEB4);
-  border-radius: 12px;
-  color: white;
-  box-shadow: 0 4px 15px rgba(249, 140, 83, 0.3);
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 1;
-}
-
-.logo:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(249, 140, 83, 0.4);
-}
-
-.logo-icon {
-  font-size: 24px;
-  margin-right: 10px;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-}
-
-.logo-text {
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  padding: 15px;
-  border-radius: 12px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  z-index: 1;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-}
-
-.nav-item:hover {
-  background: linear-gradient(135deg, #ABD7FB, #D2E0AA);
-  color: white;
-  transform: translateX(5px);
-  box-shadow: 0 4px 15px rgba(171, 215, 251, 0.3);
-}
-
-.nav-item.active {
-  background: linear-gradient(135deg, #F98C53, #FCCEB4);
-  color: white;
-  box-shadow: 0 4px 15px rgba(249, 140, 83, 0.4);
-}
-
-.nav-icon {
-  font-size: 18px;
-  margin-right: 12px;
-  transition: transform 0.3s ease;
-}
-
-.nav-item:hover .nav-icon {
-  transform: scale(1.2) rotate(5deg);
-}
-
-.upgrade-container {
-  margin-top: auto;
-  background: linear-gradient(135deg, #F9F2EF, #FCCEB4);
-  border-radius: 15px;
-  padding: 20px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 15px rgba(249, 242, 239, 0.3);
-}
-
-.upgrade-container::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  animation: shimmer 3s infinite;
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-  100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-}
-
-.upgrade-lock {
-  font-size: 28px;
-  margin-bottom: 10px;
-  animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-  40% { transform: translateY(-10px); }
-  60% { transform: translateY(-5px); }
-}
-
-.upgrade-text {
-  margin-bottom: 12px;
-  font-size: 14px;
-}
-
-.pro-text {
-  font-weight: 600;
-  color: #6200ea;
-}
-
-.upgrade-btn {
-  background: linear-gradient(135deg, #F98C53, #FCCEB4);
-  color: white;
-  border: none;
-  padding: 10px 25px;
-  border-radius: 25px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(249, 140, 83, 0.3);
-}
-
-.upgrade-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(249, 140, 83, 0.4);
-  background: linear-gradient(135deg, #FCCEB4, #F98C53);
-}
+/* 左侧导航栏样式已移至StudentSidebar组件 */
 
 /* 主内容区样式 */
 .main-content {
@@ -1318,97 +1053,6 @@ export default {
   background: linear-gradient(45deg, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.9));
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-}
-
-/* 右侧边栏样式 */
-.right-sidebar {
-  width: 280px;
-  padding: 30px 20px;
-  background-color: #fff;
-  box-shadow: -2px 0 10px rgba(0,0,0,0.05);
-}
-
-.user-profile {
-  display: flex;
-  align-items: center;
-  margin-bottom: 30px;
-}
-
-.notification-icon {
-  margin-right: auto;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  overflow: hidden;
-  margin-right: 12px;
-}
-
-.user-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.user-name {
-  font-weight: 500;
-}
-
-.dropdown-icon {
-  font-size: 10px;
-  margin-left: 5px;
-}
-
-.stats-section {
-  margin-bottom: 30px;
-}
-
-.stats-card {
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 15px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-.stats-card .stat-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.stats-card .stat-item:last-child {
-  margin-bottom: 0;
-}
-
-.stats-card .stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 15px;
-  color: white;
-  font-size: 18px;
-}
-
-.stats-card .stat-info {
-  flex: 1;
-}
-
-.stats-card .stat-value {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 3px;
-}
-
-.stats-card .stat-label {
-  font-size: 14px;
-  color: #666;
 }
 
 /* 响应式布局调整 */
