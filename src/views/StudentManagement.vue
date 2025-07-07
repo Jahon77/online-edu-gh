@@ -3,20 +3,20 @@
   <div class="page">
     <TeacherHeader />
     <div class="main-content">
-      <div class="vertical-title">学生管理</div>
+      <!-- <div class="vertical-title">学生管理</div> -->
       <div class="content-container">
         <div class="page-header">
-          <h2>学生管理与互动</h2>
+          <h2>学生学习管理</h2>
           <p>查看选修您课程的学生列表和观看进度</p>
           <!-- 論壇入口按鈕 -->
-          <div class="forum-entry">
+          <!-- <div class="forum-entry">
             <button @click="goToForum" class="forum-btn">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
               </svg>
-              進入論壇
+              进入论坛
             </button>
-          </div>
+          </div> -->
         </div>
 
         <!-- 课程选择器 -->
@@ -211,9 +211,9 @@ const groupByChapter = (lessonList) => {
   }, {})
 }
 
-const goToForum = () => {
-  router.push('/forum')
-}
+// const goToForum = () => {
+//   router.push('/forum')
+// }
 
 onMounted(() => loadTeacherCourses())
 </script>

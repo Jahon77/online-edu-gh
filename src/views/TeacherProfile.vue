@@ -2,7 +2,7 @@
   <div class="page">
     <TeacherHeader />
     <div class="main-content">
-      <div class="vertical-title">个人中心</div>
+      <!-- <div class="vertical-title">个人中心</div> -->
       <div class="content-container">
         <div class="header-banner">
           <h2>教师个人中心</h2>

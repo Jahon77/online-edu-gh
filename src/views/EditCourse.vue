@@ -5,7 +5,10 @@
     <div class="main-content">
       <!-- 课程编辑表单 -->
       <div class="form-container">
-        <h3>课程信息</h3>
+        <div class="title-row">
+          <h3>课程信息</h3>
+          <button class="back-btn" @click="$router.push('/teacher/courseList')">返回课程列表</button>
+        </div>
         <form @submit.prevent="saveCourse">
           <div class="form-layout">
             <!-- 左侧字段 -->
@@ -819,4 +822,12 @@ button:hover {
 .video-btn:hover {
   background: #1976d2;
 }
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
 </style>

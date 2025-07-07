@@ -6,9 +6,9 @@
       <!-- 主内容区：左侧垂直标题 + 表单 -->
       <div class="main-content">
         <!-- 左侧垂直标题 -->
-        <div class="vertical-title">
+        <!-- <div class="vertical-title">
           创建新课程
-        </div>
+        </div> -->
   
         <!-- 表单容器（优化后） -->
         <div class="form-container">

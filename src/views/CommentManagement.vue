@@ -3,7 +3,7 @@
   <div class="page">
     <TeacherHeader />
     <div class="main-content">
-      <div class="vertical-title">评论管理</div>
+      <!-- <div class="vertical-title">评论管理</div> -->
       <div class="content-container">
         <div class="page-header">
           <h2>学生评价管理</h2>
