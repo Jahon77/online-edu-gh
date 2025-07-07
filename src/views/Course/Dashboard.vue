@@ -1,7 +1,9 @@
 <template>
   <div>
     <!-- 添加统一的顶部导航栏 -->
-    <SiteHeader />
+    <keep-alive>
+      <SiteHeader />
+    </keep-alive>
     
     <div class="dashboard-page">
       <!-- 使用StudentSidebar组件替换原有侧边栏 -->
