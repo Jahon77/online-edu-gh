@@ -306,9 +306,13 @@ const loadComments = async () => {
       const averageRating = totalComments > 0 ? (sumRating / totalComments) : 0
       const satisfiedComments = comments.value.filter(comment => Number(comment.stars) >= 4).length
       const satisfactionRate = Math.round((satisfiedComments / totalComments) * 100)
-      
+
+      // 统计唯一学生数
+      const uniqueStudentIds = new Set(comments.value.map(c => c.userId || c.studentId));
+      const totalStudents = uniqueStudentIds.size;
+
       courseStats.value = {
-        totalStudents: comments.value.length,
+        totalStudents: totalStudents,
         averageRating: averageRating,
         totalComments: totalComments,
         satisfactionRate: satisfactionRate
