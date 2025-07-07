@@ -686,11 +686,33 @@ export default {
   margin-bottom: 40px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05),
               0 0 0 1px rgba(255, 255, 255, 0.6) inset;
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: none;
   position: relative;
   overflow: hidden;
   animation: fadeIn 0.8s ease both;
   animation-delay: 0.4s;
+}
+
+/* 添加流动彩色边框 */
+.filter-section::after {
+  content: '';
+  position: absolute;
+  inset: 0; /* 四周都有边框 */
+  border: 3px solid transparent; /* 增加边框宽度 */
+  border-radius: 16px;
+  background: linear-gradient(90deg, 
+    #F98C53, #FCCEB4, #ABD7FB, #D2E0AA, #F98C53
+  ) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, 
+                linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  animation: borderRotate 6s linear infinite;
+}
+
+@keyframes borderRotate {
+  0% { background-position: 0% 0; }
+  100% { background-position: 400% 0; }
 }
 
 @keyframes fadeIn {

@@ -265,6 +265,15 @@ const routes = [
         }
     },
     {
+        path: '/survey_test',
+        name: 'SurveyTest',
+        component: () => import('../views/survey_text.vue'),
+        meta: {
+            requiresAuth: true,
+            roles: [1, 2, 3] // 所有登录用户可访问
+        }
+    },
+    {
         path: '/admin',
         component: () => import('@/views/admin/admin_layout.vue'),
         meta: {
