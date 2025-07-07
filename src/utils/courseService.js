@@ -149,12 +149,14 @@ const courseService = {
    * @param {Number} courseId 课程ID
    * @param {String} content 评论内容
    * @param {Number} rating 评分
+   * @param {String} username 用户名
+   * @param {String} userAvatar 用户头像
    * @returns {Promise} 返回操作结果
    */
-  async addCourseComment(courseId, content, rating) {
+  async addCourseComment(courseId, content, rating, username, userAvatar) {
     const studentId = this.getCurrentUserId();
     return axios.post(`/api/courses/${courseId}/comments`, null, {
-      params: { studentId, content, rating }
+      params: { studentId, content, rating, username, userAvatar }
     });
   },
 

@@ -1,5 +1,5 @@
 <template>
-  <header class="site-header">
+  <header class="site-header" :class="{ 'scrolled': isScrolled }">
     <div class="header-container">
       <div class="logo">
         <h1>智学通</h1>
@@ -51,7 +51,8 @@ export default {
         id: null
       },
       defaultAvatarUrl: '/src/assets/images/defult_user_avatar.png',
-      userDataInitialized: false
+      userDataInitialized: false,
+      isScrolled: false,
     };
   },
   computed: {
@@ -75,6 +76,10 @@ export default {
   },
   mounted() {
     this.initUserData();
+    window.addEventListener('scroll', this.handleScroll);
+  },
+  beforeUnmount() {
+    window.removeEventListener('scroll', this.handleScroll);
   },
   methods: {
     getStoredUserData() {
@@ -202,6 +207,9 @@ export default {
         // 更新存储的数据
         this.storeUserData(this.currentUser);
       }
+    },
+    handleScroll() {
+      this.isScrolled = window.scrollY > 50;
     }
   }
 };
@@ -209,11 +217,22 @@ export default {
 
 <style scoped>
 .site-header {
-  background-color: #fff;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  background: linear-gradient(135deg, rgba(249, 140, 83, 0.85), rgba(252, 206, 180, 0.85));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(249, 140, 83, 0.3);
   position: sticky;
   top: 0;
   z-index: 100;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.site-header.scrolled {
+  background: linear-gradient(135deg, rgba(249, 140, 83, 0.65), rgba(252, 206, 180, 0.65));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 4px 25px rgba(249, 140, 83, 0.4);
 }
 
 .header-container {
@@ -227,8 +246,23 @@ export default {
 
 .logo h1 {
   margin: 0;
-  color: #F98C53;
-  font-size: 24px;
+  color: white;
+  font-size: 28px;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  letter-spacing: 1px;
+  position: relative;
+}
+
+.logo h1::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  background-color: white;
+  border-radius: 3px;
 }
 
 .main-nav ul {
@@ -240,18 +274,28 @@ export default {
 
 .main-nav li {
   margin: 0 15px;
+  position: relative;
 }
 
 .main-nav a {
   text-decoration: none;
-  color: #333;
+  color: white;
   font-weight: 500;
-  padding: 5px 0;
+  padding: 8px 0;
   position: relative;
+  transition: all 0.3s ease;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+}
+
+.main-nav a:hover {
+  transform: translateY(-2px);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .main-nav .router-link-active {
-  color: #F98C53;
+  color: white;
+  font-weight: 700;
 }
 
 .main-nav .router-link-active::after {
@@ -260,12 +304,15 @@ export default {
   left: 0;
   bottom: 0;
   width: 100%;
-  height: 2px;
-  background-color: #F98C53;
+  height: 3px;
+  background-color: white;
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .main-nav li.active a {
-  color: #F98C53;
+  color: white;
+  font-weight: 700;
 }
 
 .main-nav li.active a::after {
@@ -274,8 +321,10 @@ export default {
   left: 0;
   bottom: 0;
   width: 100%;
-  height: 2px;
-  background-color: #F98C53;
+  height: 3px;
+  background-color: white;
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .user-actions {
@@ -284,21 +333,37 @@ export default {
 }
 
 .btn-download {
-  background-color: #F98C53;
-  color: white;
+  background: linear-gradient(135deg, #ABD7FB, #D2E0AA);
+  color: #333;
   border: none;
-  padding: 8px 15px;
-  border-radius: 20px;
+  padding: 10px 20px;
+  border-radius: 25px;
   margin-right: 15px;
   cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(171, 215, 251, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-download:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(171, 215, 251, 0.4);
 }
 
 .user-avatar {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   overflow: hidden;
   margin-right: 15px;
+  border: 3px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.1);
+  border-color: white;
 }
 
 .user-avatar img {
@@ -308,17 +373,25 @@ export default {
 }
 
 .btn-logout {
-  background: #dc3545;
+  background: rgba(255, 255, 255, 0.2);
   color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 20px;
+  border: 2px solid white;
+  padding: 8px 20px;
+  border-radius: 25px;
   cursor: pointer;
   font-size: 14px;
-  transition: background-color 0.3s ease;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .btn-logout:hover {
-  background: #c82333;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 </style> 
+
+
+
