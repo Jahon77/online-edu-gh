@@ -5,7 +5,10 @@
     <div class="main-content">
       <!-- 课程编辑表单 -->
       <div class="form-container">
-        <h3>课程信息</h3>
+        <div class="title-row">
+          <h3>课程信息</h3>
+          <button class="back-btn" @click="$router.push('/teacher/courseList')">返回课程列表</button>
+        </div>
         <form @submit.prevent="saveCourse">
           <div class="form-layout">
             <!-- 左侧字段 -->
@@ -73,19 +76,21 @@
         <div v-show="!isCollapsed" class="collapse-content">
           <div v-for="(item, index) in chapterList" :key="item.chapter.id" class="chapter-card">
             <div class="form-row chapter-header">
-              <span>章节 {{ index + 1 }}：{{ item.chapter.title }}</span>
-              <button @click="deleteChapter(item.chapter.id)" class="delete-btn">删除章节</button>
+              <input v-model="item.chapter.title" class="edit-input" />
+              <button @click="deleteChapter(item.chapter.id)" class="delete-btn" :disabled="chapterList.length === 1">删除章节</button>
             </div>
 
             <div class="lesson-list">
               <div v-for="lesson in item.lessons" :key="lesson.id" class="form-row lesson-item" style="flex-direction:column;align-items:stretch;">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <span class="lesson-title" style="cursor:pointer;color:#409eff;text-decoration:underline;"
-                        @click="toggleVideoPanel(lesson.id)">
-                    课时：{{ lesson.title }} ({{ lesson.duration }} 秒)
-                  </span>
-                  
-                  <button @click="deleteLesson(lesson.id)" class="delete-btn">删除</button>
+                  <div style="display:flex;align-items:center;flex:1;">
+                    <span style="margin-right:0.5rem;">第{{ lesson.sortOrder + 1 }}课：</span>
+                    <input v-model="lesson.title" class="edit-input" style="flex:1;" />
+                  </div>
+                  <button class="video-btn" @click="toggleVideoPanel(lesson.id)">
+                    {{ videoPanelOpen[lesson.id] ? '收起视频' : '视频' }}
+                  </button>
+                  <button @click="deleteLesson(lesson.id)" class="delete-btn" :disabled="item.lessons.length === 1">删除</button>
                 </div>
                 <!-- 视频面板 -->
                 <div v-if="videoPanelOpen[lesson.id]" style="margin-top:12px;padding:16px 12px;background:#f5f7fa;border-radius:8px;">
@@ -104,27 +109,36 @@
               </div>
             </div>
 
-            <div class="form-row">
-              <label>新课时标题：</label>
+            <!-- <div class="form-row lesson-item">
+              <label>新课时：</label>
               <input v-model="newLessonTitle[item.chapter.id]" placeholder="新课时标题" class="input-inline short-input" />
               <button @click="addLesson(item.chapter.id)" class="add-btn">添加课时</button>
-            </div>
+            </div> -->
+            <div style="display:flex;justify-content:space-between;align-items:center;"></div>
+            <div style="display:flex;align-items:center;flex:1;">
+                <span style="margin-right:0.5rem;">新课时：</span>
+                <input v-model="newLessonTitle[item.chapter.id]" placeholder="新课时标题" class="edit-input" style="flex:1;" />
+            
+            <button @click="addLesson(item.chapter.id)" class="add-btn">添加课时</button>
           </div>
+          </div>
+          
 
           <div class="form-row">
-            <label>新章节标题：</label>
+            <label>新章节：</label>
             <input v-model="newChapterTitle" placeholder="新章节标题" class="short-input" />
             <button @click="addChapter" class="add-btn">添加章节</button>
           </div>
 
-          <div class="form-row">
-            <label>课程作业：</label>
-            <button @click="goToQuestionManager" class="question-btn">管理课程作业</button>
-          </div>
+          
           
           <div class="actions">
             <button type="button" @click="saveCourse">保存</button>
             <button type="button" @click="deleteCourse">删除</button>
+          </div>
+          <div class="form-row">
+            <label>课程作业：</label>
+            <button @click="goToQuestionManager" class="question-btn">管理课程作业</button>
           </div>
         </div>
       </div>
@@ -498,7 +512,8 @@ TeacherHeader {
 }
 .form-row textarea {
   resize: vertical;
-  min-height: 100px; 
+  min-height: 60px;
+  height: 60px;
 }
 
 /* 按钮组样式 */
@@ -611,15 +626,24 @@ button:hover {
   font-size: 0.9rem;
   transition: all 0.3s ease;
 }
-.delete-btn:hover {
+.delete-btn:hover:not(:disabled) {
   opacity: 0.9;
   transform: scale(1.02);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
 }
 
+.delete-btn:disabled {
+  background-color: #c0c4cc;
+  color: #909399;
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+}
+
 .form-row img.cover {
   width: 100%;
-  height: 100px;
+  height: 180px;
   object-fit: cover;
   border-radius: 8px;
   margin-left: 10px;
@@ -770,4 +794,41 @@ button:hover {
   min-width: 120px;
   max-width: 100%;
 }
+
+.edit-input {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.3rem 0.7rem;
+  font-size: 1rem;
+  margin-right: 0.5rem;
+  background: #fff;
+  transition: border 0.2s;
+}
+.edit-input:focus {
+  border-color: #409eff;
+  outline: none;
+  background: #f8fafc;
+}
+.video-btn {
+  background: #409eff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.3rem 1rem;
+  font-size: 0.95rem;
+  margin-right: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.video-btn:hover {
+  background: #1976d2;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
 </style>

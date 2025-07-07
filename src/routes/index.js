@@ -27,6 +27,14 @@ const routes = [
         path: '/login',
         name: 'login',
         component: Login,
+        props: route => ({
+            token: route.query.token,
+            username: route.query.username,
+            userId: route.query.userId,
+            role: route.query.role,
+            name: route.query.name,
+            error: route.query.error
+        }),
         meta: {
             requiresAuth: false
         }
@@ -87,7 +95,7 @@ const routes = [
         }),
         meta: {
             requiresAuth: true,
-            roles: [1, 3] // 学生和管理员可访问
+            roles: [1] // 学生和管理员可访问
         }
     },
     {
@@ -105,7 +113,7 @@ const routes = [
         component: ()=> import('../views/CreateCourse.vue'),
         meta: {
             requiresAuth: true,
-            roles: [2, 3] // 教师和管理员可访问
+            roles: [2] // 教师和管理员可访问
         }
     },
     {
@@ -114,7 +122,7 @@ const routes = [
         component: ()=> import('../views/TeacherCourseList.vue'),
         meta: {
             requiresAuth: true,
-            roles: [2, 3] // 教师和管理员可访问
+            roles: [2] // 教师和管理员可访问
         }
     },
     {
@@ -123,7 +131,7 @@ const routes = [
         component: ()=> import('../views/EditCourse.vue'),
         meta: {
             requiresAuth: true,
-            roles: [2, 3] // 教师和管理员可访问
+            roles: [2] // 教师和管理员可访问
         }
     },
     {
@@ -132,7 +140,7 @@ const routes = [
         component: ()=> import('../views/QuestionManager.vue'),
         meta: {
             requiresAuth: true,
-            roles: [2, 3] // 教师和管理员可访问
+            roles: [2] // 教师和管理员可访问
         }
     },
     {
@@ -141,7 +149,7 @@ const routes = [
         component: ()=> import('../views/StudentManagement.vue'),
         meta: {
             requiresAuth: true,
-            roles: [2, 3] // 教师和管理员可访问
+            roles: [2] // 教师和管理员可访问
         }
     },
     {
@@ -150,7 +158,7 @@ const routes = [
         component: ()=> import('../views/CommentManagement.vue'),
         meta: {
             requiresAuth: true,
-            roles: [2, 3] // 教师和管理员可访问
+            roles: [2] // 教师和管理员可访问
         }
     },
     {
@@ -159,7 +167,7 @@ const routes = [
         component: ()=> import('../views/CourseDraftBox.vue'),
         meta: {
             requiresAuth: true,
-            roles: [2, 3] // 教师和管理员可访问
+            roles: [2] // 教师和管理员可访问
         }
     },
     {
@@ -168,8 +176,28 @@ const routes = [
         component: ()=> import('../views/TeacherProfile.vue'),
         meta: {
             requiresAuth: true,
-            roles: [2, 3] // 教师和管理员可访问
+            roles: [2] // 教师和管理员可访问
         }
+    },
+    {
+        path: '/forum',
+        name: 'forum',
+        component: ()=> import('../views/Forum.vue')
+    },
+    {
+        path: '/forum/post/:id',
+        name: 'forumPostDetail',
+        component: ()=> import('../views/ForumPostDetail.vue')
+    },
+    {
+        path: '/forum/profile',
+        name: 'forumProfile',
+        component: ()=> import('../views/ForumProfile.vue')
+    },
+    {
+        path: '/forum/notifications',
+        name: 'forumNotifications',
+        component: ()=> import('../views/ForumNotifications.vue')
     },
     {
         path: '/notice',
@@ -238,6 +266,15 @@ const routes = [
     {
         path: '/survey-text',
         name: 'SurveyText',
+        component: () => import('../views/survey_text.vue'),
+        meta: {
+            requiresAuth: true,
+            roles: [1, 2, 3] // 所有登录用户可访问
+        }
+    },
+    {
+        path: '/survey_test',
+        name: 'SurveyTest',
         component: () => import('../views/survey_text.vue'),
         meta: {
             requiresAuth: true,

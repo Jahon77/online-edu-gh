@@ -1,50 +1,13 @@
 <template>
   <div>
     <!-- 添加统一的顶部导航栏 -->
-    <SiteHeader />
+    <keep-alive>
+      <SiteHeader />
+    </keep-alive>
     
     <div class="student-center-course-list">
-      <!-- 左侧导航栏 -->
-      <div class="sidebar">
-        <div class="logo">
-          <span class="logo-icon">📚</span>
-          <span class="logo-text">智学通</span>
-        </div>
-        
-        <div class="nav-item" @click="navigateTo('/dashboard')">
-          <div class="nav-icon">📊</div>
-          <div class="nav-text">Dashboard</div>
-        </div>
-        
-        <div class="nav-item active">
-          <div class="nav-icon">📝</div>
-          <div class="nav-text">所有课程</div>
-        </div>
-        
-        <div class="nav-item">
-          <div class="nav-icon">📚</div>
-          <div class="nav-text">资源</div>
-        </div>
-        
-        <div class="nav-item" @click="navigateTo('/chat')">
-          <div class="nav-icon">💬</div>
-          <div class="nav-text">聊天</div>
-        </div>
-        
-        <div class="nav-item">
-          <div class="nav-icon">⚙️</div>
-          <div class="nav-text">设置</div>
-        </div>
-        
-        <div class="upgrade-container">
-          <div class="upgrade-lock">🔒</div>
-          <div class="upgrade-text">
-            升级到 <span class="pro-text">Pro</span><br>
-            获取更多资源
-          </div>
-          <button class="upgrade-btn">升级</button>
-        </div>
-      </div>
+      <!-- 使用新的StudentSidebar组件 -->
+      <StudentSidebar activePage="course-list" :showUpgrade="true" />
       
       <!-- 主内容区 -->
       <div class="main-content">
@@ -83,6 +46,13 @@
               <div class="progress-container">
                 <div class="progress-circle">
                   <svg viewBox="0 0 36 36" class="circular-chart">
+                    <defs>
+                      <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#F98C53;stop-opacity:1" />
+                        <stop offset="50%" style="stop-color:#ABD7FB;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#D2E0AA;stop-opacity:1" />
+                      </linearGradient>
+                    </defs>
                     <path class="circle-bg"
                       d="M18 2.0845
                         a 15.9155 15.9155 0 0 1 0 31.831
@@ -169,6 +139,12 @@
           
           <div class="courses-grid">
             <div v-for="course in likedCourses" :key="course.id" class="liked-course-card" :style="getRandomGradient()">
+              <!-- 添加装饰性元素 -->
+              <div class="card-decoration">
+                <div class="decoration-circle circle-1"></div>
+                <div class="decoration-circle circle-2"></div>
+              </div>
+              
               <div class="card-header">
                 <div class="card-number">{{ course.id.toString().padStart(4, '0') }}</div>
                 <div class="card-date">{{ formatCardDate(course.createdAt) }}</div>
@@ -180,79 +156,13 @@
               </div>
               
               <div class="card-footer">
-                <div class="like-icon">❤️</div>
-                <div class="course-actions">
-                  <button class="info-btn" @click="goToCourseDetail(course.id)">Info</button>
-                  <button class="continue-btn" @click="continueCourse(course.id)">Continue</button>
+                <div class="like-icon">
+                  <span class="heart-icon">❤️</span>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- 右侧边栏 -->
-      <div class="right-sidebar">
-        <!-- 个人信息 -->
-        <div class="user-profile">
-          <div class="notification-icon">🔔</div>
-          <div class="user-avatar">
-            <img :src="userAvatar" :alt="username">
-          </div>
-          <div class="user-name">{{ username }} <span class="dropdown-icon">▼</span></div>
-        </div>
-        
-        <!-- 学习统计 -->
-        <div class="stats-section">
-          <div class="section-header">
-            <h3>学习统计</h3>
-          </div>
-          
-          <div class="card-navigation">
-            <span class="nav-arrow">&#10095;</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- 右侧边栏 -->
-    <div class="right-sidebar">
-      <!-- 个人信息 -->
-      <div class="user-profile">
-        <div class="notification-icon">🔔</div>
-        <div class="user-avatar">
-          <img :src="userAvatar" :alt="name || username">
-        </div>
-        <div class="user-name">{{ name || username }} <span class="dropdown-icon">▼</span></div>
-      </div>
-      
-      <!-- 学习统计 -->
-      <div class="stats-section">
-        <div class="section-header">
-          <h3>学习统计</h3>
-        </div>
-        
-        <div class="stats-card">
-          <div class="stat-item">
-            <div class="stat-icon" style="background-color: #F98C53">📚</div>
-            <div class="stat-info">
-              <div class="stat-value">{{ uncompletedCourses.length + completedCourses.length }}</div>
-              <div class="stat-label">已订阅课程</div>
-            </div>
-            
-            <div class="stat-item">
-              <div class="stat-icon" style="background-color: #D2E0AA">✓</div>
-              <div class="stat-info">
-                <div class="stat-value">{{ completedCourses.length }}</div>
-                <div class="stat-label">已完成课程</div>
-              </div>
-            </div>
-            
-            <div class="stat-item">
-              <div class="stat-icon" style="background-color: #ABD7FB">❤️</div>
-              <div class="stat-info">
-                <div class="stat-value">{{ likedCourses.length }}</div>
-                <div class="stat-label">已收藏课程</div>
+                <div class="course-actions">
+                  <button class="card-info-btn" @click="goToCourseDetail(course.id)">详情</button>
+                  <button class="card-continue-btn" @click="continueCourse(course.id)">学习</button>
+                </div>
               </div>
             </div>
           </div>
@@ -266,11 +176,13 @@
 import axios from 'axios';
 import StudentCenterService from '@/utils/studentCenterService';
 import SiteHeader from '@/components/commen/header/SiteHeader.vue';
+import StudentSidebar from '@/components/studentCenter/StudentSidebar.vue';
 
 export default {
   name: 'StudentCenterCourseList',
   components: {
-    SiteHeader
+    SiteHeader,
+    StudentSidebar
   },
   data() {
     return {
@@ -526,100 +438,14 @@ export default {
   font-family: 'Roboto', Arial, sans-serif;
 }
 
-/* 左侧导航栏样式 */
-.sidebar {
-  width: 220px;
-  background-color: #fff;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.05);
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  margin-bottom: 40px;
-  padding: 0 10px;
-}
-
-.logo-icon {
-  font-size: 24px;
-  margin-right: 10px;
-}
-
-.logo-text {
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 15px;
-  border-radius: 10px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.nav-item:hover {
-  background-color: #f0f0f0;
-}
-
-.nav-item.active {
-  background-color: #F98C53;
-  color: white;
-}
-
-.nav-icon {
-  font-size: 18px;
-  margin-right: 12px;
-}
-
-.upgrade-container {
-  margin-top: auto;
-  background-color: #f9f0ff;
-  border-radius: 10px;
-  padding: 15px;
-  text-align: center;
-}
-
-.upgrade-lock {
-  font-size: 24px;
-  margin-bottom: 10px;
-}
-
-.upgrade-text {
-  margin-bottom: 12px;
-  font-size: 14px;
-}
-
-.pro-text {
-  font-weight: 600;
-  color: #6200ea;
-}
-
-.upgrade-btn {
-  background-color: #6200ea;
-  color: white;
-  border: none;
-  padding: 8px 20px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.upgrade-btn:hover {
-  background-color: #5000d6;
-}
+/* 左侧导航栏样式已移至StudentSidebar组件 */
 
 /* 主内容区样式 */
 .main-content {
   flex: 1;
   padding: 30px;
   overflow-y: auto;
+  background: linear-gradient(135deg, #f5f5f7 0%, #F9F2EF 100%);
 }
 
 .page-header {
@@ -627,17 +453,29 @@ export default {
 }
 
 .page-header h1 {
-  font-size: 28px;
-  font-weight: 600;
-  color: #333;
+  font-size: 32px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #F98C53, #D2E0AA);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
 }
 
 .course-section {
-  background-color: #fff;
-  border-radius: 15px;
-  padding: 25px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 30px;
   margin-bottom: 30px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.course-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(0,0,0,0.12);
 }
 
 .section-header {
@@ -648,15 +486,28 @@ export default {
 }
 
 .section-header h2 {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 600;
-  color: #333;
+  background: linear-gradient(135deg, #F98C53, #ABD7FB);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .view-all {
-  color: #F98C53;
+  background: linear-gradient(135deg, #F98C53, #FCCEB4);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
   font-weight: 500;
   cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(249, 140, 83, 0.3);
+}
+
+.view-all:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(249, 140, 83, 0.4);
 }
 
 /* 1. 未完成课程卡片样式 */
@@ -667,20 +518,42 @@ export default {
 }
 
 .today-course-card {
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
-  padding: 24px 24px 18px 24px;
-  margin-bottom: 24px;
+  background: linear-gradient(135deg, #fff 0%, #F9F2EF 100%);
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  padding: 25px;
+  margin-bottom: 25px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: box-shadow 0.2s;
+  width: calc(25% - 15px);
+  min-width: 280px;
   position: relative;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  border: 1px solid rgba(249, 140, 83, 0.1);
+}
+
+.today-course-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #F98C53, #ABD7FB, #D2E0AA, #FCCEB4);
+  background-size: 300% 100%;
+  animation: gradientMove 3s ease infinite;
+}
+
+@keyframes gradientMove {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 .today-course-card:hover {
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 15px 40px rgba(249, 140, 83, 0.15);
 }
 
 .course-header {
@@ -733,32 +606,93 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+}
+
+.progress-container::before {
+  content: '';
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #F98C53 0deg,
+    #FCCEB4 72deg,
+    #ABD7FB 144deg,
+    #D2E0AA 216deg,
+    #F9F2EF 288deg,
+    #F98C53 360deg
+  );
+  opacity: 0.1;
+  animation: rotate 4s linear infinite;
+  z-index: -1;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .progress-circle {
   width: 72px;
   height: 72px;
   position: relative;
+  z-index: 1;
+  background: radial-gradient(
+    circle,
+    rgba(249, 242, 239, 0.8) 0%,
+    rgba(252, 206, 180, 0.6) 30%,
+    rgba(171, 215, 251, 0.4) 60%,
+    rgba(210, 224, 170, 0.2) 100%
+  );
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .circular-chart {
   width: 72px;
   height: 72px;
   display: block;
+  transition: all 0.3s ease;
+}
+
+.circular-chart:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 4px 15px rgba(249, 140, 83, 0.4));
 }
 
 .circle-bg {
   fill: none;
-  stroke: #eee;
+  stroke: linear-gradient(135deg, #F9F2EF, #FCCEB4);
   stroke-width: 3.8;
+  opacity: 0.3;
 }
 
 .circle {
   fill: none;
-  stroke: #4BC0C0;
-  stroke-width: 3.8;
+  stroke: url(#progressGradient);
+  stroke-width: 4;
   stroke-linecap: round;
-  transition: stroke-dasharray 0.6s ease;
+  transition: all 0.6s ease;
+  animation: progressPulse 2s ease-in-out infinite;
+}
+
+@keyframes progressPulse {
+  0%, 100% {
+    stroke-width: 4;
+    filter: drop-shadow(0 0 5px rgba(249, 140, 83, 0.3));
+  }
+  50% {
+    stroke-width: 4.5;
+    filter: drop-shadow(0 0 10px rgba(171, 215, 251, 0.5));
+  }
 }
 
 .percentage {
@@ -767,6 +701,23 @@ export default {
   font-weight: bold;
   text-anchor: middle;
   dominant-baseline: middle;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  animation: textGlow 3s ease-in-out infinite;
+}
+
+@keyframes textGlow {
+  0%, 100% {
+    fill: #333;
+  }
+  25% {
+    fill: #F98C53;
+  }
+  50% {
+    fill: #ABD7FB;
+  }
+  75% {
+    fill: #D2E0AA;
+  }
 }
 
 .course-actions {
@@ -776,35 +727,35 @@ export default {
 }
 
 .info-btn, .continue-btn {
-  padding: 6px 18px;
-  border-radius: 20px;
+  padding: 10px 20px;
+  border-radius: 25px;
   border: none;
-  font-weight: 500;
-  font-size: 15px;
+  font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .info-btn {
-  background: #fff;
-  color: #4BC0C0;
-  border: 1.5px solid #4BC0C0;
+  background: linear-gradient(135deg, #ABD7FB, #D2E0AA);
+  color: white;
 }
 
 .info-btn:hover {
-  background: #4BC0C0;
-  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(171, 215, 251, 0.4);
 }
 
 .continue-btn {
-  background: #4BC0C0;
-  color: #fff;
-  border: 1.5px solid #4BC0C0;
+  background: linear-gradient(135deg, #F98C53, #FCCEB4);
+  color: white;
 }
 
 .continue-btn:hover {
-  background: #388e8e;
-  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(249, 140, 83, 0.4);
 }
 
 .add-more-btn {
@@ -840,37 +791,38 @@ export default {
 /* 2. 已完成课程样式 */
 .completed-course-card {
   background: linear-gradient(135deg, #D2E0AA, #F9F2EF);
-  border-radius: 18px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-  padding: 20px;
-  margin-bottom: 15px;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(210, 224, 170, 0.15);
+  padding: 25px;
+  margin-bottom: 20px;
   display: flex;
   flex-direction: column;
   width: calc(33.33% - 14px);
   min-width: 280px;
   position: relative;
-  transition: all 0.3s ease;
+  transition: all 0.4s ease;
   overflow: hidden;
 }
 
 .completed-course-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  box-shadow: 0 12px 30px rgba(210, 224, 170, 0.25);
 }
 
 .completion-badge {
   position: absolute;
   top: 15px;
   right: 15px;
-  background-color: rgba(210, 224, 170, 0.9);
-  border-radius: 20px;
-  padding: 5px 12px;
+  background: linear-gradient(135deg, #D2E0AA, #ABD7FB);
+  border-radius: 25px;
+  padding: 8px 15px;
   display: flex;
   align-items: center;
   gap: 5px;
   font-weight: 600;
-  color: #4a6741;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  color: white;
+  box-shadow: 0 4px 15px rgba(210, 224, 170, 0.3);
+  animation: pulse 2s infinite;
 }
 
 .check-icon {
@@ -886,65 +838,108 @@ export default {
 }
 
 .review-btn {
-  padding: 8px 16px;
+  background: linear-gradient(135deg, #D2E0AA, #ABD7FB);
+  color: white;
+  padding: 10px 20px;
   border: none;
-  border-radius: 5px;
+  border-radius: 25px;
   cursor: pointer;
-  transition: all 0.3s;
-  font-weight: 500;
+  transition: all 0.3s ease;
+  font-weight: 600;
   font-size: 14px;
-  background-color: #D2E0AA;
-  color: #4a6741;
-  border: 1px solid #4a6741;
 }
 
 .review-btn:hover {
-  background-color: #4a6741;
-  color: #D2E0AA;
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(74, 103, 65, 0.3);
+  box-shadow: 0 6px 20px rgba(210, 224, 170, 0.4);
 }
 
-/* 3. 收藏的课程卡片样式 */
+/* 3. 收藏的课程卡片样式 - 美化版本 */
 .liked-course-card {
-  border-radius: 18px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-  padding: 20px;
-  margin-bottom: 15px;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+  padding: 24px;
+  margin-bottom: 20px;
   display: flex;
   flex-direction: column;
   width: calc(33.33% - 14px);
   min-width: 280px;
   position: relative;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  height: 200px;
+  height: 220px;
   justify-content: space-between;
+  /* 添加更柔和的渐变覆盖层 */
+  background-image: linear-gradient(135deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.05) 100%);
+  background-blend-mode: overlay;
 }
 
 .liked-course-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.18);
+}
+
+/* 装饰性元素 */
+.card-decoration {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.decoration-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.circle-1 {
+  width: 80px;
+  height: 80px;
+  top: -20px;
+  right: -20px;
+}
+
+.circle-2 {
+  width: 40px;
+  height: 40px;
+  bottom: 20px;
+  left: -10px;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  z-index: 2;
+  position: relative;
 }
 
 .card-number {
-  font-family: 'Roboto Mono', monospace;
-  font-weight: 600;
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.9);
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.15);
+  padding: 6px 12px;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .card-date {
-  font-family: 'Roboto Mono', monospace;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-weight: 500;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 10px;
+  border-radius: 8px;
+  backdrop-filter: blur(5px);
 }
 
 .card-body {
@@ -952,136 +947,114 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  z-index: 2;
+  position: relative;
 }
 
 .card-title {
-  font-size: 18px;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 20px;
   font-weight: 600;
-  color: white;
-  margin-bottom: 10px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  color: #ffffff;
+  margin-bottom: 12px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.4;
+  /* 添加文字描边效果增强可读性 */
+  -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.1);
 }
 
 .card-amount {
-  font-size: 22px;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 24px;
   font-weight: 700;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(45deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+  padding: 8px 16px;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: inline-block;
+  width: fit-content;
 }
 
 .card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 15px;
+  margin-top: 20px;
+  z-index: 2;
+  position: relative;
 }
 
 .like-icon {
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(45deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
   border-radius: 50%;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.like-icon:hover {
+  transform: scale(1.1);
+  background: linear-gradient(45deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.25));
+}
+
+.heart-icon {
   font-size: 16px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
-/* 右侧边栏样式 */
-.right-sidebar {
-  width: 280px;
-  padding: 30px 20px;
-  background-color: #fff;
-  box-shadow: -2px 0 10px rgba(0,0,0,0.05);
-}
-
-.user-profile {
+.course-actions {
   display: flex;
-  align-items: center;
-  margin-bottom: 30px;
+  gap: 8px;
 }
 
-.notification-icon {
-  margin-right: auto;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  overflow: hidden;
-  margin-right: 12px;
-}
-
-.user-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.user-name {
-  font-weight: 500;
-}
-
-.dropdown-icon {
-  font-size: 10px;
-  margin-left: 5px;
-}
-
-.stats-section {
-  margin-bottom: 30px;
-}
-
-.stats-card {
-  background-color: #fff;
-  border-radius: 12px;
-  padding: 15px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-.stats-card .stat-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.stats-card .stat-item:last-child {
-  margin-bottom: 0;
-}
-
-.stats-card .stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 15px;
-  color: white;
-  font-size: 18px;
-}
-
-.stats-card .stat-info {
-  flex: 1;
-}
-
-.stats-card .stat-value {
-  font-size: 18px;
+.card-info-btn, .card-continue-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: none;
   font-weight: 600;
-  margin-bottom: 3px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.stats-card .stat-label {
-  font-size: 14px;
-  color: #666;
+.card-info-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.card-info-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card-continue-btn {
+  background: linear-gradient(45deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8));
+  color: #333;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.card-continue-btn:hover {
+  background: linear-gradient(45deg, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.9));
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
 
 /* 响应式布局调整 */

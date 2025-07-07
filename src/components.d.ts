@@ -7,11 +7,15 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    BasePager: typeof import('./components/BasePager.vue')['default']
     ChatModal: typeof import('./components/ChatModal.vue')['default']
+    CustomAlert: typeof import('./components/CustomAlert.vue')['default']
+    CustomConfirm: typeof import('./components/CustomConfirm.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCalendar: typeof import('element-plus/es')['ElCalendar']
-    ElCol: typeof import('element-plus/es')['ElCol']
+    ElCheckbox: typeof import('element-plus/es')['ElCheckbox']
+    ElCheckboxGroup: typeof import('element-plus/es')['ElCheckboxGroup']
     ElDialog: typeof import('element-plus/es')['ElDialog']
     ElDropdown: typeof import('element-plus/es')['ElDropdown']
     ElDropdownItem: typeof import('element-plus/es')['ElDropdownItem']
@@ -22,8 +26,13 @@ declare module 'vue' {
     ElInput: typeof import('element-plus/es')['ElInput']
     ElOption: typeof import('element-plus/es')['ElOption']
     ElPagination: typeof import('element-plus/es')['ElPagination']
-    ElRow: typeof import('element-plus/es')['ElRow']
+    ElProgress: typeof import('element-plus/es')['ElProgress']
+    ElRadio: typeof import('element-plus/es')['ElRadio']
+    ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
+    ElRate: typeof import('element-plus/es')['ElRate']
     ElSelect: typeof import('element-plus/es')['ElSelect']
+    ElTable: typeof import('element-plus/es')['ElTable']
+    ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     ElTabPane: typeof import('element-plus/es')['ElTabPane']
     ElTabs: typeof import('element-plus/es')['ElTabs']
     ElTag: typeof import('element-plus/es')['ElTag']
@@ -35,10 +44,16 @@ declare module 'vue' {
     ReplyNode: typeof import('./components/ReplyNode.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    Sidebar: typeof import('./components/commen/sidebar/Sidebar.vue')['default']
     SiteHeader: typeof import('./components/commen/header/SiteHeader.vue')['default']
     StudentCenterCourseList: typeof import('./components/studentCenter/StudentCenterCourseList.vue')['default']
     StudentDashboard: typeof import('./components/studentCenter/StudentDashboard.vue')['default']
+    StudentSidebar: typeof import('./components/studentCenter/StudentSidebar.vue')['default']
     TeacherHeader: typeof import('./components/commen/header/TeacherHeader.vue')['default']
+    UserSettingsModal: typeof import('./components/UserSettingsModal.vue')['default']
     VideoUpload: typeof import('./components/VideoUpload.vue')['default']
+  }
+  export interface ComponentCustomProperties {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }

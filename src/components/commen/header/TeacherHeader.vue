@@ -2,23 +2,32 @@
     <div class="header-wrapper">
       <!-- 顶部图片横幅 -->
       <div class="banner-img">
-        <img src="../../../assets/images/10001.jpg" alt="banner">
+        <img src="../../../assets/images/teacherTop.jpg" alt="banner">
       </div>
   
       <!-- 目录栏 -->
       <div class="menu-bar">
         <ul class="menu-list">
-          <li class="menu-item" @click="goTo('teacherProfile')">个人中心</li>
+          <li class="menu-item" @click="goTo('teacherProfile')">
+            <i class="fa fa-user"></i> 个人中心
+          </li>
           <li class="menu-item dropdown" @mouseenter="showCourseDropdown = true" @mouseleave="showCourseDropdown = false">
-             课程管理
+              <i class="fa fa-book"></i> 课程管理
              <ul class="dropdown-menu" v-show="showCourseDropdown">
                 <li class="dropdown-item" @click="goTo('create')">创建课程</li>
                 <li class="dropdown-item" @click="goTo('teacherCourseList')">课程列表</li>
                 <li class="dropdown-item" @click="goTo('courseDraftBox')">草稿箱</li>
              </ul>
          </li>
-         <li class="menu-item" @click="goTo('studentManagement')">学生管理</li>
-         <li class="menu-item" @click="goTo('commentManagement')">互动管理</li>
+         <li class="menu-item" @click="goTo('studentManagement')">
+           <i class="fa fa-users"></i> 学生管理
+         </li>
+         <li class="menu-item" @click="goTo('commentManagement')">
+           <i class="fa fa-comments"></i> 互动管理
+         </li>
+         <li class="menu-item" @click="goTo('forum')">
+           <i class="fa fa-graduation-cap"></i> 学习论坛
+         </li>
 
          <!-- <li class="menu-item dropdown" @mouseenter="showStudentDropdown = true" @mouseleave="showStudentDropdown = false">
             学生管理与互动
@@ -35,9 +44,15 @@
              </ul>
          </li> -->
           <!-- <li class="menu-item">帮助中心</li> -->
-          <li class="menu-item" @click="goTo('chat')">消息中心</li>
-          <li class="menu-item" @click="goTo('aichat')">智能助手</li>
-          <li class="menu-item" @click="goTo('index')">系统门户</li>
+          <li class="menu-item" @click="goTo('chat')">
+            <i class="fa fa-envelope"></i> 消息中心
+          </li>
+          <li class="menu-item" @click="goTo('aichat')">
+            <i class="fa fa-robot"></i> 智能助手
+          </li>
+          <li class="menu-item" @click="goTo('index')">
+            <i class="fa fa-home"></i> 系统门户
+          </li>
         </ul>
       </div>  
   
@@ -67,16 +82,22 @@
       showCourseDropdown: false,
       showStudentDropdown: false, 
       showLiveDropdown: false, 
-      currentPath: '个人中心'
+      currentPath: '个人中心',
+      menuBarOffsetTop: 0
     };
   },
     methods: {
       toggleStickyHeader() {
-        const scrolled = document.documentElement.scrollTop;
-        if (scrolled > 100) {
-          AppFunctions.addClass('.header-default', 'sticky');
+        const scrolled = window.scrollY;
+        const menuBar = this.$el.querySelector('.menu-bar');
+        if (scrolled >= this.menuBarOffsetTop) {
+          // 固定
+          this.$el.querySelector('.header-default').classList.add('sticky');
+          if (menuBar) menuBar.classList.add('sticky');
         } else {
-          AppFunctions.removeClass('.header-default', 'sticky');
+          // 取消固定
+          this.$el.querySelector('.header-default').classList.remove('sticky');
+          if (menuBar) menuBar.classList.remove('sticky');
         }
       },
       async confirmLogout() {
@@ -107,8 +128,8 @@
           this.$router.push({ name: 'create' });
         } else if (type === 'teacherCourseList') {
           this.$router.push({ name: 'teacherCourseList' });
-        // } else if (type === 'index') {
-        //   this.$router.push({ name: 'index' });
+        } else if (type === 'forum') {
+          this.$router.push({ name: 'forum' });
         } else if (type === 'studentManagement') {
           this.$router.push({ name: 'studentManagement' });
         } else if (type === 'commentManagement') {
@@ -128,9 +149,9 @@
       updateCurrentPath() {
         const routeName = this.$route.name;
         switch (routeName) {
-          // case 'index':
-          //   this.currentPath = '首页';
-          //   break;
+          case 'forum':
+            this.currentPath = '学习论坛';
+            break;
           case 'create':
             this.currentPath = '课程管理 > 创建课程';
             break;
@@ -158,6 +179,18 @@
           case 'aichat':
             this.currentPath = '智能助手';
             break;
+          case 'editCourse':
+            this.currentPath = '课程管理 > 课程列表 > 编辑课程';
+            break;
+          case 'forumProfile':
+            this.currentPath = '学习论坛 > 个人资料';
+            break;
+          case 'forumNotifications':
+            this.currentPath = '学习论坛 > 论坛通知';
+            break;
+          case 'forumPostDetail':
+            this.currentPath = '学习论坛 > 帖子详情';
+            break;
           // Add more cases for other routes as needed
           default:
             this.currentPath = '未知页面';
@@ -169,8 +202,15 @@
       this.updateCurrentPath(); // Initial path update
     },
     mounted() {
-      this.toggleStickyHeader();
-      this.$watch('$route', this.updateCurrentPath);
+      this.$nextTick(() => {
+        const menuBar = this.$el.querySelector('.menu-bar');
+        if (menuBar) {
+          this.menuBarOffsetTop = menuBar.offsetTop;
+        }
+        this.toggleStickyHeader();
+        window.addEventListener('scroll', this.toggleStickyHeader);
+        this.$watch('$route', this.updateCurrentPath);
+      });
     },
     beforeDestroy() {
       window.removeEventListener('scroll', this.toggleStickyHeader);
@@ -184,11 +224,21 @@
     width: 100%;
     font-family: Arial, sans-serif;
   }
+
+  /* 为页面内容添加顶部边距，避免被固定菜单栏遮挡 */
+  .header-wrapper + * {
+    margin-top: 0;
+  }
+
+  /* 当菜单栏固定时，为内容添加边距 */
+  .menu-bar.sticky + * {
+    margin-top: 60px;
+  }
   
   /* 顶部图片 */
   .banner-img {
     width: 100%;
-    height: 200px;
+    height: 300px;
     margin-top: 0px;
     display: flex;
     justify-content: center;
@@ -204,35 +254,54 @@
   /* 菜单栏 */
   .menu-bar {
     width: 100%;
-    background-color: #ABD7FB;
-    padding: 12px 0;
+    background-color: #fff;
+    padding: 0;
+    border-bottom: 1px solid #e8e8e8;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: all 0.3s ease;
+  }
+
+  /* 滚动时菜单栏固定 */
+  .menu-bar.sticky {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
   }
   .menu-list {
     display: flex;
     justify-content: center;
-    gap: 30px;
+    gap: 0;
     list-style: none;
     margin: 0;
     padding: 0;
+    max-width: 1200px;
+    margin: 0 auto;
   }
   .menu-item {
-    font-size: 20px;
+    font-size: 16px;
     color: #333;
     cursor: pointer;
+    padding: 20px 24px;
+    position: relative;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent;
   }
   .menu-item:hover {
-    color: #0e90d2;
+    color: #1890ff;
+    background-color: #f6f6f6;
+    border-bottom: 3px solid #1890ff;
   }
   
   /* 导航栏 */
   .nav-wrapper {
     width: 100%;
-    background-color: #FFF;
-    border-top: 1px solid #eee;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    background: #f5f7fa; /* 更淡的灰色背景 */
+    border-top: 1px solid #e8e8e8;
+    border-bottom: 1px solid #e8e8e8;
   }
   .nav {
-    width: 90%;
+    width: 1200px;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
@@ -240,7 +309,7 @@
     padding: 12px 0;
   }
   .nav-left span {
-    font-size: 18px;
+    font-size: 14px;
     color: #666;
   }
   .nav-right {
@@ -248,15 +317,19 @@
     align-items: center;
   }
   .logout-button {
-    padding: 6px 12px;
-    background-color: #F88C53;
+    padding: 8px 16px;
+    background-color: #1890ff;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
   }
   .logout-button:hover {
-    background-color: #d32f2f;
+    background-color: #40a9ff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
   }
   
   /* 粘性导航栏 */
@@ -274,28 +347,39 @@
 .dropdown-menu {
   position: absolute;
   top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  min-width: 120px;
+  left: 0;
+  min-width: 160px;
   background: #fff;
-  border: 1px solid #eee;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-radius: 4px;
   padding: 8px 0;
   z-index: 100;
   display: block;
 }
 .dropdown-item {
-  padding: 8px 20px;
+  padding: 12px 20px;
   color: #333;
-  font-size: 18px;
+  font-size: 14px;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.2s;
+  transition: all 0.2s ease;
+  display: block;
 }
 .dropdown-item:hover {
-  background: #f5f7fa;
-  color: #0e90d2;
+  background: #f0f8ff;
+  color: #1890ff;
+}
+
+.menu-item i {
+  margin-right: 8px;
+  font-size: 17px;
+  vertical-align: middle;
+  color: #8bb1e0;
+  transition: color 0.2s;
+}
+.menu-item:hover i {
+  color: #1890ff;
 }
   </style>
   

@@ -1,28 +1,7 @@
 <template>
   <div class="course-filter-page">
     <!-- 顶部导航栏 -->
-    <header class="site-header">
-      <div class="header-container">
-        <div class="logo">
-          <h1>智学通</h1>
-        </div>
-        <nav class="main-nav">
-          <ul>
-            <li class="active"><router-link to="/courses">课程中心</router-link></li>
-            <li><router-link to="/dashboard">我的学习</router-link></li>
-            <li><a href="#" @click.prevent>论坛</a></li>
-            <li><a href="#" @click.prevent>学习助手</a></li>
-          </ul>
-        </nav>
-        <div class="user-actions">
-          <button class="btn-download">APP下载</button>
-          <div class="user-avatar">
-            <img src="https://via.placeholder.com/36" alt="用户头像">
-          </div>
-          <button class="btn-logout" @click="logout">退出</button>
-        </div>
-      </div>
-    </header>
+    <SiteHeader />
 
     <div class="main-content">
       <!-- 搜索框 -->
@@ -707,11 +686,33 @@ export default {
   margin-bottom: 40px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05),
               0 0 0 1px rgba(255, 255, 255, 0.6) inset;
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: none;
   position: relative;
   overflow: hidden;
   animation: fadeIn 0.8s ease both;
   animation-delay: 0.4s;
+}
+
+/* 添加流动彩色边框 */
+.filter-section::after {
+  content: '';
+  position: absolute;
+  inset: 0; /* 四周都有边框 */
+  border: 3px solid transparent; /* 增加边框宽度 */
+  border-radius: 16px;
+  background: linear-gradient(90deg, 
+    #F98C53, #FCCEB4, #ABD7FB, #D2E0AA, #F98C53
+  ) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, 
+                linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  animation: borderRotate 6s linear infinite;
+}
+
+@keyframes borderRotate {
+  0% { background-position: 0% 0; }
+  100% { background-position: 400% 0; }
 }
 
 @keyframes fadeIn {

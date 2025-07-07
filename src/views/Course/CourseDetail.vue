@@ -1,28 +1,27 @@
 <template>
   <div class="course-detail-page">
-    <!-- 顶部导航栏 - 与课程列表页一致 -->
-    <header class="site-header">
-      <div class="header-container">
-        <div class="logo">
-          <h1>智学通</h1>
-        </div>
-        <nav class="main-nav">
-          <ul>
-            <li class="active"><router-link to="/courses">课程中心</router-link></li>
-            <li><router-link to="/dashboard">我的学习</router-link></li>
-            <li><a href="#" @click.prevent>论坛</a></li>
-            <li><a href="#" @click.prevent>学习助手</a></li>
-          </ul>
-        </nav>
-        <div class="user-actions">
-          <button class="btn-download">APP下载</button>
-          <div class="user-avatar">
-            <img src="https://via.placeholder.com/36" alt="用户头像">
-          </div>
-          <button class="btn-logout" @click="logout">退出登录</button>
-        </div>
-      </div>
-    </header>
+    <!-- 添加自定义弹窗组件 -->
+    <CustomAlert
+      :show="showAlert"
+      :message="alertMessage"
+      :title="alertTitle"
+      @close="showAlert = false"
+    />
+    
+    <!-- 添加自定义确认对话框组件 -->
+    <CustomConfirm
+      :show="showConfirm"
+      :message="confirmMessage"
+      :title="confirmTitle"
+      @confirm="handleConfirm"
+      @cancel="handleCancel"
+      @close="showConfirm = false"
+    />
+    
+    <!-- 添加统一的顶部导航栏 -->
+    <keep-alive>
+      <SiteHeader />
+    </keep-alive>
     
     <div class="course-detail">
       <div v-if="loading" class="loading">
@@ -229,7 +228,7 @@
                   <div class="comment-header">
                     <div class="comment-user">
                         <img :src="comment.userAvatar || 'https://via.placeholder.com/40'" alt="用户头像" class="user-avatar">
-                        <span class="user-name">{{ comment.username }}</span>
+                        <span class="user-name">{{ comment.username || '用户' }}</span>
                     </div>
                     <div class="comment-rating">
                         <span v-for="i in 5" :key="i" class="star" :class="{ 'filled': i <= comment.stars }">
@@ -247,6 +246,24 @@
                       <div class="comment-likes" v-if="comment.likeCount && comment.likeCount > 0">
                         <i class="icon-like"></i> {{ comment.likeCount }}
                       </div>
+                  </div>
+                  
+                  <!-- 添加评论回复区域 -->
+                  <div class="reply-tree" style="margin-top: 12px;">
+                    <ReplyNode
+                      v-for="reply in repliesMap[comment.id] || []"
+                      :key="reply.id"
+                      :reply="reply"
+                      :level="0"
+                      :current-user-id="currentUser.id"
+                      @reply="payload => handleReply(comment.id, payload)"
+                      @deleted="loadReplies(comment.id)"
+                    />
+                    <!-- 回复根评论的输入框 -->
+                    <div class="root-reply-box">
+                      <input v-model="rootReplyInput[comment.id]" placeholder="回复该评论..." />
+                      <button @click="submitRootReply(comment.id)">回复</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -295,8 +312,22 @@
 
 <script>
 import axios from 'src/utils/http';
+import { useUserStore } from 'src/stores/user';
+import { getUserInfo } from 'src/utils/authUtils';
+import CustomAlert from 'src/components/CustomAlert.vue';
+import CustomConfirm from 'src/components/CustomConfirm.vue';
+import ReplyNode from '@/components/ReplyNode.vue';
+import SiteHeader from '@/components/commen/header/SiteHeader.vue';
+
+import courseService from '../../utils/courseService';
 export default {
   name: 'CourseDetail',
+  components: {
+    CustomAlert,
+    CustomConfirm,
+    ReplyNode,
+    SiteHeader
+  },
   props: {
     id: {
       type: [Number, String],
@@ -320,13 +351,20 @@ export default {
         rating: 5,
         content: ''
       },
-      // 模拟用户信息，实际应从登录状态获取
-      currentUser: {
-        id: 7,
-        name: '测试用户'
-      },
+      repliesMap: {},
+      rootReplyInput: {},
+
+      // 用户信息会从Pinia store中获取
+      currentUser: null,
       videoProgress: 0,
-      expandedChapters: [] // 存储已展开的章节索引
+      expandedChapters: [], // 存储已展开的章节索引
+      showAlert: false,
+      alertMessage: '',
+      alertTitle: '',
+      showConfirm: false,
+      confirmMessage: '',
+      confirmTitle: '',
+      pendingAction: null
     };
   },
   computed: {
@@ -343,11 +381,23 @@ export default {
     console.log('CourseDetail组件挂载，路由参数ID:', this.id);
     console.log('路由参数完整信息:', this.$route.params);
     
+    // 获取当前登录用户信息
+    this.initCurrentUser();
+    
     // 如果没有通过props获取到id，则尝试从路由参数获取
     const courseId = this.id || this.$route.params.id;
     if (!courseId) {
       this.error = '课程ID不存在，无法获取课程详情';
       this.loading = false;
+      return;
+    }
+    
+    // 检查用户是否已登录
+    if (!this.currentUser || !this.currentUser.id) {
+      this.error = '请先登录再查看课程详情';
+      this.loading = false;
+      // 可以选择跳转到登录页面
+      // this.$router.push('/login');
       return;
     }
     
@@ -357,10 +407,55 @@ export default {
     this.fetchCourseDetail();
   },
   methods: {
+    initCurrentUser() {
+      // 从Pinia store获取用户信息
+      const userStore = useUserStore();
+      
+      if (userStore.user && userStore.user.id) {
+        // 如果store中已有用户信息，直接使用
+        this.currentUser = {
+          id: userStore.user.id,
+          name: userStore.user.name || userStore.user.username,
+          avatar: userStore.user.avatar || userStore.user.avatar_url || 'https://via.placeholder.com/40',
+          username: userStore.user.username
+        };
+        console.log('从用户store获取到用户信息:', this.currentUser);
+      } else {
+        // 如果store中没有，则从cookie获取
+        const userInfo = getUserInfo();
+        if (userInfo && userInfo.userId) {
+          this.currentUser = {
+            id: parseInt(userInfo.userId),
+            name: userInfo.name || userInfo.username,
+            avatar: userInfo.avatar || userInfo.avatar_url || 'https://via.placeholder.com/40',
+            username: userInfo.username
+          };
+          console.log('从cookie获取到用户信息:', this.currentUser);
+        } else {
+          // 未登录状态
+          this.currentUser = {
+            id: null,
+            name: '游客',
+            avatar: 'https://via.placeholder.com/40',
+            username: '游客'
+          };
+          console.log('未找到用户信息，使用游客身份');
+        }
+      }
+    },
+    
     async fetchCourseDetail() {
       this.loading = true;
       this.error = null;
       console.log('开始获取课程详情，课程ID:', this.courseId);
+      
+      // 确保用户已登录
+      if (!this.currentUser || !this.currentUser.id) {
+        console.warn('用户未登录，无法获取课程详情');
+        this.error = '请先登录后再查看课程详情';
+        this.loading = false;
+        return;
+      }
       
       // 最大重试次数
       const maxRetries = 3;
@@ -368,13 +463,8 @@ export default {
       
       const fetchData = async () => {
         try {
-          // 直接使用标准API
-          const res = await axios.get(`/api/courses/${this.courseId}`, {
-            params: {
-              studentId: this.currentUser.id
-            },
-            timeout: 15000 // 更长的超时时间
-          });
+          // 使用课程服务获取详情
+          const res = await courseService.getCourseDetail(this.courseId);
           
           console.log('获取课程详情成功:', res.data);
           
@@ -441,7 +531,7 @@ export default {
           return;
         }
         
-        console.log('开始获取订阅状态，课程ID:', this.courseId, '学生ID:', this.currentUser.id);
+        console.log('开始获取订阅状态，课程ID:', this.courseId);
         
         // 添加错误计数和重试
         let retries = 0;
@@ -450,11 +540,8 @@ export default {
         
         while (!success && retries < maxRetries) {
           try {
-            // 使用直接针对course_subscribe表的接口
-            const response = await axios.get(`/api/courses/${this.courseId}/subscribe`, {
-              params: { studentId: this.currentUser.id },
-              timeout: 15000 // 增加超时时间
-            });
+            // 使用课程服务获取订阅状态
+            const response = await courseService.isCourseSubscribed(this.courseId);
             
             console.log('订阅状态API响应数据:', JSON.stringify(response.data));
             
@@ -526,10 +613,7 @@ export default {
     async fetchLikeStatus() {
       try {
         console.log('开始获取收藏状态，课程ID:', this.courseId);
-        const likeRes = await axios.get(`/api/courses/${this.courseId}/like`, {
-          params: { studentId: this.currentUser.id },
-          timeout: 10000
-        });
+        const likeRes = await courseService.isCourseLiked(this.courseId);
         
         if (likeRes.data && likeRes.data.status === 0) {
           console.log('获取收藏状态成功:', likeRes.data.data);
@@ -546,7 +630,7 @@ export default {
     
     async fetchChapters() {
       try {
-        const chaptersRes = await axios.get(`/api/teacher/courses/${this.courseId}/chapters`);
+        const chaptersRes = await courseService.getCourseChapters(this.courseId);
         if (chaptersRes.data && Array.isArray(chaptersRes.data)) {
           console.log('获取章节和课时成功:', chaptersRes.data);
           // 打印第一个章节的数据结构，以便查看
@@ -578,13 +662,11 @@ export default {
     },
     
     async fetchComments() {
-      if (this.comments.length > 0) return; // 已加载过评论
-      
       this.loadingComments = true;
       console.log('开始获取课程评论，课程ID:', this.courseId);
       
       try {
-        const response = await axios.get(`/api/courses/${this.courseId}/comments`);
+        const response = await courseService.getCourseComments(this.courseId);
         console.log('获取评论成功:', response.data);
         
         if (response.data.status === 0 && response.data.data) {
@@ -592,21 +674,47 @@ export default {
           const commentsData = response.data.data.records || [];
           console.log('评论数据详情:', JSON.stringify(commentsData));
           
-          // 处理头像URL中的引号
+          // 详细打印每条评论的数据结构，帮助排查问题
+          commentsData.forEach((comment, index) => {
+            console.log(`评论 ${index + 1} 详细信息:`, {
+              id: comment.id,
+              studentId: comment.studentId,
+              content: comment.content,
+              stars: comment.stars,
+              username: comment.username,
+              userAvatar: comment.userAvatar,
+              createdAt: comment.createdAt
+            });
+          });
+          
+          // 处理头像URL中的引号和确保所有评论都有用户信息
           commentsData.forEach(comment => {
-            if (comment.userAvatar) {
+            if (!comment.userAvatar || comment.userAvatar === 'null') {
+              comment.userAvatar = 'https://via.placeholder.com/40';
+            } else if (typeof comment.userAvatar === 'string') {
               comment.userAvatar = comment.userAvatar.replace(/^"|"$/g, "").replace(/\\\\/g, "\\");
             }
+            
+            // 确保有用户名
+            if (!comment.username || comment.username === 'null') {
+              comment.username = '用户';
+            }
+            
             // 确保前端显示正确
             // 如果后端返回的是rating而不是stars，进行转换，并确保为数字类型
             if (comment.rating !== undefined && comment.stars === undefined) {
               comment.stars = Number(comment.rating);
             } else if (comment.stars !== undefined) {
               comment.stars = Number(comment.stars);
+            } else {
+              comment.stars = 5; // 默认5星
             }
           });
           
           this.comments = commentsData;
+          
+          // 加载每条评论的回复
+          await this.loadAllReplies();
         } else {
           console.error('获取评论失败:', response.data.message);
           this.comments = [];
@@ -620,92 +728,162 @@ export default {
       }
     },
     
+    // 加载单个评论的回复
+    async loadReplies(commentId) {
+      try {
+        const res = await axios.get(`/api/comment/${commentId}/replies`);
+        this.repliesMap[commentId] = res.data;
+      } catch (err) {
+        console.error(`加载评论${commentId}的回复失败:`, err);
+        this.repliesMap[commentId] = [];
+      }
+    },
+    
+    // 加载所有评论的回复
+    async loadAllReplies() {
+      for (const comment of this.comments) {
+        await this.loadReplies(comment.id);
+      }
+    },
+    
+    // 提交根评论回复
+    async submitRootReply(commentId) {
+      const content = this.rootReplyInput[commentId];
+      if (!content) return;
+      
+      try {
+        await axios.post('/api/comment/reply', {
+          commentId,
+          parentReplyId: null,
+          userId: this.currentUser.id,
+          content
+        });
+        
+        this.rootReplyInput[commentId] = '';
+        await this.loadReplies(commentId);
+        this.showCustomAlert('回复成功', '成功');
+      } catch (err) {
+        console.error('回复评论失败:', err);
+        this.showCustomAlert('回复失败: ' + (err.response?.data?.msg || '请稍后重试'), '错误');
+      }
+    },
+    
+    // 处理嵌套回复
+    async handleReply(commentId, { parentReplyId, content }) {
+      try {
+        await axios.post('/api/comment/reply', {
+          commentId,
+          parentReplyId,
+          userId: this.currentUser.id,
+          content
+        });
+        
+        await this.loadReplies(commentId);
+        this.showCustomAlert('回复成功', '成功');
+      } catch (err) {
+        console.error('回复评论失败:', err);
+        this.showCustomAlert('回复失败: ' + (err.response?.data?.msg || '请稍后重试'), '错误');
+      }
+    },
+    
     async submitComment() {
       if (!this.newComment.content.trim()) {
-        alert('请输入评价内容');
+        this.showCustomAlert('请输入评价内容', '提示');
         return;
       }
       
       console.log('提交评价:', this.newComment);
       
       try {
-        // 使用正确的后端接口路径
+        // 获取当前用户信息
+        const userAvatar = this.currentUser.avatar || 'https://via.placeholder.com/40';
+        const username = this.currentUser.name || this.currentUser.username || '用户';
+        
+        console.log('提交评价的用户信息:', { userAvatar, username });
+        
         const response = await axios.post(`/api/courses/${this.courseId}/comments`, null, {
           params: {
             studentId: this.currentUser.id,
             content: this.newComment.content,
-            rating: this.newComment.rating
+            rating: this.newComment.rating,
+            username: username,
+            userAvatar: userAvatar
           }
         });
         
         console.log('提交评价响应:', response.data);
         
         if (response.data && (response.data.status === 0 || response.data.code === 200)) {
-          // 重新加载评论
-          this.comments = [];
-          await this.fetchComments();
+          // 手动构建一个新的评论对象，确保包含用户信息
+          const newCommentObj = {
+            id: response.data.data?.id || Date.now(),
+            studentId: this.currentUser.id,
+            content: this.newComment.content,
+            stars: this.newComment.rating,
+            userAvatar: userAvatar,
+            username: username,
+            createdAt: new Date().toISOString()
+          };
           
-          // 更新课程平均评分
+          // 将新评论添加到评论列表的开头
+          this.comments.unshift(newCommentObj);
+          
+          // 初始化这个评论的回复列表
+          this.repliesMap[newCommentObj.id] = [];
+          
           if (this.updateAverageRating) {
             this.updateAverageRating();
           }
           
-          // 清空表单
           this.newComment.content = '';
           this.newComment.rating = 5;
           
-          alert('评价提交成功');
+          this.showCustomAlert('评价提交成功', '成功');
         } else {
-          alert('评价提交失败: ' + (response.data?.msg || response.data?.message || '未知错误'));
+          this.showCustomAlert('评价提交失败: ' + (response.data?.msg || response.data?.message || '未知错误'), '提交失败');
         }
       } catch (err) {
         console.error('提交评价失败:', err);
-        alert('评价提交失败: ' + (err.response?.data?.msg || err.response?.data?.message || '请稍后重试'));
+        this.showCustomAlert('评价提交失败: ' + (err.response?.data?.msg || err.response?.data?.message || '请稍后重试'), '错误');
       }
     },
     
     async toggleLike() {
       try {
-        console.log('开始收藏操作，课程ID:', this.courseId, '学生ID:', this.currentUser.id);
+        console.log('开始收藏操作，课程ID:', this.courseId);
         
         if (this.course.isLiked) {
-          // 取消收藏
           console.log('执行取消收藏');
-          const response = await axios.delete(`/api/courses/${this.courseId}/like`, {
-            params: { studentId: this.currentUser.id }
-          });
+          const response = await courseService.removeCourseLike(this.courseId);
           
           console.log('取消收藏响应:', response.data);
           if (response.data && response.data.status === 0) {
             this.course.isLiked = false;
-            alert('已取消收藏');
+            this.showCustomAlert('已取消收藏');
           } else {
-            alert('取消收藏失败: ' + (response.data?.msg || '未知错误'));
+            this.showCustomAlert('取消收藏失败: ' + (response.data?.msg || '未知错误'), '操作失败');
           }
         } else {
-          // 添加收藏
           console.log('执行添加收藏');
-          const response = await axios.post(`/api/courses/${this.courseId}/like`, null, {
-            params: { studentId: this.currentUser.id }
-          });
+          const response = await courseService.addCourseLike(this.courseId);
           
           console.log('添加收藏响应:', response.data);
           if (response.data && response.data.status === 0) {
             this.course.isLiked = true;
-            alert('收藏成功');
+            this.showCustomAlert('收藏成功');
           } else {
-            alert('收藏失败: ' + (response.data?.msg || '未知错误'));
+            this.showCustomAlert('收藏失败: ' + (response.data?.msg || '未知错误'), '操作失败');
           }
         }
       } catch (err) {
         console.error('收藏操作失败:', err);
-        alert('操作失败，请稍后重试');
+        this.showCustomAlert('操作失败，请稍后重试', '错误');
       }
     },
     
     async subscribeCourse() {
       if (!this.currentUser || !this.currentUser.id) {
-        alert('请先登录');
+        this.showCustomAlert('请先登录', '提示');
         return;
       }
       
@@ -714,69 +892,122 @@ export default {
         return;
       }
       
-      console.log('开始订阅课程，课程ID:', this.courseId, '学生ID:', this.currentUser.id);
+      console.log('开始订阅课程，课程ID:', this.courseId);
       
       try {
-        // 使用原生fetch API - 最简单的方式
         const url = `/api/studentcourse/${this.courseId}/subscribe?studentId=${this.currentUser.id}`;
         console.log('订阅课程请求URL:', url);
         
-        // 显示加载中
-        alert('正在订阅课程，请稍候...');
+        this.showCustomAlert('正在订阅课程，请稍候...', '处理中');
         
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        });
+        const response = await courseService.subscribeCourse(this.courseId);
         
-        console.log('订阅课程API响应状态:', response.status);
+        console.log('订阅课程API响应数据:', response.data);
         
-        if (response.ok) {
-          const data = await response.json();
-          console.log('订阅课程API响应数据:', data);
+        if (response.data && response.data.status === 0) {
+          console.log('订阅课程成功');
+          // 更新课程状态
+          this.course.isPurchased = true;
+          this.course.isBookmarked = true;
           
-          if (data && data.status === 0) {
-            console.log('订阅课程成功');
-            // 更新课程状态
-            this.course.isPurchased = true;
-            this.course.isBookmarked = true;
-            
-            // 更新订阅人数 - 直接+1
-            if (typeof this.course.subscriberCount === 'number') {
-              this.course.subscriberCount += 1;
-              console.log('更新订阅人数为:', this.course.subscriberCount);
-            } else {
-              // 如果订阅人数不是数字，设为1
-              this.course.subscriberCount = 1;
-            }
-            
-            alert('订阅成功，现在可以观看完整课程内容了！');
-            
-            // 如果当前在试看模式，重新加载视频
-            if (this.showPlayer && this.isPreviewMode) {
-              this.playChapter(this.currentChapterIndex);
-            }
+          // 更新订阅人数
+          if (typeof this.course.subscriberCount === 'number') {
+            this.course.subscriberCount += 1;
+            console.log('更新订阅人数为:', this.course.subscriberCount);
           } else {
-            alert('订阅失败: ' + (data?.message || '请稍后重试'));
+            this.course.subscriberCount = 1;
+          }
+          
+          this.checkAndJoinCourseGroup();
+          
+          if (this.showPlayer && this.isPreviewMode) {
+            this.playChapter(this.currentChapterIndex);
           }
         } else {
-          // 尝试读取错误响应
           let errorText = '';
           try {
-            const errorData = await response.text();
-            console.error('错误响应内容:', errorData);
-            errorText = errorData;
+            errorText = JSON.stringify(response.data);
+            console.error('错误响应内容:', errorText);
           } catch (e) {
             errorText = '无法读取错误详情';
           }
           
-          alert(`订阅失败: HTTP状态码 ${response.status}; ${errorText}`);
+          this.showCustomAlert(`订阅失败: ${errorText}`, '错误');
         }
       } catch (err) {
         console.error('订阅课程请求异常:', err);
-        alert('订阅失败: ' + err.message);
+        this.showCustomAlert('订阅失败: ' + err.message, '错误');
+      }
+    },
+    
+    // 检查课程群聊并自动加入
+    async checkAndJoinCourseGroup() {
+      try {
+        console.log('检查课程群聊，课程ID:', this.courseId);
+        
+        // 获取所有群聊
+        const conversationsRes = await axios.get(`/api/chat/all-conversations`);
+        console.log('所有群聊:', conversationsRes.data);
+        
+        if (conversationsRes.data.status === 10000) {
+          // 过滤出群聊类型的会话
+          const groupChats = conversationsRes.data.data.filter(c => 
+            c.conversation && 
+            c.conversation.type === 'GROUP' && 
+            c.group
+          );
+          console.log('过滤后的群聊:', groupChats);
+          
+          // 检查是否有同名群聊
+          const courseGroupName = `${this.course.title} 【课程群聊】`;
+          console.log('课程群聊名称:', courseGroupName);
+          const existingGroup = groupChats.find(g => g.title === courseGroupName);
+          
+          if (existingGroup) {
+            console.log('找到课程群聊:', existingGroup);
+            
+            // 检查用户是否已在群聊中
+            const isUserInGroup = await this.checkUserInGroup(existingGroup.conversation.id);
+            
+            if (!isUserInGroup) {
+              // 将用户加入群聊
+              const joinRes = await axios.post(`/api/chat/group/${existingGroup.group.id}/join?userId=${this.currentUser.id}`);
+              
+              if (joinRes.data.status === 10000) {
+                this.showCustomAlert(`订阅成功！已加入${this.course.title}课程班群`);
+              } else {
+                console.error('加入群聊失败:', joinRes.data);
+              }
+            } else {
+              console.log('用户已在群聊中，无需重复加入');
+              this.showCustomAlert('订阅成功，现在可以观看完整课程内容了！');
+            }
+          } else {
+            console.log('未找到对应的课程群聊');
+            this.showCustomAlert('订阅成功，现在可以观看完整课程内容了！');
+          }
+        }
+      } catch (err) {
+        console.error('检查课程群聊失败:', err);
+      }
+    },
+    
+    // 检查用户是否已在群聊中
+    async checkUserInGroup(groupId) {
+      try {
+        // 使用获取会话参与者的API
+        const membersRes = await axios.get(`/api/chat/participants/${groupId}`);
+        
+        if (membersRes.data.status === 10000 && membersRes.data.data) {
+          const members = membersRes.data.data;
+          console.log('群聊成员:', members);
+          console.log('当前用户ID:', this.currentUser.id);
+          return members.some(member => member.id === this.currentUser.id);
+        }
+        return false;
+      } catch (err) {
+        console.error('检查用户是否在群聊中失败:', err);
+        return false;
       }
     },
     
@@ -784,63 +1015,60 @@ export default {
       if (!this.course.isPurchased) return;
       
       if (!this.currentUser || !this.currentUser.id) {
-        alert('请先登录');
+        this.showCustomAlert('请先登录', '提示');
         return;
       }
       
-      if (!confirm('确定要取消订阅该课程吗？')) {
-        return;
-      }
-      
-      try {
-        console.log('开始取消订阅课程 - 课程ID:', this.courseId, '学生ID:', this.currentUser.id);
-        
-        // 显示加载状态
-        this.$message = this.$message || {};
-        const loadingMessage = this.$message.loading ? 
-          this.$message.loading('正在取消订阅...', 0) : 
-          { close: () => console.log('关闭加载提示') };
-        
-        // 使用统一的DELETE API端点
-        const params = new URLSearchParams();
-        params.append('studentId', this.currentUser.id);
-        
-        const response = await axios.delete(`/api/studentcourse/${this.courseId}/unsubscribe`, {
-          params: { studentId: this.currentUser.id },
-          timeout: 15000
-        });
-        
-        // 关闭加载状态
-        loadingMessage.close();
-        
-        console.log('取消订阅响应:', JSON.stringify(response.data));
-        
-        if (response.data && response.data.status === 0) {
-          this.course.isPurchased = false;
-          this.course.isBookmarked = false;
-          
-          // 更新订阅人数 - 直接-1，但不小于0
-          if (typeof this.course.subscriberCount === 'number' && this.course.subscriberCount > 0) {
-            this.course.subscriberCount -= 1;
-            console.log('更新订阅人数为:', this.course.subscriberCount);
-          } else {
-            this.course.subscriberCount = 0;
+      // 使用自定义确认对话框
+      this.showCustomConfirm(
+        '确定要取消订阅该课程吗？',
+        async () => {
+          try {
+            console.log('开始取消订阅课程 - 课程ID:', this.courseId, '学生ID:', this.currentUser.id);
+            
+            // 显示加载状态
+            this.$message = this.$message || {};
+            const loadingMessage = this.$message.loading ? 
+              this.$message.loading('正在取消订阅...', 0) : 
+              { close: () => console.log('关闭加载提示') };
+            
+            const response = await axios.delete(`/api/studentcourse/${this.courseId}/unsubscribe`, {
+              params: { studentId: this.currentUser.id },
+              timeout: 15000
+            });
+            
+            // 关闭加载状态
+            loadingMessage.close();
+            
+            console.log('取消订阅响应:', JSON.stringify(response.data));
+            
+            if (response.data && response.data.status === 0) {
+              this.course.isPurchased = false;
+              this.course.isBookmarked = false;
+              
+              if (typeof this.course.subscriberCount === 'number' && this.course.subscriberCount > 0) {
+                this.course.subscriberCount -= 1;
+                console.log('更新订阅人数为:', this.course.subscriberCount);
+              } else {
+                this.course.subscriberCount = 0;
+              }
+              
+              this.showCustomAlert('取消订阅成功');
+              
+              if (this.showPlayer && !this.isPreviewMode) {
+                this.showPlayer = false;
+              }
+            } else {
+              console.error('取消订阅失败:', response.data);
+              this.showCustomAlert('取消订阅失败: ' + (response.data?.message || '请稍后重试'), '错误');
+            }
+          } catch (err) {
+            console.error('取消订阅失败:', err);
+            this.showCustomAlert('取消订阅失败: ' + (err.response?.data?.message || '网络错误，请稍后重试'), '错误');
           }
-          
-          alert('取消订阅成功');
-          
-          // 如果当前在视频播放模式，关闭播放器
-          if (this.showPlayer && !this.isPreviewMode) {
-            this.showPlayer = false;
-          }
-        } else {
-          console.error('取消订阅失败:', response.data);
-          alert('取消订阅失败: ' + (response.data?.message || '请稍后重试'));
-        }
-      } catch (err) {
-        console.error('取消订阅失败:', err);
-        alert('取消订阅失败: ' + (err.response?.data?.message || '网络错误，请稍后重试'));
-      }
+        },
+        '取消订阅'
+      );
     },
     
     previewCourse() {
@@ -857,7 +1085,7 @@ export default {
       
       // 修改：无论订阅与否，都可以试看第一个章节
       if (!this.course.isPurchased && index > 0 && !chapter.isPreviewable) {
-        alert('请先订阅课程');
+        this.showCustomAlert('请先订阅课程', '提示');
         return;
       }
       
@@ -933,12 +1161,12 @@ export default {
           name: 'StudentCoursePlayer',
           params: { lessonId: lessonId },
           query: { 
-            courseId: courseId,
-            studentId: this.currentUser.id
+            courseId: courseId
+            // studentId不再需要传递，由PlayerCoursePlayer组件从Pinia store获取
           }
         });
       } else {
-        alert('请先订阅课程以观看完整内容');
+        this.showCustomAlert('请先订阅课程以观看完整内容', '提示');
       }
     },
     
@@ -979,6 +1207,30 @@ export default {
       } catch (err) {
         console.error('更新课程平均评分失败:', err);
       }
+    },
+    // 添加显示弹窗的方法
+    showCustomAlert(message, title = '') {
+      this.alertMessage = message;
+      this.alertTitle = title;
+      this.showAlert = true;
+    },
+    // 添加显示确认对话框的方法
+    showCustomConfirm(message, action, title = '确认') {
+      this.confirmMessage = message;
+      this.confirmTitle = title;
+      this.pendingAction = action;
+      this.showConfirm = true;
+    },
+    // 处理确认
+    handleConfirm() {
+      if (this.pendingAction) {
+        this.pendingAction();
+      }
+      this.pendingAction = null;
+    },
+    // 处理取消
+    handleCancel() {
+      this.pendingAction = null;
     }
   }
 }
@@ -2003,5 +2255,51 @@ export default {
     padding: 10px 12px;
     font-size: 14px;
   }
+}
+
+/* 添加回复相关样式 */
+.reply-tree {
+  margin-top: 12px;
+  padding: 0 0 0 10px;
+  border-left: 2px solid #e5e7eb;
+}
+
+.root-reply-box {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 0.7rem;
+}
+
+.root-reply-box input {
+  flex: 1;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  background: #f8fafc;
+  transition: border 0.2s;
+}
+
+.root-reply-box input:focus {
+  border-color: #3b82f6;
+  outline: none;
+  background: #fff;
+}
+
+.root-reply-box button {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.root-reply-box button:hover {
+  background: #2563eb;
 }
 </style>
