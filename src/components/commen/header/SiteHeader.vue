@@ -39,17 +39,22 @@ import axios from 'axios';
 export default {
   name: 'SiteHeader',
   data() {
+    // 从本地存储获取初始用户数据
+    const storedData = this.getStoredUserData();
+    const defaultUser = {
+      avatar: '',
+      name: '',
+      username: '',
+      role: 1,
+      id: null
+    };
+
     return {
       username: '',
       userAvatar: '',
       userId: null,
-      currentUser: this.getStoredUserData() || {
-        avatar: '',
-        name: '',
-        username: '',
-        role: 1,
-        id: null
-      },
+      // 优先使用存储的数据作为初始值
+      currentUser: storedData || defaultUser,
       defaultAvatarUrl: '/src/assets/images/defult_user_avatar.png',
       userDataInitialized: false,
       isScrolled: false,
@@ -64,7 +69,6 @@ export default {
     }
   },
   watch: {
-    // 监听用户数据变化
     currentUser: {
       handler(newValue) {
         if (newValue && newValue.id) {
@@ -75,7 +79,10 @@ export default {
     }
   },
   mounted() {
-    this.initUserData();
+    // 只有在没有用户数据或头像时才初始化
+    if (!this.currentUser.id || !this.currentUser.avatar) {
+      this.initUserData();
+    }
     window.addEventListener('scroll', this.handleScroll);
   },
   beforeUnmount() {
@@ -85,7 +92,15 @@ export default {
     getStoredUserData() {
       try {
         const storedData = localStorage.getItem('headerUserData');
-        return storedData ? JSON.parse(storedData) : null;
+        if (storedData) {
+          const parsedData = JSON.parse(storedData);
+          // 验证存储的数据是否与当前登录用户匹配
+          const userId = this.getCookie('userid');
+          if (userId && parsedData.id === parseInt(userId)) {
+            return parsedData;
+          }
+        }
+        return null;
       } catch (error) {
         console.error('Error reading stored user data:', error);
         return null;
@@ -103,46 +118,50 @@ export default {
     async initUserData() {
       const username = this.getCookie('username');
       const userId = this.getCookie('userid');
-      console.log(userId, username);
 
-      if (userId && username) {
-        this.loginRequired = false;
-        const role = this.getCookie('role');
-        
-        // 获取存储的用户数据
-        const storedData = this.getStoredUserData();
-        
-        // 如果存储的数据与当前用户ID匹配，优先使用存储的数据
-        if (storedData && storedData.id === parseInt(userId)) {
-          this.currentUser = storedData;
-        } else {
-          // 否则使用cookie中的基本信息
-          this.currentUser = {
-            id: parseInt(userId),
-            name: this.getCookie('name') || username,
-            username: username,
-            role: parseInt(role) || 1,
-            avatar: this.defaultAvatarUrl
-          };
-        }
-        
-        // 无论如何都尝试从服务器获取最新数据
-        try {
-          const response = await axios.get(`/user/user-info?userId=${userId}`);
-          if (response.data.status === 0) {
-            const userData = response.data.data;
-            if (userData.avatar && (!this.currentUser.avatar || this.currentUser.avatar === this.defaultAvatarUrl)) {
-              this.currentUser = {
-                ...this.currentUser,
-                avatar: userData.avatar
-              };
-            }
-            this.userDataInitialized = true;
+      if (!userId || !username) {
+        return;
+      }
+
+      const role = this.getCookie('role');
+      const storedData = this.getStoredUserData();
+      
+      // 如果有存储的数据且ID匹配，直接使用
+      if (storedData && storedData.id === parseInt(userId)) {
+        this.currentUser = storedData;
+        this.userDataInitialized = true;
+        // 在后台更新最新数据
+        this.updateUserDataInBackground();
+        return;
+      }
+
+      // 否则设置基本信息
+      this.currentUser = {
+        id: parseInt(userId),
+        name: this.getCookie('name') || username,
+        username: username,
+        role: parseInt(role) || 1,
+        avatar: storedData?.avatar || this.defaultAvatarUrl
+      };
+
+      // 获取最新数据
+      await this.updateUserDataInBackground();
+    },
+
+    async updateUserDataInBackground() {
+      try {
+        const response = await axios.get(`/user/user-info?userId=${this.currentUser.id}`);
+        if (response.data.status === 0) {
+          const userData = response.data.data;
+          if (userData.avatar) {
+            this.currentUser = {
+              ...this.currentUser,
+              avatar: userData.avatar
+            };
           }
-        } catch (error) {
-          console.error('获取用户详细信息失败:', error);
-          // 如果请求失败，保持使用当前数据
         }
+      } catch (error) {
+        console.error('获取用户详细信息失败:', error);
       }
     },
     
@@ -167,7 +186,7 @@ export default {
         localStorage.removeItem('token');
         localStorage.removeItem('userInfo');
         localStorage.removeItem('user');
-        localStorage.removeItem('headerUserData'); // 清除存储的头像数据
+        localStorage.removeItem('headerUserData');
         sessionStorage.clear();
         
         document.cookie = "satoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -204,7 +223,6 @@ export default {
           ...this.currentUser,
           avatar: this.defaultAvatarUrl
         };
-        // 更新存储的数据
         this.storeUserData(this.currentUser);
       }
     },
