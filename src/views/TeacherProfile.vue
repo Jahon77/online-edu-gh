@@ -26,7 +26,7 @@
             <el-button type="success" @click="goToSurveyText" class="survey-text-button">
               问卷填写
             </el-button>
-            <button class="change-pwd-btn small" @click="showPwdDialog = true">修改密码</button>
+            <el-button type="success" class="survey-text-button" @click="showPwdDialog = true">修改密码</el-button>
             <div class="profile-details">
               <div class="detail-row">
                 <label>姓名:</label>
@@ -207,7 +207,7 @@ const editingField = ref('')
 const editValue = ref('')
 
 // 修改密码相关
-const showPwdDialog = ref(true)
+const showPwdDialog = ref(false)
 const pwdForm = ref({ oldPwd: '', newPwd: '', confirmPwd: '' })
 const showOldPwd = ref(false)
 const showNewPwd = ref(false)

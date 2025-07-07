@@ -2,19 +2,19 @@
   <div class="page">
     <TeacherHeader />
     <div class="main-content">
-      <div class="vertical-title">個人資料</div>
+      <!-- <div class="vertical-title">个人资料</div> -->
       <div class="content-container">
         <div class="back-section">
           <button @click="$router.push({ name: 'forum' })" class="back-btn">
             <el-icon><ArrowLeft /></el-icon>
-            返回論壇
+            返回论坛
           </button>
         </div>
 
-        <div class="page-header">
+        <!-- <div class="page-header">
           <h2>論壇個人資料</h2>
           <p>查看您的論壇活動和統計數據</p>
-        </div>
+        </div> -->
 
         <!-- 加載狀態 -->
         <div v-if="loading" class="loading-state">
@@ -33,23 +33,23 @@
             <div class="user-stats-grid">
               <div class="stat-item">
                 <div class="stat-number">{{ userStats.forumPostCount || 0 }}</div>
-                <div class="stat-label">發帖數</div>
+                <div class="stat-label">发帖数</div>
               </div>
               <div class="stat-item">
                 <div class="stat-number">{{ userStats.forumLikeCount || 0 }}</div>
-                <div class="stat-label">獲贊數</div>
+                <div class="stat-label">获赞数</div>
               </div>
               <div class="stat-item">
                 <div class="stat-number">{{ userStats.forumCommentCount || 0 }}</div>
-                <div class="stat-label">評論數</div>
+                <div class="stat-label">评论数</div>
               </div>
               <div class="stat-item">
                 <div class="stat-number">{{ userStats.forumFollowingCount || 0 }}</div>
-                <div class="stat-label">關注數</div>
+                <div class="stat-label">关注数</div>
               </div>
               <div class="stat-item">
                 <div class="stat-number">{{ userStats.forumFollowerCount || 0 }}</div>
-                <div class="stat-label">粉絲數</div>
+                <div class="stat-label">粉丝数</div>
               </div>
             </div>
           </div>
@@ -93,8 +93,8 @@
                 </div>
               </div>
               <div v-else class="empty-state">
-                <p>您還沒有發佈過帖子</p>
-                <button @click="goToForum" class="post-btn">去發帖</button>
+                <p>您还没有发布过帖子</p>
+                <button @click="goToForum" class="post-btn">去发帖</button>
               </div>
               <BasePager
                 v-model="currentPagePosts"
@@ -124,8 +124,8 @@
                 </div>
               </div>
               <div v-else class="empty-state">
-                <p>您還沒有收藏任何帖子</p>
-                <button @click="goToForum" class="post-btn">去發現</button>
+                <p>您还没有收藏任何帖子</p>
+                <button @click="goToForum" class="post-btn">去发现</button>
               </div>
               <BasePager
                 v-model="currentPageFavorites"
@@ -155,8 +155,8 @@
                 </div>
               </div>
               <div v-else class="empty-state">
-                <p>您還沒有給任何帖子點贊</p>
-                <button @click="goToForum" class="post-btn">去發現</button>
+                <p>您还没有给任何帖子点赞</p>
+                <button @click="goToForum" class="post-btn">去发现</button>
               </div>
               <BasePager
                 v-model="currentPageLikes"
@@ -173,15 +173,15 @@
                     <img :src="user.followingAvatar || '/default-avatar.png'" :alt="user.followingName" class="user-avatar-small" />
                     <div class="user-details">
                       <h5 class="user-name">{{ user.followingName }}</h5>
-                      <span class="follow-time">關注於 {{ formatTime(user.createdAt) }}</span>
+                      <span class="follow-time">关注于 {{ formatTime(user.createdAt) }}</span>
                     </div>
                   </div>
-                  <button @click="unfollowUser(user.followingId)" class="unfollow-btn">取消關注</button>
+                  <button @click="unfollowUser(user.followingId)" class="unfollow-btn">取消关注</button>
                 </div>
               </div>
               <div v-else class="empty-state">
-                <p>您還沒有關注任何用戶</p>
-                <button @click="goToForum" class="post-btn">去發現</button>
+                <p>您还没有关注任何用户</p>
+                <button @click="goToForum" class="post-btn">去发现</button>
               </div>
             </div>
 
@@ -193,14 +193,14 @@
                     <img :src="user.followerAvatar || '/default-avatar.png'" :alt="user.followerName" class="user-avatar-small" />
                     <div class="user-details">
                       <h5 class="user-name">{{ user.followerName }}</h5>
-                      <span class="follow-time">關注於 {{ formatTime(user.createdAt) }}</span>
+                      <span class="follow-time">关注于 {{ formatTime(user.createdAt) }}</span>
                     </div>
                   </div>
                 </div>
               </div>
               <div v-else class="empty-state">
-                <p>您還沒有粉絲</p>
-                <button @click="goToForum" class="post-btn">去發帖</button>
+                <p>您还没有粉丝</p>
+                <button @click="goToForum" class="post-btn">去发帖</button>
               </div>
             </div>
           </div>
@@ -268,9 +268,9 @@ watch(likes, () => { currentPageLikes.value = 1 })
 const tabs = [
   { id: 'posts', name: '我的帖子' },
   { id: 'favorites', name: '我的收藏' },
-  { id: 'likes', name: '我的點贊' },
-  { id: 'following', name: '我的關注' },
-  { id: 'followers', name: '我的粉絲' }
+  { id: 'likes', name: '我的点赞' },
+  { id: 'following', name: '我的关注' },
+  { id: 'followers', name: '我的粉丝' }
 ]
 
 // 获取cookie的辅助函数

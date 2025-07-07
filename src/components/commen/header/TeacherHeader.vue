@@ -179,6 +179,18 @@
           case 'aichat':
             this.currentPath = '智能助手';
             break;
+          case 'editCourse':
+            this.currentPath = '课程管理 > 课程列表 > 编辑课程';
+            break;
+          case 'forumProfile':
+            this.currentPath = '学习论坛 > 个人资料';
+            break;
+          case 'forumNotifications':
+            this.currentPath = '学习论坛 > 论坛通知';
+            break;
+          case 'forumPostDetail':
+            this.currentPath = '学习论坛 > 帖子详情';
+            break;
           // Add more cases for other routes as needed
           default:
             this.currentPath = '未知页面';

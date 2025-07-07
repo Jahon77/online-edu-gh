@@ -2,34 +2,34 @@
   <div class="page">
     <TeacherHeader />
     <div class="main-content">
-      <div class="vertical-title">通知</div>
+      <!-- <div class="vertical-title">通知</div> -->
       <div class="content-container">
         <div class="back-section">
           <button @click="goBack" class="back-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
-            返回論壇
+            返回论坛
           </button>
         </div>
 
-        <div class="page-header">
+        <!-- <div class="page-header">
           <h2>論壇通知</h2>
           <p>查看您的論壇活動通知</p>
-        </div>
+        </div> -->
 
         <!-- 加載狀態 -->
         <div v-if="loading" class="loading-state">
           <div class="loading-spinner"></div>
-          <p>加載中...</p>
+          <p>加载中...</p>
         </div>
 
         <!-- 通知列表 -->
         <div v-else-if="notifications.length > 0" class="notifications-section">
           <div class="notifications-header">
-            <h3>未讀通知 ({{ unreadCount }})</h3>
+            <h3>未读通知 ({{ unreadCount }})</h3>
             <button @click="markAllAsRead" class="mark-all-btn">
-              全部標記為已讀
+              全部标记为已读
             </button>
           </div>
           
@@ -67,7 +67,7 @@
               
               <div class="notification-actions">
                 <button v-if="!notification.isRead" @click="markAsRead(notification.id)" class="mark-read-btn">
-                  標記已讀
+                  标记已读
                 </button>
                 <button @click="deleteNotification(notification.id)" class="delete-btn">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -81,11 +81,11 @@
           <!-- 分頁 -->
           <div class="pagination">
             <button @click="prevPage" :disabled="currentPage <= 1" class="page-btn">
-              上一頁
+              上一页
             </button>
             <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
             <button @click="nextPage" :disabled="currentPage >= totalPages" class="page-btn">
-              下一頁
+              下一页
             </button>
           </div>
         </div>
@@ -98,9 +98,9 @@
               <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
           </div>
-          <h3>暫無通知</h3>
-          <p>當您有新的論壇活動時，通知會出現在這裡</p>
-          <button @click="goToForum" class="forum-btn">去論壇看看</button>
+          <h3>暂无通知</h3>
+          <p>当您有新的论坛活动时，通知会出现在这里</p>
+          <button @click="goToForum" class="forum-btn">去论坛看看</button>
         </div>
       </div>
     </div>
@@ -156,7 +156,7 @@ const getCurrentUserId = () => {
 const loadNotifications = async () => {
   // 檢查用戶是否已登錄
   if (!currentUserId.value) {
-    alert('請先登錄再查看通知');
+    alert('请先登录再查看通知');
     return;
   }
   
@@ -180,7 +180,7 @@ const loadNotifications = async () => {
       n.senderName = senderCache[n.senderId]
     }))
   } catch (error) {
-    console.error('加載通知失敗:', error)
+    console.error('加载通知失败:', error)
   } finally {
     loading.value = false
   }
@@ -188,7 +188,7 @@ const loadNotifications = async () => {
 
 const markAsRead = async (notificationId) => {
   if (!currentUserId.value) {
-    alert('請先登錄');
+    alert('请先登录');
     return;
   }
   
@@ -204,7 +204,7 @@ const markAsRead = async (notificationId) => {
       unreadCount.value = Math.max(0, unreadCount.value-1)
     }
   } catch (error) {
-    console.error('標記通知失敗:', error)
+    console.error('标记通知失败:', error)
   }
 }
 
@@ -216,7 +216,7 @@ const markAllAsRead = async () => {
     notifications.value.forEach(n => n.isRead = 1)
     unreadCount.value = 0
   } catch (error) {
-    console.error('標記全部已讀失敗:', error)
+    console.error('标记全部已读失败:', error)
   }
 }
 
@@ -226,7 +226,7 @@ const deleteNotification = async (notificationId) => {
     await axios.delete(`http://localhost:8080/api/forum/notification/${notificationId}`)
     notifications.value = notifications.value.filter(n => n.id !== notificationId)
   } catch (error) {
-    console.error('刪除通知失敗:', error)
+    console.error('删除通知失败:', error)
   }
 }
 
@@ -245,13 +245,13 @@ const getNotificationMessage = (n) => {
   const namePart = n.senderName || '有人'
   switch (n.type) {
     case 1:
-      return `${namePart} 點贊了您的帖子`
+      return `${namePart} 点赞了您的帖子`
     case 2:
-      return `${namePart} 評論了您的帖子`
+      return `${namePart} 评论了您的帖子`
     case 3:
       return `${namePart} 收藏了您的帖子`
     case 4:
-      return `${namePart} 回覆了您的評論`
+      return `${namePart} 回复了您的评论`
     default:
       return '您有新的通知'
   }
@@ -262,9 +262,9 @@ const formatTime = (timeStr) => {
   const now = new Date()
   const diff = now - date
   
-  if (diff < 60000) return '剛剛'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}分鐘前`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小時前`
+  if (diff < 60000) return '刚刚'
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
   if (diff < 2592000000) return `${Math.floor(diff / 86400000)}天前`
   
   return date.toLocaleDateString('zh-CN')
