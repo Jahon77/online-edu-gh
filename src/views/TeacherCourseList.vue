@@ -2,7 +2,7 @@
   <div class="course-list-bg">
     <TeacherHeader />
     <div class="main-flex">
-      <div class="vertical-title">课程列表管理</div>
+      <!-- <div class="vertical-title">课程列表管理</div> -->
       <div class="main-content">
         <div class="header-banner">
           <h2>我的课程</h2>
@@ -299,7 +299,7 @@ export default {
   justify-content: center;
   width: 100%;
   max-width: 1500px;
-  margin-top: 2rem;
+  /* margin-top: 2rem; */
   flex-direction: row;
   align-items: flex-start;
 }
@@ -310,7 +310,7 @@ export default {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   padding: 2rem 2rem 3rem 2rem;
   margin-top: 2rem;
-  margin-bottom: 2rem;
+  /* margin-bottom: 2rem; */
   width: 100%;
   max-width: 1400px;
   min-height: 700px;

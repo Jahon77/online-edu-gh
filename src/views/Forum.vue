@@ -2,11 +2,11 @@
   <div class="page">
     <TeacherHeader />
     <div class="main-content">
-      <div class="vertical-title">論壇</div>
+      <!-- <div class="vertical-title">论坛</div> -->
       <div class="content-container">
         <div class="page-header">
-          <h2>學習論壇</h2>
-          <p>與同學們分享學習心得，討論課程內容</p>
+          <h2>学习论坛</h2>
+          <p>与同学们分享学习心得，讨论课程内容</p>
         </div>
 
         <!-- 操作欄 -->
@@ -17,7 +17,7 @@
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                 <circle cx="12" cy="7" r="4"/>
               </svg>
-              個人資料
+              个人资料
             </button>
             <button @click="goToNotifications" class="notification-btn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -31,21 +31,21 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 5v14M5 12h14"/>
               </svg>
-              發佈帖子
+              发布帖子
             </button>
           </div>
           <div class="right-actions">
             <div class="filter-group">
               <select v-model="selectedTag" @change="loadPosts" class="filter-select">
-                <option value="">全部標籤</option>
+                <option value="">全部标签</option>
                 <option v-for="tag in tags" :key="tag.id" :value="tag.id">
                   {{ tag.name }}
                 </option>
               </select>
               <select v-model="sortBy" @change="loadPosts" class="filter-select">
-                <option value="latest">最新發布</option>
-                <option value="hot">最熱門</option>
-                <option value="likes">最多點贊</option>
+                <option value="latest">最新发布</option>
+                <option value="hot">最热门</option>
+                <option value="likes">最多点赞</option>
               </select>
             </div>
           </div>
@@ -118,17 +118,17 @@
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
           </div>
-          <h3>暫無帖子</h3>
-          <p>成為第一個發佈帖子的用戶吧！</p>
+          <h3>暂无帖子</h3>
+          <p>成为第一个发布帖子的用户吧！</p>
           <button @click="showPostModal = true" class="post-btn">
-            發佈帖子
+            发布帖子
           </button>
         </div>
 
         <!-- 加載狀態 -->
         <div v-if="loading" class="loading-state">
           <div class="loading-spinner"></div>
-          <p>加載中...</p>
+          <p>加载中...</p>
         </div>
       </div>
     </div>
@@ -137,7 +137,7 @@
     <div v-if="showPostModal" class="modal-overlay" @click="showPostModal = false">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h3>發佈新帖子</h3>
+          <h3>发布新帖子</h3>
           <button @click="showPostModal = false" class="close-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 6L6 18M6 6l12 12"/>
@@ -146,15 +146,15 @@
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <label>標題</label>
-            <input v-model="newPost.title" type="text" placeholder="輸入帖子標題" class="form-input" />
+            <label>标题</label>
+            <input v-model="newPost.title" type="text" placeholder="输入帖子标题" class="form-input" />
           </div>
           <div class="form-group">
-            <label>內容</label>
+            <label>内容</label>
             <textarea v-model="newPost.content" placeholder="分享你的想法..." class="form-textarea" rows="6"></textarea>
           </div>
           <div class="form-group">
-            <label>標籤</label>
+            <label>标签</label>
             <div class="tag-selector">
               <span v-for="tag in tags" :key="tag.id" 
                     :class="['tag-option', { active: selectedTags.includes(tag.id) }]"
@@ -167,7 +167,7 @@
         <div class="modal-footer">
           <button @click="showPostModal = false" class="cancel-btn">取消</button>
           <button @click="submitPost" :disabled="submitting" class="submit-btn">
-            {{ submitting ? '發佈中...' : '發佈' }}
+            {{ submitting ? '发布中...' : '发布' }}
           </button>
         </div>
       </div>

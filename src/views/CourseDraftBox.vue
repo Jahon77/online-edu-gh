@@ -2,7 +2,7 @@
   <div class="page">
     <TeacherHeader />
     <div class="main-content">
-      <div class="vertical-title">草稿箱管理</div>
+      <!-- <div class="vertical-title">草稿箱管理</div> -->
       <div class="content-container">
         <div class="header-banner">
           <h2>课程草稿箱</h2>
