@@ -148,7 +148,8 @@ export default {
         level: "基础",
         price: 0,
         coverUrl: "",
-        introMd: ""
+        introMd: "",
+        teacherId: this.getCurrentUserId()
       },
       chapterList: [],
       newChapterTitle: "",
@@ -328,7 +329,7 @@ export default {
     },
     deleteCourse() {
       if (confirm("确定删除课程？")) {
-        fetch(`http://localhost:8080/api/teacher/course/delete/${this.courseId}`, {
+        fetch(`http://localhost:8080/api/teacher/course/delete/${this.courseId}?teacherId=${this.getCurrentUserId()}`, {
           method: "DELETE"
         }).then(() => {
           alert("删除成功");
@@ -342,7 +343,7 @@ export default {
         title: this.newChapterTitle,
         sortOrder: this.chapterList.length
       };
-      fetch("http://localhost:8080/api/teacher/course/chapter", {
+      fetch(`http://localhost:8080/api/teacher/course/chapter?teacherId=${this.getCurrentUserId()}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(chapter)
@@ -352,7 +353,7 @@ export default {
       });
     },
     deleteChapter(chapterId) {
-      fetch(`http://localhost:8080/api/teacher/course/chapter/${chapterId}`, {
+      fetch(`http://localhost:8080/api/teacher/course/chapter/${chapterId}?teacherId=${this.getCurrentUserId()}`, {
         method: "DELETE"
       }).then(() => this.fetchChapters());
     },
@@ -364,7 +365,7 @@ export default {
         sortOrder: 0,
         isPreview: 0
       };
-      fetch("http://localhost:8080/api/teacher/course/lesson", {
+      fetch(`http://localhost:8080/api/teacher/course/lesson?teacherId=${this.getCurrentUserId()}&courseId=${this.courseId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(lesson)
@@ -374,7 +375,7 @@ export default {
       });
     },
     deleteLesson(lessonId) {
-      fetch(`http://localhost:8080/api/teacher/course/lesson/${lessonId}`, {
+      fetch(`http://localhost:8080/api/teacher/course/lesson/${lessonId}?teacherId=${this.getCurrentUserId()}&courseId=${this.courseId}`, {
         method: "DELETE"
       }).then(() => this.fetchChapters());
     },

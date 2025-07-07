@@ -16,7 +16,6 @@ import FaceTest from '../views/FaceTest.vue'
 import CourseList from '../views/Course/CourseList.vue'
 import CourseDetail from '../views/Course/CourseDetail.vue'
 import StudentCenterCourseList from '@/views/Course/StudentCenterCourseList.vue'
-import { createWebHistory } from 'vue-router'
 
 const routes = [
     {
@@ -319,9 +318,9 @@ const routes = [
 ]
 
 const router = createRouter({
-    history: createWebHistory(),
+    history: createWebHashHistory(),
     routes
-  });
+})
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
@@ -352,13 +351,4 @@ router.beforeEach((to, from, next) => {
     next();
 });
 
-// 路由切换后通知 Ptengine
-router.afterEach(() => {
-    setTimeout(() => {
-      if (window._pt_sp_2 && typeof window._pt_sp_2.push === 'function') {
-        window._pt_sp_2.push(['_trackPageview']);
-      }
-    }, 300);
-  });
-  
 export default router 

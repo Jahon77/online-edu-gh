@@ -21,7 +21,7 @@
           <img :src="userAvatar" :alt="username">
         </div>
         <button class="btn-download">APP下载</button>
-        <button class="btn-logout" @click="logout">退出登录</button>
+        <button class="btn-logout" @click="confirmLogout">退出登录</button>
       </div>
     </div>
   </header>
@@ -29,6 +29,7 @@
 
 <script>
 import axios from 'axios';
+import { logout } from "@/utils/authUtils";
 
 export default {
   name: 'SiteHeader',
@@ -93,34 +94,32 @@ export default {
       }
       return null;
     },
-    logout() {
-      this.$confirm('确定要退出登录吗？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userInfo');
-        localStorage.removeItem('user');
-        sessionStorage.clear();
-        
-        document.cookie = "satoken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie = "userid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie = "name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        
-        this.$message({
-          type: 'success',
-          message: '已成功退出登录!'
-        });
-        
-        this.$router.push('/login');
-      }).catch(() => {
-        // this.$message({
-        //   type: 'info',
-        //   message: '已取消退出'
-        // });
-      });
+    async confirmLogout() {
+      try {
+        // 弹出确认框
+        await ElMessageBox.confirm(
+          "确定要退出登录吗？",
+          "提示",
+          {
+            confirmButtonText: "确定",
+            cancelButtonText: "取消",
+            type: "warning",
+          }
+        );
+        // 调用导入的 logout 函数完成后端登出和本地清理
+        await logout();
+
+        ElMessage.success("已成功退出登录!");
+        // 跳转登录页
+        this.$router.push("/login");
+      } catch (error) {
+        if (error !== "cancel") {
+          // 不是取消弹窗的情况，显示错误
+          ElMessage.error("退出失败，请稍后再试");
+          console.error(error);
+        }
+        // 取消操作啥都不做
+      }
     }
   }
 };

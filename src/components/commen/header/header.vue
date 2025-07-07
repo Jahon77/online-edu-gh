@@ -98,6 +98,7 @@ export default {
       this.username = '';
       // 跳转到首页
       this.$router.push({ name: 'index' });
+      this.$message.success('已成功退出登录!');
     },
     goToDashboard() {
       const userRole = getUserRole();

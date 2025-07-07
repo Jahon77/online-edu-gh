@@ -2,6 +2,7 @@
  * 认证相关工具函数
  */
 
+import axios from 'axios';
 /**
  * 设置cookie
  * @param {string} name - cookie名称
@@ -79,11 +80,33 @@ export function getUserInfo() {
 /**
  * 用户登出
  */
-export function logout() {
+export async function logout() {
+  try {
+    // 从 cookie 中提取 satoken（推荐写法）
+    const match = document.cookie.match(/(?:^|;\s*)satoken=([^;]*)/);
+    const token = match ? match[1] : null;
+
+    // 带上 satoken 发请求
+    await axios.post('/logout', {}, {
+      headers: {
+        satoken: token || ''
+      }
+    });
+
+  } catch (error) {
+    console.error('后端登出接口调用失败:', error);
+  }
+
+  // 清理本地 cookie
   deleteCookie('satoken');
   deleteCookie('username');
   deleteCookie('userid');
   deleteCookie('name');
   deleteCookie('role');
+
+  // 清理 localStorage
   localStorage.removeItem('user');
-} 
+
+  // sessionStorage 通常也清理一下
+  sessionStorage.clear();
+}

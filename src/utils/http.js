@@ -23,7 +23,6 @@ instance.interceptors.request.use(
         console.error('Request error:', error)
         return Promise.reject(error)
     }
-// <<<<<<< HEAD
 )
 
 // 响应拦截器
