@@ -4,10 +4,10 @@
     <div class="main-content">
       <!-- <div class="vertical-title">论坛</div> -->
       <div class="content-container">
-        <div class="page-header">
+        <!-- <div class="page-header">
           <h2>学习论坛</h2>
           <p>与同学们分享学习心得，讨论课程内容</p>
-        </div>
+        </div> -->
 
         <!-- 操作欄 -->
         <div class="action-bar">

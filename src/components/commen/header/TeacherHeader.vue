@@ -82,24 +82,22 @@
       showCourseDropdown: false,
       showStudentDropdown: false, 
       showLiveDropdown: false, 
-      currentPath: '个人中心'
+      currentPath: '个人中心',
+      menuBarOffsetTop: 0
     };
   },
     methods: {
       toggleStickyHeader() {
-        const scrolled = document.documentElement.scrollTop;
-        const menuBar = document.querySelector('.menu-bar');
-        
-        if (scrolled > 100) {
-          AppFunctions.addClass('.header-default', 'sticky');
-          if (menuBar) {
-            menuBar.classList.add('sticky');
-          }
+        const scrolled = window.scrollY;
+        const menuBar = this.$el.querySelector('.menu-bar');
+        if (scrolled >= this.menuBarOffsetTop) {
+          // 固定
+          this.$el.querySelector('.header-default').classList.add('sticky');
+          if (menuBar) menuBar.classList.add('sticky');
         } else {
-          AppFunctions.removeClass('.header-default', 'sticky');
-          if (menuBar) {
-            menuBar.classList.remove('sticky');
-          }
+          // 取消固定
+          this.$el.querySelector('.header-default').classList.remove('sticky');
+          if (menuBar) menuBar.classList.remove('sticky');
         }
       },
       async confirmLogout() {
@@ -192,8 +190,15 @@
       this.updateCurrentPath(); // Initial path update
     },
     mounted() {
-      this.toggleStickyHeader();
-      this.$watch('$route', this.updateCurrentPath);
+      this.$nextTick(() => {
+        const menuBar = this.$el.querySelector('.menu-bar');
+        if (menuBar) {
+          this.menuBarOffsetTop = menuBar.offsetTop;
+        }
+        this.toggleStickyHeader();
+        window.addEventListener('scroll', this.toggleStickyHeader);
+        this.$watch('$route', this.updateCurrentPath);
+      });
     },
     beforeDestroy() {
       window.removeEventListener('scroll', this.toggleStickyHeader);

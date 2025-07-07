@@ -4,10 +4,10 @@
     <div class="main-content">
       <!-- <div class="vertical-title">草稿箱管理</div> -->
       <div class="content-container">
-        <div class="header-banner">
+        <!-- <div class="header-banner">
           <h2>课程草稿箱</h2>
           <p>管理和发布您未完成的课程草稿</p>
-        </div>
+        </div> -->
         <div class="course-selector">
           <label>筛选分区：</label>
           <select v-model="filterType">

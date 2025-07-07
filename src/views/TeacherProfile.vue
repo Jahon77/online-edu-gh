@@ -4,10 +4,10 @@
     <div class="main-content">
       <!-- <div class="vertical-title">个人中心</div> -->
       <div class="content-container">
-        <div class="header-banner">
+        <!-- <div class="header-banner">
           <h2>教师个人中心</h2>
           <p>管理您的个人信息和教学数据</p>
-        </div>
+        </div> -->
 
         <!-- 个人信息卡片 -->
         <div class="profile-section">
@@ -26,6 +26,7 @@
             <el-button type="success" @click="goToSurveyText" class="survey-text-button">
               问卷填写
             </el-button>
+            <button class="change-pwd-btn small" @click="showPwdDialog = true">修改密码</button>
             <div class="profile-details">
               <div class="detail-row">
                 <label>姓名:</label>
@@ -133,6 +134,40 @@
             </div>
           </div>
         </div>
+
+        <!-- 修改密码弹窗 -->
+        <div v-if="showPwdDialog" class="edit-dialog-overlay" @click="showPwdDialog = false">
+          <div class="edit-dialog" @click.stop>
+            <h3>修改密码</h3>
+            <div class="edit-form">
+              <label>原密码：</label>
+              <div class="pwd-input-row">
+                <input :type="showOldPwd ? 'text' : 'password'" v-model="pwdForm.oldPwd" placeholder="请输入原密码" />
+                <span class="toggle-eye" @click="showOldPwd = !showOldPwd">
+                  <i :class="showOldPwd ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+                </span>
+              </div>
+              <label>新密码：</label>
+              <div class="pwd-input-row">
+                <input :type="showNewPwd ? 'text' : 'password'" v-model="pwdForm.newPwd" placeholder="请输入新密码（6位）" />
+                <span class="toggle-eye" @click="showNewPwd = !showNewPwd">
+                  <i :class="showNewPwd ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+                </span>
+              </div>
+              <label>确认新密码：</label>
+              <div class="pwd-input-row">
+                <input :type="showConfirmPwd ? 'text' : 'password'" v-model="pwdForm.confirmPwd" placeholder="请再次输入新密码" />
+                <span class="toggle-eye" @click="showConfirmPwd = !showConfirmPwd">
+                  <i :class="showConfirmPwd ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+                </span>
+              </div>
+            </div>
+            <div class="dialog-actions">
+              <button class="cancel-btn" @click="showPwdDialog = false">取消</button>
+              <button class="save-btn" @click="submitChangePwd">确定</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -143,6 +178,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import TeacherHeader from '@/components/commen/header/TeacherHeader.vue'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 
@@ -169,6 +205,13 @@ const loading = ref(false)
 const showEditDialog = ref(false)
 const editingField = ref('')
 const editValue = ref('')
+
+// 修改密码相关
+const showPwdDialog = ref(true)
+const pwdForm = ref({ oldPwd: '', newPwd: '', confirmPwd: '' })
+const showOldPwd = ref(false)
+const showNewPwd = ref(false)
+const showConfirmPwd = ref(false)
 
 // 加载教师信息
 const loadTeacherInfo = async () => {
@@ -265,9 +308,9 @@ const closeEditDialog = () => {
 }
 
 // 更换头像
-const changeAvatar = () => {
-  alert('头像上传功能开发中...')
-}
+// const changeAvatar = () => {
+//   alert('头像上传功能开发中...')
+// }
 
 // 创建课程
 const createCourse = () => {
@@ -338,6 +381,38 @@ const goToCommentManagement = () => {
 const goToSurveyText = () => {
   router.push('/survey-text')
 }
+
+async function submitChangePwd() {
+  if (!pwdForm.value.oldPwd || !pwdForm.value.newPwd || !pwdForm.value.confirmPwd) {
+    ElMessage.error('请填写完整信息')
+    return
+  }
+  if (pwdForm.value.newPwd.length < 6) {
+    ElMessage.error('新密码至少6位')
+    return
+  }
+  if (pwdForm.value.newPwd !== pwdForm.value.confirmPwd) {
+    ElMessage.error('两次输入的新密码不一致')
+    return
+  }
+  try {
+    const res = await axios.put(`http://localhost:8080/api/teacher/profile/${teacherId}/password`, {
+      oldPassword: pwdForm.value.oldPwd,
+      newPassword: pwdForm.value.newPwd
+    })
+    if (res.data.status === 0) {
+      ElMessage.success('修改成功，请重新登录')
+      showPwdDialog.value = false
+      pwdForm.value = { oldPwd: '', newPwd: '', confirmPwd: '' }
+      // 可选：router.push('/login')
+    } else {
+      ElMessage.error(res.data.message || '修改失败')
+    }
+  } catch (e) {
+    ElMessage.error('请求失败，请重试')
+  }
+}
+
 onMounted(() => {
   if (teacherId) {
     loadTeacherInfo()
@@ -838,5 +913,61 @@ onMounted(() => {
   .courses-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* 修改密码按钮 */
+.change-pwd-btn {
+  margin-top: 1rem;
+  background: #1890ff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.2rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+.change-pwd-btn:hover {
+  background: #40a9ff;
+}
+
+.change-pwd-btn.small {
+  margin-left: 1rem;
+  padding: 0.35rem 1rem;
+  font-size: 0.95rem;
+  height: 32px;
+  line-height: 1;
+  background: #f98c53;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  vertical-align: middle;
+  transition: background 0.2s;
+  display: inline-block;
+}
+.change-pwd-btn.small:hover {
+  background: #f7a059;
+}
+
+.pwd-input-row {
+  display: flex;
+  align-items: center;
+  position: relative;
+  margin-bottom: 0.5rem;
+}
+.pwd-input-row input {
+  flex: 1;
+  padding-right: 2.2em;
+}
+.toggle-eye {
+  margin-left: -2em;
+  cursor: pointer;
+  color: #aaa;
+  font-size: 1.1em;
+  user-select: none;
+  z-index: 2;
+}
+.toggle-eye:hover {
+  color: #1890ff;
 }
 </style> 

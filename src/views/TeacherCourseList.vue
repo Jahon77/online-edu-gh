@@ -4,10 +4,10 @@
     <div class="main-flex">
       <!-- <div class="vertical-title">课程列表管理</div> -->
       <div class="main-content">
-        <div class="header-banner">
+        <!-- <div class="header-banner">
           <h2>我的课程</h2>
           <p>在这里管理和编辑你发布的所有课程</p>
-        </div>
+        </div> -->
         <div class="filter-row">
           <label>课程分类：</label>
           <select v-model="selectedCategory" @change="filterCourses">
