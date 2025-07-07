@@ -706,6 +706,38 @@
         <button @click="testApiCall" class="test-api-btn">测试API</button>
       </div>
     </footer>
+      
+    <!-- 人脸注册提示弹窗 -->
+    <div class="auth-modal" v-if="showFaceRegisterModal">
+      <div class="auth-modal-content face-register-modal">
+        <h3>人脸识别注册</h3>
+        <p>检测到您尚未注册人脸识别，是否现在进行注册？</p>
+        <p class="modal-desc">注册人脸识别后可以使用人脸快速登录，更加安全便捷。</p>
+        <div v-if="!showFaceCamera">
+          <div class="button-group">
+            <button @click="closeFaceRegisterModal" class="btn modal-btn secondary">暂不注册</button>
+            <button @click="startFaceRegistration" class="btn modal-btn">立即注册</button>
+          </div>
+        </div>
+        <div v-else>
+          <canvas ref="canvas" style="display:none;"></canvas>
+          <div v-if="!capturedImage">
+            <video ref="video" autoplay playsinline class="video-preview"></video>
+            <button @click="capture" class="btn modal-btn">拍照</button>
+          </div>
+          <div v-else>
+            <img :src="capturedImage" class="video-preview" />
+            <div class="button-group">
+              <button @click="resetCapture" class="btn modal-btn secondary">重拍</button>
+              <button @click="registerFace" class="btn modal-btn" :disabled="isProcessing">
+                {{ isProcessing ? '注册中...' : '确认注册' }}
+              </button>
+            </div>
+          </div>
+          <button @click="closeCamera" class="btn modal-btn transparent">关闭</button>
+        </div>
+      </div>
+    </div>
       </div>
     </template>
     
@@ -730,61 +762,67 @@
           sort: 'recommend',
           level: '',
           subject: '',
-      currentCategory: '', // 当前选中的课程分类
-      subjects: ['学科主修', '职场技能', '人文通识', '考研督学', '兴趣探索'], // 更新为新的分类
-      categoryImages: { // 分类图片映射
-        '': '/src/assets/images/course/course-bar/course-bar1-1.png', // 全部课程
-        '学科主修': '/src/assets/images/course/course-bar/course-bar1-3.png',
-        '职场技能': '/src/assets/images/course/course-bar/course-bar1-2.png',
-        '人文通识': '/src/assets/images/course/course-bar/course-bar1-7.png',
-        '考研督学': '/src/assets/images/course/course-bar/course-bar1-4.png',
-        '兴趣探索': '/src/assets/images/course/course-bar/course-bar1-6.png'
-      },
-      trainingItems: [
-        { 
-          title: '素质培养', 
-          description: '以国家战略为导向，以素养人才的最新标准为教研准则',
-          icon: 'cube'
-        },
-        { 
-          title: '升学规划', 
-          description: '通过AI技术，为学生提供全面、个性化、深层次的升学规划服务',
-          icon: 'arrow'
-        },
-        { 
-          title: '赛考服务', 
-          description: '提供一站式权威赛事辅导，助力特长培养，收获竞赛好成绩',
-          icon: 'star'
-        }
-      ],
-      currentSlide: 0,
-      carouselImages: [
-        { 
-          url: '/src/assets/images/course/list-show1.png', 
-          alt: '轮播图1',
-          title: '精品课程，成就未来',
-          description: '海量优质课程，助你实现学习目标'
-        },
-        { 
-          url: '/src/assets/images/course/list-show2.png', 
-          alt: '轮播图2',
-          title: '名师授课，学习无忧',
-          description: '一线名师在线指导，助你攻克学习难关'
-        },
-        { 
-          url: '/src/assets/images/course/list-show3.png', 
-          alt: '轮播图3',
-          title: '个性化学习，提高效率',
-          description: '根据学习需求定制专属学习计划'
-        },
-        { 
-          url: '/src/assets/images/course/list-show4.png', 
-          alt: '轮播图4',
-          title: '全面提升，综合发展',
-          description: '全方位培养能力，助力综合素质提升'
-        }
-      ],
-      // progressWidth已移除
+          currentCategory: '', // 当前选中的课程分类
+          subjects: ['学科主修', '职场技能', '人文通识', '考研督学', '兴趣探索'], // 更新为新的分类
+          categoryImages: { // 分类图片映射
+            '': '/src/assets/images/course/course-bar/course-bar1-1.png', // 全部课程
+            '学科主修': '/src/assets/images/course/course-bar/course-bar1-3.png',
+            '职场技能': '/src/assets/images/course/course-bar/course-bar1-2.png',
+            '人文通识': '/src/assets/images/course/course-bar/course-bar1-7.png',
+            '考研督学': '/src/assets/images/course/course-bar/course-bar1-4.png',
+            '兴趣探索': '/src/assets/images/course/course-bar/course-bar1-6.png'
+          },
+          trainingItems: [
+            { 
+              title: '素质培养', 
+              description: '以国家战略为导向，以素养人才的最新标准为教研准则',
+              icon: 'cube'
+            },
+            { 
+              title: '升学规划', 
+              description: '通过AI技术，为学生提供全面、个性化、深层次的升学规划服务',
+              icon: 'arrow'
+            },
+            { 
+              title: '赛考服务', 
+              description: '提供一站式权威赛事辅导，助力特长培养，收获竞赛好成绩',
+              icon: 'star'
+            }
+          ],
+          currentSlide: 0,
+          carouselImages: [
+            { 
+              url: '/src/assets/images/course/list-show1.png', 
+              alt: '轮播图1',
+              title: '精品课程，成就未来',
+              description: '海量优质课程，助你实现学习目标'
+            },
+            { 
+              url: '/src/assets/images/course/list-show2.png', 
+              alt: '轮播图2',
+              title: '名师授课，学习无忧',
+              description: '一线名师在线指导，助你攻克学习难关'
+            },
+            { 
+              url: '/src/assets/images/course/list-show3.png', 
+              alt: '轮播图3',
+              title: '个性化学习，提高效率',
+              description: '根据学习需求定制专属学习计划'
+            },
+            { 
+              url: '/src/assets/images/course/list-show4.png', 
+              alt: '轮播图4',
+              title: '全面提升，综合发展',
+              description: '全方位培养能力，助力综合素质提升'
+            }
+          ],
+          // 人脸注册相关
+          showFaceRegisterModal: false,
+          showFaceCamera: false,
+          capturedImage: null,
+          isProcessing: false,
+          stream: null,
+          userId: null
         }
       },
       mounted() {
@@ -799,6 +837,9 @@
         // 初始化教师卡片3D效果
         this.initTeacherCards();
         
+        // 检查用户是否注册了人脸识别
+        this.checkFaceRegistration();
+        
         // 测试API调用
         console.log("开始测试API调用...");
         testApi.testGetAllCourses().then(courses => {
@@ -808,6 +849,11 @@
       beforeUnmount() {
         this.stopCarousel(); // 清理定时器
         window.removeEventListener('scroll', this.handleScroll); // 移除滚动监听
+        // 确保关闭摄像头
+        if (this.stream) {
+          this.stream.getTracks().forEach(track => track.stop());
+          this.stream = null;
+        }
       },
       methods: {
         getCardColor(level) {
@@ -1224,6 +1270,181 @@
             this.topCourses = [];
           }
         },
+        // 检查用户是否注册了人脸识别
+        async checkFaceRegistration() {
+          try {
+            // 从cookie获取userId
+            const userId = this.getCookie('userid');
+            if (!userId) {
+              console.log('未找到用户ID，无法检查人脸注册状态');
+              return;
+            }
+            
+            this.userId = userId; // 保存userId以备后用
+            
+            // 检查本地存储中是否已经记录了该用户的选择
+            const hasDeclined = localStorage.getItem(`face_register_declined_${userId}`);
+            if (hasDeclined) {
+              console.log('用户之前已选择暂不注册，不再显示提示');
+              return;
+            }
+            
+            // 获取用户信息
+            const response = await axios.get(`/user/user-info?userId=${userId}`);
+            console.log('获取用户信息响应:', response);
+            
+            if (response.data && response.data.status === 0) {
+              const user = response.data.data;
+              
+              // 检查是否已注册人脸
+              if (user.isFaceRegistered === false) {
+                console.log('用户未注册人脸，显示注册提示');
+                this.showFaceRegisterModal = true;
+              } else {
+                console.log('用户已注册人脸，无需显示提示');
+              }
+            }
+          } catch (error) {
+            console.error('检查人脸注册状态失败:', error);
+          }
+        },
+        
+        // 获取Cookie值
+        getCookie(name) {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop().split(';').shift();
+          return null;
+        },
+        
+        // 关闭人脸注册提示弹窗
+        closeFaceRegisterModal() {
+          this.showFaceRegisterModal = false;
+          // 记录用户选择不注册的决定
+          if (this.userId) {
+            localStorage.setItem(`face_register_declined_${this.userId}`, 'true');
+          }
+        },
+        
+        // 开始人脸注册流程
+        startFaceRegistration() {
+          this.showFaceCamera = true;
+          this.openCamera();
+        },
+        
+        // 打开摄像头
+        async openCamera() {
+          if (this.stream) return;
+          try {
+            this.stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            this.$nextTick(() => {
+              const videoElement = this.$refs.video;
+              if(videoElement) {
+                videoElement.srcObject = this.stream;
+              }
+            });
+          } catch (err) {
+            alert('无法访问摄像头，请检查权限。');
+            console.error("Error accessing camera: ", err);
+            this.closeCamera();
+          }
+        },
+        
+        // 关闭摄像头
+        closeCamera() {
+          if (this.stream) {
+            this.stream.getTracks().forEach(track => track.stop());
+            this.stream = null;
+          }
+          this.resetCapture();
+          this.showFaceCamera = false;
+          this.showFaceRegisterModal = false;
+        },
+        
+        // 拍照
+        capture() {
+          const videoElement = this.$refs.video;
+          const canvasElement = this.$refs.canvas;
+          if (videoElement && canvasElement) {
+            if (videoElement.videoWidth === 0) {
+              alert('摄像头尚未准备好或权限被阻止，请稍等片刻或刷新重试。');
+              return;
+            }
+            const context = canvasElement.getContext('2d');
+            
+            // 设置较小的尺寸以减小图像大小
+            const maxWidth = 640;
+            const maxHeight = 480;
+            let width = videoElement.videoWidth;
+            let height = videoElement.videoHeight;
+            
+            // 保持宽高比的情况下调整尺寸
+            if (width > height) {
+              if (width > maxWidth) {
+                height = Math.round(height * maxWidth / width);
+                width = maxWidth;
+              }
+            } else {
+              if (height > maxHeight) {
+                width = Math.round(width * maxHeight / height);
+                height = maxHeight;
+              }
+            }
+            
+            canvasElement.width = width;
+            canvasElement.height = height;
+            context.drawImage(videoElement, 0, 0, width, height);
+            
+            // 使用较低的图像质量
+            this.capturedImage = canvasElement.toDataURL('image/jpeg', 0.7);
+            
+            console.log('图像已压缩，大小约为：' + Math.round(this.capturedImage.length / 1024) + 'KB');
+          } else {
+            alert('拍照功能初始化失败，请关闭弹窗后重试。');
+          }
+        },
+        
+        // 重置拍照
+        resetCapture() {
+          this.capturedImage = null;
+          if (this.showFaceCamera) {
+            this.$nextTick(() => this.openCamera());
+          }
+        },
+        
+        // 注册人脸
+        async registerFace() {
+          if (!this.userId) {
+            alert('用户ID无效，请重新登录。');
+            return;
+          }
+          if (!this.capturedImage) {
+            alert('请先拍照');
+            return;
+          }
+          this.isProcessing = true;
+          try {
+            const response = await axios.post('/api/face/register', {
+              userId: parseInt(this.userId),
+              image: this.capturedImage,
+            });
+            console.log('人脸注册响应:', response);
+            if (response.data.status === 0) {
+              alert('人脸注册成功！');
+              // 注册成功后，移除本地存储中的记录
+              localStorage.removeItem(`face_register_declined_${this.userId}`);
+              this.closeCamera();
+            } else {
+              alert(response.data.message || '人脸注册失败，请重试。');
+            }
+          } catch (error) {
+            console.error('人脸注册错误:', error);
+            const errorMessage = error.response?.data?.message || '请求失败，请检查网络或联系管理员。';
+            alert(errorMessage);
+          } finally {
+            this.isProcessing = false;
+          }
+        }
       }
     }
     </script>
@@ -3670,5 +3891,89 @@
 .category-tab:active {
   transform: scale(0.95);
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* 人脸注册弹窗样式 */
+.auth-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.auth-modal-content {
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  text-align: center;
+}
+
+.face-register-modal h3 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.face-register-modal p {
+  font-size: 16px;
+  margin-bottom: 15px;
+  color: #555;
+}
+
+.modal-desc {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 25px;
+}
+
+.video-preview {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  background-color: #eee;
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.modal-btn {
+  padding: 10px 25px;
+  border-radius: 30px;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.3s;
+  width: auto;
+  height: auto;
+}
+
+.modal-btn.secondary {
+  background-color: #f0f0f0;
+  color: #555;
+}
+
+.modal-btn.transparent {
+  background: none;
+  color: #888;
+  margin-top: 15px;
+}
+
+.modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
     </style>

@@ -7,6 +7,7 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    BasePager: typeof import('./components/BasePager.vue')['default']
     ChatModal: typeof import('./components/ChatModal.vue')['default']
     CustomAlert: typeof import('./components/CustomAlert.vue')['default']
     CustomConfirm: typeof import('./components/CustomConfirm.vue')['default']
@@ -30,9 +31,12 @@ declare module 'vue' {
     ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
     ElRate: typeof import('element-plus/es')['ElRate']
     ElSelect: typeof import('element-plus/es')['ElSelect']
+    ElTable: typeof import('element-plus/es')['ElTable']
+    ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     ElTabPane: typeof import('element-plus/es')['ElTabPane']
     ElTabs: typeof import('element-plus/es')['ElTabs']
     ElTag: typeof import('element-plus/es')['ElTag']
+    FaceRegistrationPrompt: typeof import('./components/FaceRegistrationPrompt.vue')['default']
     Footer: typeof import('./components/commen/footer/footer.vue')['default']
     Header: typeof import('./components/commen/header/header.vue')['default']
     HeaderSelect: typeof import('./components/commen/header/header-select.vue')['default']
@@ -49,5 +53,8 @@ declare module 'vue' {
     TeacherHeader: typeof import('./components/commen/header/TeacherHeader.vue')['default']
     UserSettingsModal: typeof import('./components/UserSettingsModal.vue')['default']
     VideoUpload: typeof import('./components/VideoUpload.vue')['default']
+  }
+  export interface ComponentCustomProperties {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }
